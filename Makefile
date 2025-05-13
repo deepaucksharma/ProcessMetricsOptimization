@@ -98,6 +98,7 @@ k8s-all-profiles:    ## Run all profiles in parallel in Kubernetes
 	kind create cluster --name demo 2>/dev/null || true
 	kubectl -n observability create secret generic newrelic-license \
         --from-literal=NEW_RELIC_LICENSE_KEY=$(NR_KEY) --dry-run=client -o yaml | kubectl apply -f -
+	cd k8s && ./update-configmap.sh
 	kubectl apply -f k8s/all-profiles-deployments.yaml
 	@echo "🚀 All profile collectors deployed to Kubernetes with demo_id=$(DEMO_ID)"
 

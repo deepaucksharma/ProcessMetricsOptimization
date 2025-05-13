@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nrdot-collector-host
+  namespace: observability
+spec:
+  template:
+    spec:
+      containers:
+      - name: collector
+        env:
+        - name: PROFILE
+          value: "lean"
+        - name: NR_USE_ULTRA
+          value: "false"
+        - name: NR_USE_BALANCED
+          value: "false"
+        - name: NR_USE_OPTIMIZED
+          value: "false"
+        - name: NR_USE_LEAN
+          value: "true"
+        - name: NR_USE_MICRO
+          value: "false"

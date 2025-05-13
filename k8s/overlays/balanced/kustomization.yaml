@@ -9,5 +9,3 @@ configMapGenerator:
   namespace: observability
   files:
   - config.yaml=../../../../config.yaml
-
-# No patches needed for balanced as it's the default
