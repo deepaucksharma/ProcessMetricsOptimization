@@ -28,11 +28,7 @@ CL = kubectl -n observability
 UP = \
  kind create cluster --name demo 2>/dev/null ;\
  $(CL) apply -f k8s/namespace.yaml ;\
- helm repo add boutique https://microservices-demo.github.io/microservices-demo ;\
- helm repo add sockshop https://weaveworks.github.io/sock-shop/ ;\
- helm repo update ;\
- helm upgrade --install boutique boutique/microservices-demo -n observability -f k8s/boutique-helm-values.yaml ;\
- helm upgrade --install sockshop sockshop/sock-shop -n observability -f k8s/sockshop-helm-values.yaml ;\
+ $(CL) apply -f k8s/minimal-demo.yaml ;\
  $(CL) create secret generic newrelic-license \
        --from-literal=NEW_RELIC_LICENSE_KEY=$(NR_KEY) --dry-run=client -o yaml | $(CL) apply -f - ;\
  $(CL) apply -f k8s/collector-daemonset.yaml
@@ -40,7 +36,8 @@ DOWN = kind delete cluster --name demo
 LOGS = kubectl -n observability logs -l app=nrdot-collector-host -f
 endif
 
-.PHONY: up down logs validate clean dashboard query test-k8s
+.PHONY: up down logs validate clean dashboard query all-profiles k8s-test
+
 up:          ## Spin everything up
 	$(UP)
 	@echo "🚀  Lab ready – profile=$(PROFILE) mode=$(MODE) demo_id=$(DEMO_ID)"
@@ -84,41 +81,11 @@ query:       ## Show profile comparison NRQL
 	@echo "FACET  benchmark.profile"
 	@echo "SINCE 5 minutes AGO"
 
-test-k8s:    ## Test K8s connectivity to New Relic
-	@./test-nr-connectivity.sh
+all-profiles:  ## Run all profiles in parallel with docker
+	docker-compose -f docker-compose-all-profiles.yml up -d
+	@echo "🚀 All profile collectors started with demo_id=$(DEMO_ID)"
 
-simple-up:  ## Run with simplified config
-	@echo "Setting up profile-specific environment variables..."
-	@export CLEAN_DEMO_ID=$$(echo "$(DEMO_ID)" | tr -d ' '); \
-	export COLLECTION_INTERVAL="30s"; \
-	export INCLUDE_THREADS="false"; \
-	export INCLUDE_FDS="false"; \
-	case "$(PROFILE)" in \
-		"ultra") \
-			export COLLECTION_INTERVAL="5s"; \
-			export INCLUDE_THREADS="true"; \
-			export INCLUDE_FDS="true"; \
-			;; \
-		"balanced") \
-			export COLLECTION_INTERVAL="30s"; \
-			;; \
-		"optimized") \
-			export COLLECTION_INTERVAL="60s"; \
-			;; \
-		"lean") \
-			export COLLECTION_INTERVAL="120s"; \
-			;; \
-		"micro") \
-			export COLLECTION_INTERVAL="300s"; \
-			;; \
-		*) \
-			echo "Unknown profile: $(PROFILE), using balanced"; \
-			export COLLECTION_INTERVAL="30s"; \
-			;; \
-	esac; \
-	DEMO_ID=$$CLEAN_DEMO_ID \
-	COLLECTION_INTERVAL=$$COLLECTION_INTERVAL \
-	INCLUDE_THREADS=$$INCLUDE_THREADS \
-	INCLUDE_FDS=$$INCLUDE_FDS \
-	docker-compose -f docker-compose-simple.yml up -d
-	@echo "🚀 Simplified collector started with profile=$(PROFILE)"
+k8s-test:    ## Test K8s connectivity to New Relic
+	kubectl apply -f k8s/test-connectivity.yaml
+	sleep 10
+	kubectl -n observability logs -l job-name=test-nr-connectivity

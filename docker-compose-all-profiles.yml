@@ -15,12 +15,14 @@ services:
   ###############################################################################
   collector-ultra:
     image: newrelic/nrdot-collector-host:1.1.0
-    container_name: demo-ultra-collector
+    container_name: ${DEMO_ID:-demo-local}-ultra-collector
     ports: 
       - "8889:8888"  # For prometheus metrics
     volumes:
-      - ./config.yaml:/etc/otel/config.yaml:ro
+      - /:/hostfs:ro
+      - ./config.yaml:/etc/nrdot-collector-host/config.yaml:ro
     environment:
+      - HOST_ROOT_PATH=/hostfs
       - BENCHMARK_PROFILE=ultra
       - DEMO_ID=${DEMO_ID:-demo-local}-ultra
       - NR_USE_ULTRA=true
@@ -30,16 +32,22 @@ services:
       - NR_USE_MICRO=false
       - NEW_RELIC_LICENSE_KEY=${NR_KEY:-replace_me}
       - NEW_RELIC_METADATA_DEMO_ID=${DEMO_ID:-demo-local}-ultra
-    command: --config /etc/otel/config.yaml
+      - NEW_RELIC_DISPLAY_NAME=${DEMO_ID:-demo-local}-ultra-collector
+      - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=delta
+      - OTEL_EXPORTER_OTLP_COMPRESSION=zstd
+      - MEM_LIMIT_MIB=256
+    command: --config /etc/nrdot-collector-host/config.yaml
 
   collector-balanced:
     image: newrelic/nrdot-collector-host:1.1.0
-    container_name: demo-balanced-collector
+    container_name: ${DEMO_ID:-demo-local}-balanced-collector
     ports: 
       - "8890:8888"  # For prometheus metrics
     volumes:
-      - ./config.yaml:/etc/otel/config.yaml:ro
+      - /:/hostfs:ro
+      - ./config.yaml:/etc/nrdot-collector-host/config.yaml:ro
     environment:
+      - HOST_ROOT_PATH=/hostfs
       - BENCHMARK_PROFILE=balanced
       - DEMO_ID=${DEMO_ID:-demo-local}-balanced
       - NR_USE_ULTRA=false
@@ -49,16 +57,22 @@ services:
       - NR_USE_MICRO=false
       - NEW_RELIC_LICENSE_KEY=${NR_KEY:-replace_me}
       - NEW_RELIC_METADATA_DEMO_ID=${DEMO_ID:-demo-local}-balanced
-    command: --config /etc/otel/config.yaml
+      - NEW_RELIC_DISPLAY_NAME=${DEMO_ID:-demo-local}-balanced-collector
+      - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=delta
+      - OTEL_EXPORTER_OTLP_COMPRESSION=zstd
+      - MEM_LIMIT_MIB=256
+    command: --config /etc/nrdot-collector-host/config.yaml
 
   collector-optimized:
     image: newrelic/nrdot-collector-host:1.1.0
-    container_name: demo-optimized-collector
+    container_name: ${DEMO_ID:-demo-local}-optimized-collector
     ports: 
       - "8891:8888"  # For prometheus metrics
     volumes:
-      - ./config.yaml:/etc/otel/config.yaml:ro
+      - /:/hostfs:ro
+      - ./config.yaml:/etc/nrdot-collector-host/config.yaml:ro
     environment:
+      - HOST_ROOT_PATH=/hostfs
       - BENCHMARK_PROFILE=optimized
       - DEMO_ID=${DEMO_ID:-demo-local}-optimized
       - NR_USE_ULTRA=false
@@ -68,16 +82,22 @@ services:
       - NR_USE_MICRO=false
       - NEW_RELIC_LICENSE_KEY=${NR_KEY:-replace_me}
       - NEW_RELIC_METADATA_DEMO_ID=${DEMO_ID:-demo-local}-optimized
-    command: --config /etc/otel/config.yaml
+      - NEW_RELIC_DISPLAY_NAME=${DEMO_ID:-demo-local}-optimized-collector
+      - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=delta
+      - OTEL_EXPORTER_OTLP_COMPRESSION=zstd
+      - MEM_LIMIT_MIB=256
+    command: --config /etc/nrdot-collector-host/config.yaml
 
   collector-lean:
     image: newrelic/nrdot-collector-host:1.1.0
-    container_name: demo-lean-collector
+    container_name: ${DEMO_ID:-demo-local}-lean-collector
     ports: 
       - "8892:8888"  # For prometheus metrics
     volumes:
-      - ./config.yaml:/etc/otel/config.yaml:ro
+      - /:/hostfs:ro
+      - ./config.yaml:/etc/nrdot-collector-host/config.yaml:ro
     environment:
+      - HOST_ROOT_PATH=/hostfs
       - BENCHMARK_PROFILE=lean
       - DEMO_ID=${DEMO_ID:-demo-local}-lean
       - NR_USE_ULTRA=false
@@ -87,16 +107,22 @@ services:
       - NR_USE_MICRO=false
       - NEW_RELIC_LICENSE_KEY=${NR_KEY:-replace_me}
       - NEW_RELIC_METADATA_DEMO_ID=${DEMO_ID:-demo-local}-lean
-    command: --config /etc/otel/config.yaml
+      - NEW_RELIC_DISPLAY_NAME=${DEMO_ID:-demo-local}-lean-collector
+      - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=delta
+      - OTEL_EXPORTER_OTLP_COMPRESSION=zstd
+      - MEM_LIMIT_MIB=256
+    command: --config /etc/nrdot-collector-host/config.yaml
 
   collector-micro:
     image: newrelic/nrdot-collector-host:1.1.0
-    container_name: demo-micro-collector
+    container_name: ${DEMO_ID:-demo-local}-micro-collector
     ports: 
       - "8893:8888"  # For prometheus metrics
     volumes:
-      - ./config.yaml:/etc/otel/config.yaml:ro
+      - /:/hostfs:ro
+      - ./config.yaml:/etc/nrdot-collector-host/config.yaml:ro
     environment:
+      - HOST_ROOT_PATH=/hostfs
       - BENCHMARK_PROFILE=micro
       - DEMO_ID=${DEMO_ID:-demo-local}-micro
       - NR_USE_ULTRA=false
@@ -106,4 +132,8 @@ services:
       - NR_USE_MICRO=true
       - NEW_RELIC_LICENSE_KEY=${NR_KEY:-replace_me}
       - NEW_RELIC_METADATA_DEMO_ID=${DEMO_ID:-demo-local}-micro
-    command: --config /etc/otel/config.yaml
+      - NEW_RELIC_DISPLAY_NAME=${DEMO_ID:-demo-local}-micro-collector
+      - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=delta
+      - OTEL_EXPORTER_OTLP_COMPRESSION=zstd
+      - MEM_LIMIT_MIB=256
+    command: --config /etc/nrdot-collector-host/config.yaml
