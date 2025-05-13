@@ -1,1 +1,43 @@
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+**/.DS_Store
+
+# Build artifacts
+bin/
+/dist/
+/build/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.o
+*.a
+
+# Dependencies
+vendor/
+node_modules/
+
+# Logs
+*.log
+
+# Testing and coverage
+*.out
+coverage.txt
+.coverage
+htmlcov/
+
+# Environment and config files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 **/.claude/settings.local.json
+
+# Temporary files
+tmp/
+temp/
