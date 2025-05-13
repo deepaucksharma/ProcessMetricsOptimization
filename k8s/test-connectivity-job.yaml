@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nr-connectivity-test
+  namespace: observability
+spec:
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      containers:
+      - name: curl
+        image: curlimages/curl
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Testing connection to New Relic OTLP endpoints..."
+          echo "Testing OTLP HTTP metrics endpoint (US)..."
+          curl -v -X POST https://otlp.nr-data.net/v1/metrics \
+            -H "Content-Type: application/json" \
+            -H "api-key: 2a326cab47d49f5aab8db7ee009e4a57FFFFNRAL" \
+            -d '{"resourceMetrics":[{"resource":{"attributes":[{"key":"service.name","value":{"stringValue":"test-service"}}]},"scopeMetrics":[{"metrics":[{"name":"test.metric","gauge":{"dataPoints":[{"timeUnixNano":"1643226945000000000","asDouble":1}]}}]}]}]}'
+          
+          echo "\nTesting OTLP HTTP traces endpoint (US)..."
+          curl -v -X POST https://otlp.nr-data.net/v1/traces \
+            -H "Content-Type: application/json" \
+            -H "api-key: 2a326cab47d49f5aab8db7ee009e4a57FFFFNRAL" \
+            -d '{"resourceSpans":[{"resource":{"attributes":[{"key":"service.name","value":{"stringValue":"test-service"}}]},"scopeSpans":[{"spans":[{"traceId":"0123456789abcdef0123456789abcdef","spanId":"0123456789abcdef","name":"test-span","kind":1,"startTimeUnixNano":"1643226945000000000","endTimeUnixNano":"1643226946000000000","status":{}}]}]}]}'
+          
+          echo "\nDone!"
+      restartPolicy: Never
+  backoffLimit: 0

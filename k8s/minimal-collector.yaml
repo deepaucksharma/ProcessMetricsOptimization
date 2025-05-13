@@ -1,0 +1,138 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minimal-collector-config
+  namespace: observability
+data:
+  config.yaml: |
+    extensions:
+      health_check: {}
+
+    receivers:
+      hostmetrics:
+        root_path: ${env:HOST_ROOT_PATH:-/hostfs}
+        collection_interval: 30s
+        scrapers:
+          cpu: {}
+          memory: {}
+          load: {}
+          # Disabled filesystem temporarily
+          # filesystem:
+          #   exclude_mount_points:
+          #     match_type: regexp
+          #     mount_points:
+          #       - "^/var/lib/kubelet/pods/.+/volume-subpaths/"
+
+    processors:
+      batch: {}
+      
+      resourcedetection:
+        detectors: ["system"]
+        system:
+          hostname_sources: ["os"]
+          
+      attributes:
+        actions:
+          - key: benchmark.demo_id
+            value: "test-minimal"
+            action: upsert
+
+    exporters:
+      otlphttp:
+        endpoint: ${env:OTEL_EXPORTER_OTLP_ENDPOINT:-https://otlp.nr-data.net}
+        headers:
+          api-key: ${env:NEW_RELIC_LICENSE_KEY}
+        compression: ${env:OTEL_EXPORTER_OTLP_COMPRESSION:-zstd}
+      logging:
+        verbosity: detailed
+
+    service:
+      extensions: [health_check]
+      pipelines:
+        metrics:
+          receivers: [hostmetrics]
+          processors: [resourcedetection, attributes, batch]
+          exporters: [otlphttp, logging]
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nrdot-collector-minimal
+  namespace: observability
+  labels:
+    app: nrdot-collector-minimal
+    profile: minimal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nrdot-collector-minimal
+      profile: minimal
+  template:
+    metadata:
+      labels:
+        app: nrdot-collector-minimal
+        profile: minimal
+    spec:
+      serviceAccountName: nrdot-collector
+      containers:
+      - name: collector
+        image: newrelic/nrdot-collector-host:1.1.0
+        securityContext:
+          privileged: true
+          runAsUser: 0
+        env:
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: newrelic-license
+              key: NEW_RELIC_LICENSE_KEY
+        - name: HOST_ROOT_PATH
+          value: /hostfs
+        - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+          value: "delta"
+        - name: OTEL_EXPORTER_OTLP_COMPRESSION
+          value: "zstd"
+        volumeMounts:
+        - name: hostfs
+          mountPath: /hostfs
+          readOnly: true
+        - name: config
+          mountPath: /etc/otel/config.yaml
+          subPath: config.yaml
+          readOnly: true
+        ports:
+        - containerPort: 8888
+          name: metrics
+        resources:
+          limits:
+            memory: 320Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+      volumes:
+      - name: hostfs
+        hostPath:
+          path: /
+      - name: config
+        configMap:
+          name: minimal-collector-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nrdot-collector-minimal-metrics
+  namespace: observability
+  labels:
+    app: nrdot-collector-minimal
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 8888
+    protocol: TCP
+    targetPort: 8888
+  selector:
+    app: nrdot-collector-minimal

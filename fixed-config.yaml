@@ -1,0 +1,275 @@
+extensions:
+  health_check: {}
+  pprof: {}
+  zpages: {}
+  prometheus:
+    endpoint: "0.0.0.0:8888"
+
+receivers:
+  hostmetrics/ultra:
+    root_path: ${env:HOST_ROOT_PATH:-/hostfs}
+    collection_interval: 5s
+    scrapers:
+      process:
+        metrics:
+          process.cpu.utilization: {enabled: true}
+          process.cpu.time: {enabled: true}
+          process.memory.usage: {enabled: true}
+          process.memory.utilization: {enabled: true}
+          process.disk.io: {enabled: true}
+          process.disk.operations: {enabled: true}
+          process.disk.operation_time: {enabled: true}
+          process.threads: {enabled: true}
+          process.open_fds: {enabled: true}
+      processes: {}
+
+  hostmetrics/balanced:
+    root_path: ${env:HOST_ROOT_PATH:-/hostfs}
+    collection_interval: 30s
+    scrapers:
+      process:
+        metrics:
+          process.cpu.utilization: {enabled: true}
+          process.memory.usage: {enabled: true}
+          process.threads: {enabled: false}
+          process.open_fds: {enabled: false}
+      processes: {}
+
+  hostmetrics/optimized:
+    root_path: ${env:HOST_ROOT_PATH:-/hostfs}
+    collection_interval: 60s
+    scrapers:
+      process:
+        metrics:
+          process.cpu.utilization: {enabled: true}
+          process.memory.usage: {enabled: true}
+          process.threads: {enabled: false}
+          process.open_fds: {enabled: false}
+      processes: {}
+
+  hostmetrics/lean:
+    root_path: ${env:HOST_ROOT_PATH:-/hostfs}
+    collection_interval: 120s
+    scrapers:
+      process:
+        metrics:
+          process.cpu.utilization: {enabled: true}
+          process.memory.usage: {enabled: true}
+        include: {match_type: regexp, names: [".*"]}
+        exclude: {match_type: regexp, names: ["$^"]}
+      processes: {}
+
+  hostmetrics/micro:
+    root_path: ${env:HOST_ROOT_PATH:-/hostfs}
+    collection_interval: 300s
+    scrapers:
+      process:
+        metrics:
+          process.cpu.utilization: {enabled: true}
+          process.memory.usage: {enabled: true}
+        include: {match_type: regexp, names: [".*"]}
+        exclude: {match_type: regexp, names: ["$^"]}
+      processes: {}
+
+processors:
+  memory_limiter:
+    limit_mib: ${env:MEM_LIMIT_MIB:-256}
+    check_interval: 1s
+
+  resourcedetection:
+    detectors: ["system"]
+    system:
+      hostname_sources: ["os"]
+  resourcedetection/cloud:
+    detectors: ["gcp", "ec2", "azure"]
+    timeout: 2s
+  resourcedetection/env:
+    detectors: ["env"]
+    timeout: 2s
+    override: true
+
+  cumulativetodelta: {}
+  batch: {}
+
+  attributes/tag_ultra:
+    actions:
+      - key: benchmark.profile
+        value: "ultra"
+        action: upsert
+      - key: benchmark.demo_id
+        value: ${env:NEW_RELIC_METADATA_DEMO_ID:-k8s-default}
+        action: upsert
+
+  attributes/tag_balanced:
+    actions:
+      - key: benchmark.profile
+        value: "balanced"
+        action: upsert
+      - key: benchmark.demo_id
+        value: ${env:NEW_RELIC_METADATA_DEMO_ID:-k8s-default}
+        action: upsert
+
+  attributes/tag_optimized:
+    actions:
+      - key: benchmark.profile
+        value: "optimized"
+        action: upsert
+      - key: benchmark.demo_id
+        value: ${env:NEW_RELIC_METADATA_DEMO_ID:-k8s-default}
+        action: upsert
+
+  attributes/tag_lean:
+    actions:
+      - key: benchmark.profile
+        value: "lean"
+        action: upsert
+      - key: benchmark.demo_id
+        value: ${env:NEW_RELIC_METADATA_DEMO_ID:-k8s-default}
+        action: upsert
+
+  attributes/tag_micro:
+    actions:
+      - key: benchmark.profile
+        value: "micro"
+        action: upsert
+      - key: benchmark.demo_id
+        value: ${env:NEW_RELIC_METADATA_DEMO_ID:-k8s-default}
+        action: upsert
+
+  attributes/balanced_drop_long_cli:
+    actions:
+      - key: process.command_line
+        action: delete
+
+  filter/balanced_idle_gate:
+    metrics:
+      datapoint:
+        - 'metric.name == "process.cpu.utilization" and value_double < ${env:IDLE_CPU_THRESHOLD:-0.005}'
+        - 'metric.name == "process.memory.usage" and value_int < ${env:IDLE_RSS_THRESHOLD:-31457280}'
+
+  attributes/optim_drop_pid:
+    actions:
+      - key: process.pid
+        action: delete
+
+  metricstransform/optim_aggregate_exe:
+    transforms:
+      - include: ^process\..*
+        match_type: regexp
+        action: update
+        operations:
+          - action: aggregate_labels
+            label_set: [process.executable.name, process.owner]
+            aggregation_type: sum
+
+  filter/optim_idle_gate:
+    metrics:
+      datapoint:
+        - 'metric.name == "process.cpu.utilization" and value_double < ${env:IDLE_CPU_THRESHOLD:-0.005}'
+        - 'metric.name == "process.memory.usage" and value_int < ${env:IDLE_RSS_THRESHOLD:-31457280}'
+
+  attributes/lean_drop_pid_and_cli:
+    actions:
+      - key: process.pid
+        action: delete
+      - key: process.command_line
+        action: delete
+
+  metricstransform/lean_aggregate_exe:
+    transforms:
+      - include: ^process\..*
+        match_type: regexp
+        action: update
+        operations:
+          - action: aggregate_labels
+            label_set: [process.executable.name, process.owner]
+            aggregation_type: sum
+
+  filter/lean_slo_value_gate:
+    metrics:
+      datapoint:
+        - 'metric.name == "process.cpu.utilization" and value_double < ${env:IDLE_CPU_THRESHOLD_LEAN_MICRO:-0.05}'
+        - 'metric.name == "process.memory.usage" and value_int < ${env:IDLE_RSS_THRESHOLD_LEAN_MICRO:-52428800}'
+
+exporters:
+  otlphttp:
+    endpoint: ${env:OTEL_EXPORTER_OTLP_ENDPOINT:-https://otlp.nr-data.net}
+    headers:
+      api-key: ${env:NEW_RELIC_LICENSE_KEY}
+    compression: ${env:OTEL_EXPORTER_OTLP_COMPRESSION:-zstd}
+
+service:
+  pipelines:
+    metrics/ultra:
+      receivers: [hostmetrics/ultra]
+      processors:
+        - memory_limiter
+        - resourcedetection
+        - resourcedetection/cloud
+        - resourcedetection/env
+        - attributes/tag_ultra
+        - cumulativetodelta
+        - batch
+      exporters: [otlphttp]
+
+    metrics/balanced:
+      receivers: [hostmetrics/balanced]
+      processors:
+        - memory_limiter
+        - attributes/balanced_drop_long_cli
+        - filter/balanced_idle_gate
+        - resourcedetection
+        - resourcedetection/cloud
+        - resourcedetection/env
+        - attributes/tag_balanced
+        - cumulativetodelta
+        - batch
+      exporters: [otlphttp]
+
+    metrics/optimized:
+      receivers: [hostmetrics/optimized]
+      processors:
+        - memory_limiter
+        - attributes/optim_drop_pid
+        - attributes/balanced_drop_long_cli
+        - metricstransform/optim_aggregate_exe
+        - filter/optim_idle_gate
+        - resourcedetection
+        - resourcedetection/cloud
+        - resourcedetection/env
+        - attributes/tag_optimized
+        - cumulativetodelta
+        - batch
+      exporters: [otlphttp]
+
+    metrics/lean:
+      receivers: [hostmetrics/lean]
+      processors:
+        - memory_limiter
+        - attributes/lean_drop_pid_and_cli
+        - metricstransform/lean_aggregate_exe
+        - filter/lean_slo_value_gate
+        - resourcedetection
+        - resourcedetection/cloud
+        - resourcedetection/env
+        - attributes/tag_lean
+        - cumulativetodelta
+        - batch
+      exporters: [otlphttp]
+
+    metrics/micro:
+      receivers: [hostmetrics/micro]
+      processors:
+        - memory_limiter
+        - attributes/lean_drop_pid_and_cli
+        - metricstransform/lean_aggregate_exe
+        - filter/lean_slo_value_gate
+        - resourcedetection
+        - resourcedetection/cloud
+        - resourcedetection/env
+        - attributes/tag_micro
+        - cumulativetodelta
+        - batch
+      exporters: [otlphttp]
+
+  extensions: [health_check, pprof, zpages, prometheus]

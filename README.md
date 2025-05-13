@@ -2,6 +2,8 @@
 
 A one-command demo environment for New Relic DOT (Distribution of Telemetry) with multiple collection profiles, showcasing Google's Online Boutique and Weaveworks' Sock Shop microservices.
 
+> **ℹ️ Important Note**: This project uses New Relic DOT 1.1.0, which is based on OpenTelemetry Collector v0.125.0 and has specific configuration requirements. The configuration approach has been updated to ensure compatibility.
+
 ## Overview
 
 This project provides a simple way to spin up a complete observability demo environment:
@@ -63,7 +65,10 @@ export NR_KEY=your_new_relic_license_key
 # Validate configuration before running
 make validate
 
-# Start the environment (defaults to docker mode and balanced profile)
+# Start the environment with simplified configuration (recommended)
+make simple-up
+
+# Or start with the original configuration
 make up
 
 # Follow collector logs
@@ -75,6 +80,9 @@ make query
 # Get link to filtered dashboard
 make dashboard
 
+# Test connectivity to New Relic endpoints
+./test-nr-connectivity.sh
+
 # When finished
 make down
 ```
@@ -83,6 +91,30 @@ make down
 
 ### Data Collection Profiles
 
+#### Standard Configuration (using environment variables)
+```bash
+# Ultra profile (maximum data, 5s interval)
+make down
+PROFILE=ultra make simple-up
+
+# Balanced profile (recommended, 30s interval, ~8x reduction)
+make down
+PROFILE=balanced make simple-up
+
+# Optimized profile (60s interval, ~40-60x reduction)
+make down
+PROFILE=optimized make simple-up
+
+# Lean profile (120s interval, ~90x reduction)
+make down
+PROFILE=lean make simple-up
+
+# Micro profile (300s interval, ~250x+ reduction)
+make down
+PROFILE=micro make simple-up
+```
+
+#### Legacy Configuration (original approach)
 ```bash
 # Ultra profile (maximum data, 5s interval)
 make down
@@ -183,7 +215,11 @@ For non-container deployments on VMs:
    [Service]
    Environment="HOST_ROOT_PATH=/hostfs"
    Environment="BENCHMARK_PROFILE=lean"
-   Environment="NR_USE_LEAN=true" 
+   
+   # Use simplified configuration variables
+   Environment="COLLECTION_INTERVAL=120s"
+   Environment="INCLUDE_THREADS=false"
+   Environment="INCLUDE_FDS=false"
    Environment="MEM_LIMIT_MIB=256"
    Environment="NEW_RELIC_LICENSE_KEY=your-license-key"
    EOL
@@ -207,7 +243,10 @@ For non-container deployments on VMs:
 .
 ├── Makefile                      # Main orchestration with multiple profiles
 ├── docker-compose.yml            # Docker deployment of services
+├── docker-compose-simple.yml     # Simplified Docker deployment 
 ├── config.yaml                   # New Relic DOT collector with 5 profiles
+├── updated-config.yaml           # Simplified configuration using env vars
+├── test-nr-connectivity.sh       # Tool to test New Relic connectivity
 ├── .env.example                  # Example environment variables
 ├── .github/                      # GitHub Actions integration
 │   ├── actions/start-lab/        # Reusable composite action
@@ -220,12 +259,29 @@ For non-container deployments on VMs:
     ├── namespace.yaml            # Observability namespace
     ├── boutique-helm-values.yaml # Helm values for Online Boutique
     ├── sockshop-helm-values.yaml # Helm values for Sock Shop
-    └── collector-daemonset.yaml  # New Relic DOT collector DaemonSet
+    ├── collector-daemonset.yaml  # New Relic DOT collector DaemonSet
+    ├── collector-service.yaml    # Service for the collector
+    └── test-connectivity.yaml    # Kubernetes job to test connectivity
 ```
 
 ## Security Note
 
-This lab runs the collector as `root` with `pid: host` and mounts the host filesystem, which grants full host access. This is standard for monitoring but should be limited to trusted environments.
+This lab runs the collector with `pid: host` and mounts the host filesystem, which grants full host access. This is standard for monitoring but should be limited to trusted environments.
+
+## Troubleshooting
+
+### Common Issues
+
+1. **403 Errors in Logs**: If you see HTTP 403 errors when the collector tries to send data to New Relic, check your license key. Use the `test-nr-connectivity.sh` script to verify connectivity.
+
+2. **Configuration Parse Errors**: NRDOT 1.1.0 is based on OpenTelemetry Collector v0.125.0, which doesn't support the `if:` condition syntax in service pipelines. Use the simplified configuration approach with `make simple-up` to avoid this issue.
+
+3. **Filesystem Errors**: When running in a container, you may see errors about not being able to read filesystem usage. These are generally non-critical and won't prevent the collector from functioning properly.
+
+4. **Missing Metrics**: If metrics aren't appearing in New Relic:
+   - Check collector logs for errors with `make logs`
+   - Verify the collection interval matches your profile (Ultra: 5s, Balanced: 30s, etc.)
+   - Confirm your license key has the right permissions for metrics ingest
 
 ## License
 

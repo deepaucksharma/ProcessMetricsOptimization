@@ -1,0 +1,51 @@
+extensions:
+  health_check: {}
+  prometheus:
+    endpoint: "0.0.0.0:8888"
+
+receivers:
+  # Using standard receiver with conditional collection intervals
+  hostmetrics:
+    root_path: ${env:HOST_ROOT_PATH:-/hostfs}
+    collection_interval: ${env:COLLECTION_INTERVAL:-30s}
+    scrapers:
+      process:
+        metrics:
+          process.cpu.utilization: {enabled: true}
+          process.memory.usage: {enabled: true}
+          process.threads: {enabled: ${env:INCLUDE_THREADS:-false}}
+          process.open_fds: {enabled: ${env:INCLUDE_FDS:-false}}
+      processes: {}
+
+processors:
+  memory_limiter:
+    limit_mib: ${env:MEM_LIMIT_MIB:-256}
+    check_interval: 1s
+    
+  resourcedetection:
+    detectors: ["system"]
+    system: {hostname_sources: ["os"]}
+    
+  batch: {}
+  
+  attributes/tag_profile:
+    actions:
+      - {key: benchmark.profile, value: ${env:BENCHMARK_PROFILE:-balanced}, action: upsert}
+      - {key: benchmark.demo_id, value: ${env:DEMO_ID:-default_demo}, action: upsert}
+
+exporters:
+  otlphttp:
+    endpoint: ${env:OTEL_EXPORTER_OTLP_ENDPOINT:-https://otlp.nr-data.net}
+    headers:
+      api-key: ${env:NEW_RELIC_LICENSE_KEY}
+    compression: ${env:OTEL_EXPORTER_OTLP_COMPRESSION:-zstd}
+  logging:
+    verbosity: detailed
+
+service:
+  extensions: [health_check, prometheus]
+  pipelines:
+    metrics:
+      receivers: [hostmetrics]
+      processors: [memory_limiter, resourcedetection, attributes/tag_profile, batch]
+      exporters: [otlphttp, logging]

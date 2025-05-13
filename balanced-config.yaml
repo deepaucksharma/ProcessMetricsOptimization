@@ -1,0 +1,52 @@
+extensions:
+  health_check: {}
+
+receivers:
+  hostmetrics/balanced:
+    collection_interval: 30s
+    scrapers:
+      process:
+        metrics:
+          process.cpu.utilization: {enabled: true}
+          process.memory.usage: {enabled: true}
+      processes: {}
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+
+  resourcedetection:
+    detectors: ["system"]
+    system:
+      hostname_sources: ["os"]
+  
+  batch: {}
+
+  attributes/balanced:
+    actions:
+      - key: benchmark.profile
+        value: "balanced"
+        action: upsert
+      - key: benchmark.demo_id
+        value: ${env:NEW_RELIC_METADATA_DEMO_ID:-k8s-default}
+        action: upsert
+
+exporters:
+  otlphttp:
+    endpoint: ${env:OTEL_EXPORTER_OTLP_ENDPOINT:-https://otlp.nr-data.net}
+    headers:
+      api-key: ${env:NEW_RELIC_LICENSE_KEY}
+    compression: ${env:OTEL_EXPORTER_OTLP_COMPRESSION:-zstd}
+
+service:
+  extensions: [health_check]
+  pipelines:
+    metrics/balanced:
+      receivers: [hostmetrics/balanced]
+      processors: 
+        - memory_limiter
+        - resourcedetection
+        - attributes/balanced
+        - batch
+      exporters: [otlphttp]

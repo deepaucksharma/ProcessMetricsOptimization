@@ -1,0 +1,449 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nrdot-collector-ultra
+  namespace: observability
+  labels:
+    app: nrdot-collector-ultra
+    profile: ultra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nrdot-collector-ultra
+      profile: ultra
+  template:
+    metadata:
+      labels:
+        app: nrdot-collector-ultra
+        profile: ultra
+    spec:
+      serviceAccountName: nrdot-collector
+      containers:
+      - name: collector
+        image: newrelic/nrdot-collector-host:1.1.0
+        env:
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: newrelic-license
+              key: NEW_RELIC_LICENSE_KEY
+        - name: HOST_ROOT_PATH
+          value: /hostfs
+        - name: BENCHMARK_PROFILE
+          value: "ultra"
+        - name: DEMO_ID
+          value: "k8s-ultra-profile"
+        - name: COLLECTION_INTERVAL
+          value: "5s"
+        - name: INCLUDE_THREADS
+          value: "true"
+        - name: INCLUDE_FDS
+          value: "true"
+        - name: MEM_LIMIT_MIB
+          value: "256"
+        - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+          value: "delta"
+        - name: OTEL_EXPORTER_OTLP_COMPRESSION
+          value: "zstd"
+        volumeMounts:
+        - name: hostfs
+          mountPath: /hostfs
+          readOnly: true
+        - name: config
+          mountPath: /etc/otel/config.yaml
+          subPath: config.yaml
+          readOnly: true
+        ports:
+        - containerPort: 8888
+          name: metrics
+        resources:
+          limits:
+            memory: 320Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+      volumes:
+      - name: hostfs
+        hostPath:
+          path: /
+      - name: config
+        configMap:
+          name: nrdot-collector-config-simple
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nrdot-collector-balanced
+  namespace: observability
+  labels:
+    app: nrdot-collector-balanced
+    profile: balanced
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nrdot-collector-balanced
+      profile: balanced
+  template:
+    metadata:
+      labels:
+        app: nrdot-collector-balanced
+        profile: balanced
+    spec:
+      serviceAccountName: nrdot-collector
+      containers:
+      - name: collector
+        image: newrelic/nrdot-collector-host:1.1.0
+        env:
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: newrelic-license
+              key: NEW_RELIC_LICENSE_KEY
+        - name: HOST_ROOT_PATH
+          value: /hostfs
+        - name: BENCHMARK_PROFILE
+          value: "balanced"
+        - name: DEMO_ID
+          value: "k8s-balanced-profile"
+        - name: COLLECTION_INTERVAL
+          value: "30s"
+        - name: INCLUDE_THREADS
+          value: "false"
+        - name: INCLUDE_FDS
+          value: "false"
+        - name: MEM_LIMIT_MIB
+          value: "256"
+        - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+          value: "delta"
+        - name: OTEL_EXPORTER_OTLP_COMPRESSION
+          value: "zstd"
+        volumeMounts:
+        - name: hostfs
+          mountPath: /hostfs
+          readOnly: true
+        - name: config
+          mountPath: /etc/otel/config.yaml
+          subPath: config.yaml
+          readOnly: true
+        ports:
+        - containerPort: 8888
+          name: metrics
+        resources:
+          limits:
+            memory: 320Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+      volumes:
+      - name: hostfs
+        hostPath:
+          path: /
+      - name: config
+        configMap:
+          name: nrdot-collector-config-simple
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nrdot-collector-optimized
+  namespace: observability
+  labels:
+    app: nrdot-collector-optimized
+    profile: optimized
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nrdot-collector-optimized
+      profile: optimized
+  template:
+    metadata:
+      labels:
+        app: nrdot-collector-optimized
+        profile: optimized
+    spec:
+      serviceAccountName: nrdot-collector
+      containers:
+      - name: collector
+        image: newrelic/nrdot-collector-host:1.1.0
+        env:
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: newrelic-license
+              key: NEW_RELIC_LICENSE_KEY
+        - name: HOST_ROOT_PATH
+          value: /hostfs
+        - name: BENCHMARK_PROFILE
+          value: "optimized"
+        - name: DEMO_ID
+          value: "k8s-optimized-profile"
+        - name: COLLECTION_INTERVAL
+          value: "60s"
+        - name: INCLUDE_THREADS
+          value: "false"
+        - name: INCLUDE_FDS
+          value: "false"
+        - name: MEM_LIMIT_MIB
+          value: "256"
+        - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+          value: "delta"
+        - name: OTEL_EXPORTER_OTLP_COMPRESSION
+          value: "zstd"
+        volumeMounts:
+        - name: hostfs
+          mountPath: /hostfs
+          readOnly: true
+        - name: config
+          mountPath: /etc/otel/config.yaml
+          subPath: config.yaml
+          readOnly: true
+        ports:
+        - containerPort: 8888
+          name: metrics
+        resources:
+          limits:
+            memory: 320Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+      volumes:
+      - name: hostfs
+        hostPath:
+          path: /
+      - name: config
+        configMap:
+          name: nrdot-collector-config-simple
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nrdot-collector-lean
+  namespace: observability
+  labels:
+    app: nrdot-collector-lean
+    profile: lean
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nrdot-collector-lean
+      profile: lean
+  template:
+    metadata:
+      labels:
+        app: nrdot-collector-lean
+        profile: lean
+    spec:
+      serviceAccountName: nrdot-collector
+      containers:
+      - name: collector
+        image: newrelic/nrdot-collector-host:1.1.0
+        env:
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: newrelic-license
+              key: NEW_RELIC_LICENSE_KEY
+        - name: HOST_ROOT_PATH
+          value: /hostfs
+        - name: BENCHMARK_PROFILE
+          value: "lean"
+        - name: DEMO_ID
+          value: "k8s-lean-profile"
+        - name: COLLECTION_INTERVAL
+          value: "120s"
+        - name: INCLUDE_THREADS
+          value: "false"
+        - name: INCLUDE_FDS
+          value: "false"
+        - name: MEM_LIMIT_MIB
+          value: "256"
+        - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+          value: "delta"
+        - name: OTEL_EXPORTER_OTLP_COMPRESSION
+          value: "zstd"
+        volumeMounts:
+        - name: hostfs
+          mountPath: /hostfs
+          readOnly: true
+        - name: config
+          mountPath: /etc/otel/config.yaml
+          subPath: config.yaml
+          readOnly: true
+        ports:
+        - containerPort: 8888
+          name: metrics
+        resources:
+          limits:
+            memory: 320Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+      volumes:
+      - name: hostfs
+        hostPath:
+          path: /
+      - name: config
+        configMap:
+          name: nrdot-collector-config-simple
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nrdot-collector-micro
+  namespace: observability
+  labels:
+    app: nrdot-collector-micro
+    profile: micro
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nrdot-collector-micro
+      profile: micro
+  template:
+    metadata:
+      labels:
+        app: nrdot-collector-micro
+        profile: micro
+    spec:
+      serviceAccountName: nrdot-collector
+      containers:
+      - name: collector
+        image: newrelic/nrdot-collector-host:1.1.0
+        env:
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: newrelic-license
+              key: NEW_RELIC_LICENSE_KEY
+        - name: HOST_ROOT_PATH
+          value: /hostfs
+        - name: BENCHMARK_PROFILE
+          value: "micro"
+        - name: DEMO_ID
+          value: "k8s-micro-profile"
+        - name: COLLECTION_INTERVAL
+          value: "300s"
+        - name: INCLUDE_THREADS
+          value: "false"
+        - name: INCLUDE_FDS
+          value: "false"
+        - name: MEM_LIMIT_MIB
+          value: "256"
+        - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+          value: "delta"
+        - name: OTEL_EXPORTER_OTLP_COMPRESSION
+          value: "zstd"
+        volumeMounts:
+        - name: hostfs
+          mountPath: /hostfs
+          readOnly: true
+        - name: config
+          mountPath: /etc/otel/config.yaml
+          subPath: config.yaml
+          readOnly: true
+        ports:
+        - containerPort: 8888
+          name: metrics
+        resources:
+          limits:
+            memory: 320Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+      volumes:
+      - name: hostfs
+        hostPath:
+          path: /
+      - name: config
+        configMap:
+          name: nrdot-collector-config-simple
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nrdot-collector-ultra-metrics
+  namespace: observability
+  labels:
+    app: nrdot-collector-ultra
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 8888
+    protocol: TCP
+    targetPort: 8888
+  selector:
+    app: nrdot-collector-ultra
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nrdot-collector-balanced-metrics
+  namespace: observability
+  labels:
+    app: nrdot-collector-balanced
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 8888
+    protocol: TCP
+    targetPort: 8888
+  selector:
+    app: nrdot-collector-balanced
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nrdot-collector-optimized-metrics
+  namespace: observability
+  labels:
+    app: nrdot-collector-optimized
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 8888
+    protocol: TCP
+    targetPort: 8888
+  selector:
+    app: nrdot-collector-optimized
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nrdot-collector-lean-metrics
+  namespace: observability
+  labels:
+    app: nrdot-collector-lean
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 8888
+    protocol: TCP
+    targetPort: 8888
+  selector:
+    app: nrdot-collector-lean
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nrdot-collector-micro-metrics
+  namespace: observability
+  labels:
+    app: nrdot-collector-micro
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 8888
+    protocol: TCP
+    targetPort: 8888
+  selector:
+    app: nrdot-collector-micro

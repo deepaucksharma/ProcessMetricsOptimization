@@ -1,0 +1,29 @@
+services:
+  collector:
+    image: newrelic/nrdot-collector-host:1.1.0
+    container_name: "${DEMO_ID:-demo-local}-collector"
+    network_mode: host
+    pid: host
+    ports: 
+      - "8888:8888"  # For metrics endpoint
+    volumes:
+      - /:/hostfs:ro
+      - ./updated-config.yaml:/etc/otel/config.yaml:ro
+    environment:
+      # License key and host info
+      - NEW_RELIC_LICENSE_KEY=${NR_KEY:-replace_me}
+      - HOST_ROOT_PATH=/hostfs
+      
+      # Profile-specific settings based on selected profile
+      - BENCHMARK_PROFILE=${PROFILE:-balanced}
+      - DEMO_ID=${DEMO_ID:-demo-local}
+      
+      # Dynamic settings based on profile
+      - COLLECTION_INTERVAL=${COLLECTION_INTERVAL:-30s}
+      - INCLUDE_THREADS=${INCLUDE_THREADS:-false}
+      - INCLUDE_FDS=${INCLUDE_FDS:-false}
+      - MEM_LIMIT_MIB=${MEM_LIMIT_MIB:-256}
+      
+      # New Relic and OTLP settings
+      - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=delta
+      - OTEL_EXPORTER_OTLP_COMPRESSION=zstd

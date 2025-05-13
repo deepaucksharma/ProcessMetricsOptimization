@@ -86,3 +86,39 @@ query:       ## Show profile comparison NRQL
 
 test-k8s:    ## Test K8s connectivity to New Relic
 	@./test-nr-connectivity.sh
+
+simple-up:  ## Run with simplified config
+	@echo "Setting up profile-specific environment variables..."
+	@export CLEAN_DEMO_ID=$$(echo "$(DEMO_ID)" | tr -d ' '); \
+	export COLLECTION_INTERVAL="30s"; \
+	export INCLUDE_THREADS="false"; \
+	export INCLUDE_FDS="false"; \
+	case "$(PROFILE)" in \
+		"ultra") \
+			export COLLECTION_INTERVAL="5s"; \
+			export INCLUDE_THREADS="true"; \
+			export INCLUDE_FDS="true"; \
+			;; \
+		"balanced") \
+			export COLLECTION_INTERVAL="30s"; \
+			;; \
+		"optimized") \
+			export COLLECTION_INTERVAL="60s"; \
+			;; \
+		"lean") \
+			export COLLECTION_INTERVAL="120s"; \
+			;; \
+		"micro") \
+			export COLLECTION_INTERVAL="300s"; \
+			;; \
+		*) \
+			echo "Unknown profile: $(PROFILE), using balanced"; \
+			export COLLECTION_INTERVAL="30s"; \
+			;; \
+	esac; \
+	DEMO_ID=$$CLEAN_DEMO_ID \
+	COLLECTION_INTERVAL=$$COLLECTION_INTERVAL \
+	INCLUDE_THREADS=$$INCLUDE_THREADS \
+	INCLUDE_FDS=$$INCLUDE_FDS \
+	docker-compose -f docker-compose-simple.yml up -d
+	@echo "🚀 Simplified collector started with profile=$(PROFILE)"
