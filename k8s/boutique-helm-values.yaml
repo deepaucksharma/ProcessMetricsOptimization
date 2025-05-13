@@ -1,0 +1,12 @@
+# k8s/boutique-helm-values.yaml
+loadgenerator:
+  enabled: true
+  replicaCount: 1
+frontend:
+  service:
+    type: ClusterIP
+# reduce unknown services for speed
+adservice:
+  enabled: false
+paymentservice:
+  enabled: false

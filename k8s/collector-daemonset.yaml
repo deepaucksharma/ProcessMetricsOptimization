@@ -1,0 +1,317 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nrdot-collector-host
+  namespace: observability
+  labels:
+    app: nrdot-collector-host
+spec:
+  selector:
+    matchLabels:
+      app: nrdot-collector-host
+  template:
+    metadata:
+      labels:
+        app: nrdot-collector-host
+    spec:
+      serviceAccountName: nrdot-collector
+      containers:
+      - name: collector
+        image: newrelic/nrdot-collector-host:1.1.0
+        securityContext:
+          runAsUser: 0
+        env:
+        - name: NEW_RELIC_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: newrelic-license
+              key: NEW_RELIC_LICENSE_KEY
+        - name: HOST_ROOT_PATH
+          value: /hostfs
+        # Demo metadata
+        - name: NEW_RELIC_METADATA_DEMO_ID
+          value: "$(NODE_NAME)-k8s"
+        - name: NEW_RELIC_DISPLAY_NAME
+          value: "$(NODE_NAME)-collector"
+        # Global OTEL settings
+        - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+          value: "delta"
+        - name: OTEL_EXPORTER_OTLP_COMPRESSION
+          value: "zstd"
+        # Profile selection based on values file or default to balanced
+        - name: NR_USE_ULTRA
+          value: "{{ if eq .Values.profile \"ultra\" }}true{{ else }}false{{ end }}"
+        - name: NR_USE_BALANCED
+          value: "{{ if eq .Values.profile \"balanced\" }}true{{ else }}false{{ end }}"
+        - name: NR_USE_OPTIMIZED
+          value: "{{ if eq .Values.profile \"optimized\" }}true{{ else }}false{{ end }}"
+        - name: NR_USE_LEAN
+          value: "{{ if eq .Values.profile \"lean\" }}true{{ else }}false{{ end }}"
+        - name: NR_USE_MICRO
+          value: "{{ if eq .Values.profile \"micro\" }}true{{ else }}false{{ end }}"
+        # Idle gate thresholds
+        - name: IDLE_CPU_THRESHOLD
+          value: "0.005"
+        - name: IDLE_RSS_THRESHOLD
+          value: "31457280"
+        - name: IDLE_CPU_THRESHOLD_LEAN_MICRO
+          value: "0.05"
+        - name: IDLE_RSS_THRESHOLD_LEAN_MICRO
+          value: "52428800"
+        volumeMounts:
+        - name: hostfs
+          mountPath: /hostfs
+          readOnly: true
+        - name: config
+          mountPath: /etc/nrdot-collector-host/config.yaml
+          subPath: config.yaml
+          readOnly: true
+      volumes:
+      - name: hostfs
+        hostPath:
+          path: /
+      - name: config
+        configMap:
+          name: nrdot-collector-config
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nrdot-collector
+  namespace: observability
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nrdot-collector-config
+  namespace: observability
+data:
+  config.yaml: |
+    ###############################################################################
+    # NRDOT 1.1.0 – FIVE-PROFILE HOST-METRICS CONFIG (PROCESS-CENTRIC)           #
+    ###############################################################################
+
+    extensions:
+      health_check: {}
+      pprof: {}      # Enables performance profiling
+      zpages: {}     # For telemetry troubleshooting
+      prometheus:    # For scraping collector metrics
+        endpoint: "0.0.0.0:8888"
+
+    ###############################################################################
+    # 1. RECEIVERS                                                               #
+    ###############################################################################
+    receivers:
+
+      # ---------- ULTRA (5 s, full detail) ----------
+      hostmetrics_ultra:
+        root_path: ${env:HOST_ROOT_PATH:-/hostfs}
+        collection_interval: 5s
+        scrapers:
+          process:
+            metrics:
+              process.cpu.utilization:     {enabled: true}
+              process.cpu.time:            {enabled: true}
+              process.memory.usage:        {enabled: true}
+              process.memory.utilization:  {enabled: true}
+              process.disk.io:             {enabled: true}
+              process.disk.operations:     {enabled: true}
+              process.disk.operation_time: {enabled: true}
+              process.threads:             {enabled: true}
+              process.open_fds:            {enabled: true}
+          processes: {}
+
+      # ---------- BALANCED (30 s, core metrics) ----------
+      hostmetrics_balanced:
+        root_path: ${env:HOST_ROOT_PATH:-/hostfs}
+        collection_interval: 30s
+        scrapers:
+          process:
+            metrics:
+              process.cpu.utilization: {enabled: true}
+              process.memory.usage:    {enabled: true}
+              process.threads:         {enabled: false}
+              process.open_fds:        {enabled: false}
+          processes: {}
+
+      # ---------- OPTIMIZED (60 s, core metrics) ----------
+      hostmetrics_optimized:
+        root_path: ${env:HOST_ROOT_PATH:-/hostfs}
+        collection_interval: 60s
+        scrapers:
+          process:
+            metrics:
+              process.cpu.utilization: {enabled: true}
+              process.memory.usage:    {enabled: true}
+              process.threads:         {enabled: false}
+              process.open_fds:        {enabled: false}
+          processes: {}
+
+      # ---------- LEAN (120 s, CPU% + RSS) ----------
+      hostmetrics_lean:
+        root_path: ${env:HOST_ROOT_PATH:-/hostfs}
+        collection_interval: 120s
+        scrapers:
+          process:
+            metrics:
+              process.cpu.utilization: {enabled: true}
+              process.memory.usage:    {enabled: true}
+            include: {match_type: regexp, names: [".*"]}
+            exclude: {match_type: regexp, names: ["$^"]}
+          processes: {}
+
+      # ---------- MICRO (300 s, CPU% + RSS) ----------
+      hostmetrics_micro:
+        root_path: ${env:HOST_ROOT_PATH:-/hostfs}
+        collection_interval: 300s
+        scrapers:
+          process:
+            metrics:
+              process.cpu.utilization: {enabled: true}
+              process.memory.usage:    {enabled: true}
+            include: {match_type: regexp, names: [".*"]}
+            exclude: {match_type: regexp, names: ["$^"]}
+          processes: {}
+
+    ###############################################################################
+    # 2. PROCESSORS                                                             #
+    ###############################################################################
+    processors:
+
+      # --- shared base ---
+      memory_limiter:
+        limit_mib: ${env:MEM_LIMIT_MIB:-256}
+        check_interval: 1s
+
+      resourcedetection:      {detectors: ["system"], system: {hostname_sources:["os"]}}
+      resourcedetection/cloud:{detectors: ["gcp","ec2","azure"], timeout: 2s}
+      resourcedetection/env:  {detectors: ["env"], timeout: 2s, override: true}
+
+      cumulativetodelta: {}   # Single shared processor for all pipelines
+      batch:          {}
+
+      # --- profile tags ---
+      attributes/tag_profile:
+        actions:
+          - {key: benchmark.profile, value: ${env:BENCHMARK_PROFILE}, action: upsert}
+          - {key: benchmark.demo_id, value: ${env:benchmark.demo_id}, action: upsert}
+
+      # --- balanced stack ---
+      attributes/balanced_drop_long_cli:
+        actions: [{key: process.command_line, action: delete}]
+
+      filter/balanced_idle_gate:
+        metrics:
+          datapoint:
+            - 'metric.name == "process.cpu.utilization" and value_double < ${env:IDLE_CPU_THRESHOLD:-0.005}'
+            - 'metric.name == "process.memory.usage"    and value_int   < ${env:IDLE_RSS_THRESHOLD:-31457280}'
+
+      # --- optimized stack ---
+      attributes/optim_drop_pid: {actions:[{key: process.pid, action: delete}]}
+
+      metricstransform/optim_aggregate_exe:
+        transforms:
+          - include: ^process\..*
+            match_type: regexp
+            action: update
+            operations:
+              - action: aggregate_labels
+                label_set: [process.executable.name, process.owner]  # Added process.owner
+                aggregation_type: sum
+
+      # same idle gate thresholds as balanced
+      filter/optim_idle_gate: {metrics: {datapoint:
+            [ 'metric.name == "process.cpu.utilization" and value_double < ${env:IDLE_CPU_THRESHOLD:-0.005}',
+              'metric.name == "process.memory.usage"    and value_int   < ${env:IDLE_RSS_THRESHOLD:-31457280}'] } }
+
+      # --- lean & micro shared stack ---
+      attributes/lean_drop_pid_and_cli:
+        actions:
+          - {key: process.pid,          action: delete}
+          - {key: process.command_line, action: delete}
+
+      metricstransform/lean_aggregate_exe:
+        transforms:
+          - include: ^process\..*
+            match_type: regexp
+            action: update
+            operations:
+              - action: aggregate_labels
+                label_set: [process.executable.name, process.owner]  # Added process.owner
+                aggregation_type: sum
+
+      filter/lean_slo_value_gate:
+        metrics:
+          datapoint:
+            - 'metric.name == "process.cpu.utilization" and value_double < ${env:IDLE_CPU_THRESHOLD_LEAN_MICRO:-0.05}'
+            - 'metric.name == "process.memory.usage"    and value_int   < ${env:IDLE_RSS_THRESHOLD_LEAN_MICRO:-52428800}'
+
+    ###############################################################################
+    # 3. EXPORTER                                                               #
+    ###############################################################################
+    exporters:
+      otlphttp:
+        endpoint: ${env:OTEL_EXPORTER_OTLP_ENDPOINT:-https://otlp.nr-data.net}
+        headers:  {api-key: ${env:NEW_RELIC_LICENSE_KEY}}
+        compression: ${env:OTEL_EXPORTER_OTLP_COMPRESSION:-zstd}
+
+    ###############################################################################
+    # 4. PIPELINES                                                             #
+    ###############################################################################
+    service:
+      pipelines:
+
+        metrics/ultra:
+          if: ${env:NR_USE_ULTRA:false}
+          receivers:  [hostmetrics_ultra]
+          processors: [memory_limiter,
+                      resourcedetection, resourcedetection/cloud, resourcedetection/env,
+                      attributes/tag_profile,
+                      cumulativetodelta, batch]
+          exporters:  [otlphttp]
+
+        metrics/balanced:
+          if: ${env:NR_USE_BALANCED:-true}
+          receivers:  [hostmetrics_balanced]
+          processors: [memory_limiter,
+                      attributes/balanced_drop_long_cli,
+                      filter/balanced_idle_gate,
+                      resourcedetection, resourcedetection/cloud, resourcedetection/env,
+                      attributes/tag_profile,
+                      cumulativetodelta, batch]
+          exporters:  [otlphttp]
+
+        metrics/optimized:
+          if: ${env:NR_USE_OPTIMIZED:false}
+          receivers:  [hostmetrics_optimized]
+          processors: [memory_limiter,
+                      attributes/optim_drop_pid, attributes/balanced_drop_long_cli,
+                      metricstransform/optim_aggregate_exe, filter/optim_idle_gate,
+                      resourcedetection, resourcedetection/cloud, resourcedetection/env,
+                      attributes/tag_profile,
+                      cumulativetodelta, batch]
+          exporters:  [otlphttp]
+
+        metrics/lean:
+          if: ${env:NR_USE_LEAN:false}
+          receivers:  [hostmetrics_lean]
+          processors: [memory_limiter,
+                      attributes/lean_drop_pid_and_cli,
+                      metricstransform/lean_aggregate_exe, filter/lean_slo_value_gate,
+                      resourcedetection, resourcedetection/cloud, resourcedetection/env,
+                      attributes/tag_profile,
+                      cumulativetodelta, batch]
+          exporters:  [otlphttp]
+
+        metrics/micro:
+          if: ${env:NR_USE_MICRO:false}
+          receivers:  [hostmetrics_micro]
+          processors: [memory_limiter,
+                      attributes/lean_drop_pid_and_cli,
+                      metricstransform/lean_aggregate_exe, filter/lean_slo_value_gate,
+                      resourcedetection, resourcedetection/cloud, resourcedetection/env,
+                      attributes/tag_profile,
+                      cumulativetodelta, batch]
+          exporters:  [otlphttp]
+
+      extensions: [health_check, pprof, zpages, prometheus]

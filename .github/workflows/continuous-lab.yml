@@ -1,0 +1,17 @@
+name: Lab – continuous
+on: 
+  workflow_dispatch:   # manual trigger only
+
+jobs:
+  forever:
+    runs-on: [self-hosted, linux, nrdot-lab]
+    timeout-minutes: 1000000      # essentially unlimited
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          export NR_KEY='${{ secrets.NR_LICENSE_KEY }}'
+          export PROFILE=optimized
+          make up
+          trap 'make down' EXIT
+          # block forever but let ^C / job cancel reach the trap
+          tail -f /dev/null

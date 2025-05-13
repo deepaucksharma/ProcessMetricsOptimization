@@ -1,0 +1,27 @@
+name: Lab – scheduled
+on:
+  schedule:          # every 30 min, adjust as needed
+    - cron:  '*/30 * * * *'
+  workflow_dispatch: # manual "Run workflow" button
+    inputs:
+      profile: {default: balanced, description: "ultra/balanced/optimized/lean/micro"}
+      slice:   {default: 20,       description: "Minutes per run",   type: number}
+
+jobs:
+  lab:
+    timeout-minutes: ${{ github.event.inputs.slice || 20 }}   # hard-stop
+    runs-on: ubuntu-latest
+    concurrency: lab      # prevents overlap if a previous run is late
+    env:
+      NR_KEY:  ${{ secrets.NR_LICENSE_KEY }}
+      PROFILE: ${{ github.event.inputs.profile || 'balanced' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch config for hosted runner
+        run: |
+          sed -i 's/hostmetrics_ultra:/hostmetrics_ultra:\n  disable_scrapers:\n    - process.disk\n    - process.open_fds\n    - process.threads/' config.yaml
+      - uses: ./.github/actions/start-lab
+        with:
+          nr-license-key:   ${{ env.NR_KEY }}
+          profile:          ${{ env.PROFILE }}
+          duration-minutes: ${{ github.event.inputs.slice || 20 }}

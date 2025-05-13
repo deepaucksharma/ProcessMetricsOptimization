@@ -1,0 +1,23 @@
+networks:
+  demo_net: {}
+
+services:
+  ###############################################################################
+  # Basic demo - Alpine Linux for simplicity
+  ###############################################################################
+  alpine:
+    image: alpine:latest
+    command: sh -c "while true; do echo 'Running demo...'; sleep 60; done"
+    networks: [demo_net]
+
+  ###############################################################################
+  # NRDOT host collector (simplified for demo)
+  ###############################################################################
+  collector:
+    image: newrelic/nrdot-collector-host:1.1.0
+    container_name: demo-local-collector
+    ports: 
+      - "8888:8888"  # For prometheus metrics
+    volumes:
+      - ./simple-config.yaml:/etc/otel/config.yaml:ro
+    command: --config /etc/otel/config.yaml

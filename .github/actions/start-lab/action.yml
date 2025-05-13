@@ -1,0 +1,40 @@
+# action.yml
+name: "Start NR Lab"
+description: "Spin up the five-profile NRDOT lab inside GitHub Actions"
+inputs:
+  nr-license-key:           {required: true}
+  profile:                  {required: true, default: "balanced"}
+  duration-minutes:         {required: true, default: "20"}
+  mem-limit-mib:            {required: false, default: "256"}
+runs:
+  using: "composite"
+  steps:
+    - run: sudo apt-get update && sudo apt-get install -y make
+      shell: bash
+    - name: Expose env flags
+      shell: bash
+      run: |
+        echo "DEMO_ID=gha-${{ github.run_id }}"              >> $GITHUB_ENV
+        # selector booleans for docker-compose
+        for p in ultra balanced optimized lean micro; do
+          echo "NR_USE_${p^^}=$([[ '${{ inputs.profile }}' == $p ]] && echo true || echo false)" >> $GITHUB_ENV
+        done
+        echo "MEM_LIMIT_MIB=${{ inputs.mem-limit-mib }}"     >> $GITHUB_ENV
+        echo "BENCHMARK_PROFILE=${{ inputs.profile }}"       >> $GITHUB_ENV
+        echo "benchmark.demo_id=gha-${{ github.run_id }}"    >> $GITHUB_ENV
+    - name: Validate config
+      run: make validate
+      shell: bash
+    - name: Launch lab
+      env:
+        NR_KEY: ${{ inputs.nr-license-key }}
+        PROFILE: ${{ inputs.profile }}
+      run: make up
+      shell: bash
+    - name: Hold for telemetry
+      run: sleep $(( ${{ inputs.duration-minutes }} * 60 ))
+      shell: bash
+    - name: Teardown
+      if: always()
+      run: make down
+      shell: bash

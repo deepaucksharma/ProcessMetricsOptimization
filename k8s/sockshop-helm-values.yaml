@@ -1,0 +1,7 @@
+# k8s/sockshop-helm-values.yaml
+loadtest:
+  enabled: true
+  replicas: 1
+front-end:
+  service:
+    type: ClusterIP
