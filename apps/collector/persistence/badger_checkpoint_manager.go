@@ -129,12 +129,27 @@ func (m *BadgerCheckpointManager) Checkpoint(
 		Timestamp  time.Time `json:"timestamp"`
 		WindowID   int64     `json:"window_id"`
 		SpanCount  int       `json:"span_count"`
-		WindowData windowData `json:"window_data"`
+		WindowData struct {
+			ID         int64     `json:"id"`
+			StartTime  time.Time `json:"start_time"`
+			EndTime    time.Time `json:"end_time"`
+			CountTotal int64     `json:"count_total"`
+		} `json:"window_data"`
 	}{
 		Timestamp:  now,
 		WindowID:   windowID,
 		SpanCount:  len(spans),
-		WindowData: windowData,
+		WindowData: struct {
+			ID         int64     `json:"id"`
+			StartTime  time.Time `json:"start_time"`
+			EndTime    time.Time `json:"end_time"`
+			CountTotal int64     `json:"count_total"`
+		}{
+			ID:         windowID,
+			StartTime:  startTime,
+			EndTime:    endTime,
+			CountTotal: windowCount,
+		},
 	}
 
 	metaJSON, err := json.Marshal(metaData)

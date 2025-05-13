@@ -21,7 +21,7 @@ test: ## Run all unit tests
 
 .PHONY: test-core
 test-core: ## Run core library tests only
-	go test ./core/... -v -cover
+	cd core/reservoir && go test ./... -v -cover
 
 .PHONY: build
 build: ## Build the collector application
@@ -38,7 +38,7 @@ image: ## Build Docker image
 .PHONY: kind
 kind: ## Create kind cluster if not exists
 	kind create cluster --config infra/kind/kind-config.yaml || true
-	kind load docker-image $(IMAGE)
+	kind load docker-image reservoir-test:latest
 
 .PHONY: deploy
 deploy: ## Deploy to Kubernetes

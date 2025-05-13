@@ -127,8 +127,8 @@ func (cfg *Config) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// CreateDefaultConfig creates the default configuration for the processor.
-func CreateDefaultConfig() component.Config {
+// DefaultConfig creates a default configuration for the reservoir
+func DefaultConfig() *Config {
 	return &Config{
 		SizeK:                    5000,
 		WindowDuration:           60 * time.Second,

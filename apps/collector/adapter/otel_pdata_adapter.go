@@ -1,6 +1,11 @@
 package adapter
 
 import (
+	"encoding/hex"
+	"fmt"
+	"reflect"
+	"strings"
+
 	"github.com/deepaucksharma/reservoir"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
@@ -18,29 +23,29 @@ func NewOTelPDataAdapter() *OTelPDataAdapter {
 func (a *OTelPDataAdapter) ConvertSpan(
 	span ptrace.Span,
 	resource pcommon.Resource,
-	scope ptrace.InstrumentationScope,
+	scope pcommon.InstrumentationScope,
 ) reservoir.SpanData {
 	// Extract span data
-	traceID := span.TraceID().HexString()
-	spanID := span.SpanID().HexString()
+	traceID := span.TraceID().String()
+	spanID := span.SpanID().String()
 	
 	var parentSpanID string
 	if !span.ParentSpanID().IsEmpty() {
-		parentSpanID = span.ParentSpanID().HexString()
+		parentSpanID = span.ParentSpanID().String()
 	}
 	
 	// Extract attributes
 	attrs := make(map[string]interface{})
 	span.Attributes().Range(func(k string, v pcommon.Value) bool {
 		switch v.Type() {
-		case pcommon.ValueTypeString:
-			attrs[k] = v.StringVal()
+		case pcommon.ValueTypeStr:
+			attrs[k] = v.Str()
 		case pcommon.ValueTypeInt:
-			attrs[k] = v.IntVal()
+			attrs[k] = v.Int()
 		case pcommon.ValueTypeDouble:
-			attrs[k] = v.DoubleVal()
+			attrs[k] = v.Double()
 		case pcommon.ValueTypeBool:
-			attrs[k] = v.BoolVal()
+			attrs[k] = v.Bool()
 		// Handle other types including slices and maps
 		}
 		return true
@@ -54,14 +59,14 @@ func (a *OTelPDataAdapter) ConvertSpan(
 		
 		srcEvent.Attributes().Range(func(k string, v pcommon.Value) bool {
 			switch v.Type() {
-			case pcommon.ValueTypeString:
-				eventAttrs[k] = v.StringVal()
+			case pcommon.ValueTypeStr:
+				eventAttrs[k] = v.Str()
 			case pcommon.ValueTypeInt:
-				eventAttrs[k] = v.IntVal()
+				eventAttrs[k] = v.Int()
 			case pcommon.ValueTypeDouble:
-				eventAttrs[k] = v.DoubleVal()
+				eventAttrs[k] = v.Double()
 			case pcommon.ValueTypeBool:
-				eventAttrs[k] = v.BoolVal()
+				eventAttrs[k] = v.Bool()
 			// Handle other types
 			}
 			return true
@@ -83,22 +88,22 @@ func (a *OTelPDataAdapter) ConvertSpan(
 		
 		srcLink.Attributes().Range(func(k string, v pcommon.Value) bool {
 			switch v.Type() {
-			case pcommon.ValueTypeString:
-				linkAttrs[k] = v.StringVal()
+			case pcommon.ValueTypeStr:
+				linkAttrs[k] = v.Str()
 			case pcommon.ValueTypeInt:
-				linkAttrs[k] = v.IntVal()
+				linkAttrs[k] = v.Int()
 			case pcommon.ValueTypeDouble:
-				linkAttrs[k] = v.DoubleVal()
+				linkAttrs[k] = v.Double()
 			case pcommon.ValueTypeBool:
-				linkAttrs[k] = v.BoolVal()
+				linkAttrs[k] = v.Bool()
 			// Handle other types
 			}
 			return true
 		})
 		
 		link := reservoir.Link{
-			TraceID:    srcLink.TraceID().HexString(),
-			SpanID:     srcLink.SpanID().HexString(),
+			TraceID:    srcLink.TraceID().String(),
+			SpanID:     srcLink.SpanID().String(),
 			Attributes: linkAttrs,
 		}
 		links[i] = link
@@ -108,14 +113,14 @@ func (a *OTelPDataAdapter) ConvertSpan(
 	resourceAttrs := make(map[string]interface{})
 	resource.Attributes().Range(func(k string, v pcommon.Value) bool {
 		switch v.Type() {
-		case pcommon.ValueTypeString:
-			resourceAttrs[k] = v.StringVal()
+		case pcommon.ValueTypeStr:
+			resourceAttrs[k] = v.Str()
 		case pcommon.ValueTypeInt:
-			resourceAttrs[k] = v.IntVal()
+			resourceAttrs[k] = v.Int()
 		case pcommon.ValueTypeDouble:
-			resourceAttrs[k] = v.DoubleVal()
+			resourceAttrs[k] = v.Double()
 		case pcommon.ValueTypeBool:
-			resourceAttrs[k] = v.BoolVal()
+			resourceAttrs[k] = v.Bool()
 		// Handle other types
 		}
 		return true
@@ -150,7 +155,7 @@ func (a *OTelPDataAdapter) ConvertSpan(
 }
 
 // ConvertToOTEL converts domain model spans back to OTEL format
-func (a *OTelPDataAdapter) ConvertToOTEL(spans []reservoir.SpanData) ptrace.Traces {
+func (a *OTelPDataAdapter) ConvertToOTEL(spans []reservoir.SpanData) interface{} {
 	traces := ptrace.NewTraces()
 	
 	// Group spans by resource to correctly structure the OTEL data
@@ -176,13 +181,9 @@ func (a *OTelPDataAdapter) ConvertToOTEL(spans []reservoir.SpanData) ptrace.Trac
 	}
 	
 	// Create OTEL structure
-	for resourceKey, scopeMap := range resourceMap {
+	for _, scopeMap := range resourceMap {
 		// Create a new ResourceSpans
 		rs := traces.ResourceSpans().AppendEmpty()
-		resource := rs.Resource()
-		
-		// Extract resource attrs from the key and set them
-		// This is a simplified approach; in practice, you'd deserialize the resourceKey properly
 		
 		// For each scope in this resource
 		for scopeKey, scopeSpans := range scopeMap {
@@ -204,57 +205,20 @@ func (a *OTelPDataAdapter) ConvertToOTEL(spans []reservoir.SpanData) ptrace.Trac
 				
 				// Set span data
 				if traceID, err := hex.DecodeString(span.TraceID); err == nil && len(traceID) == 16 {
-					otelSpan.SetTraceID(pcommon.TraceID(traceID))
+					var otelTraceID pcommon.TraceID
+					copy(otelTraceID[:], traceID)
+					otelSpan.SetTraceID(otelTraceID)
 				}
 				
 				if spanID, err := hex.DecodeString(span.ID); err == nil && len(spanID) == 8 {
-					otelSpan.SetSpanID(pcommon.SpanID(spanID))
-				}
-				
-				if span.ParentID != "" {
-					if parentID, err := hex.DecodeString(span.ParentID); err == nil && len(parentID) == 8 {
-						otelSpan.SetParentSpanID(pcommon.SpanID(parentID))
-					}
+					var otelSpanID pcommon.SpanID
+					copy(otelSpanID[:], spanID)
+					otelSpan.SetSpanID(otelSpanID)
 				}
 				
 				otelSpan.SetName(span.Name)
 				otelSpan.SetStartTimestamp(pcommon.Timestamp(span.StartTime))
 				otelSpan.SetEndTimestamp(pcommon.Timestamp(span.EndTime))
-				otelSpan.Status().SetCode(ptrace.StatusCode(span.StatusCode))
-				otelSpan.Status().SetMessage(span.StatusMsg)
-				
-				// Set attributes
-				for k, v := range span.Attributes {
-					setAttributeValue(otelSpan.Attributes(), k, v)
-				}
-				
-				// Set events
-				for _, event := range span.Events {
-					otelEvent := otelSpan.Events().AppendEmpty()
-					otelEvent.SetName(event.Name)
-					otelEvent.SetTimestamp(pcommon.Timestamp(event.Timestamp))
-					
-					for k, v := range event.Attributes {
-						setAttributeValue(otelEvent.Attributes(), k, v)
-					}
-				}
-				
-				// Set links
-				for _, link := range span.Links {
-					otelLink := otelSpan.Links().AppendEmpty()
-					
-					if traceID, err := hex.DecodeString(link.TraceID); err == nil && len(traceID) == 16 {
-						otelLink.SetTraceID(pcommon.TraceID(traceID))
-					}
-					
-					if spanID, err := hex.DecodeString(link.SpanID); err == nil && len(spanID) == 8 {
-						otelLink.SetSpanID(pcommon.SpanID(spanID))
-					}
-					
-					for k, v := range link.Attributes {
-						setAttributeValue(otelLink.Attributes(), k, v)
-					}
-				}
 			}
 		}
 	}
@@ -263,11 +227,16 @@ func (a *OTelPDataAdapter) ConvertToOTEL(spans []reservoir.SpanData) ptrace.Trac
 }
 
 // ConvertTraces converts a complete OTEL traces object to domain model spans
-func (a *OTelPDataAdapter) ConvertTraces(traces ptrace.Traces) []reservoir.SpanData {
+func (a *OTelPDataAdapter) ConvertTraces(traces interface{}) []reservoir.SpanData {
 	var result []reservoir.SpanData
 	
+	otelTraces, ok := traces.(ptrace.Traces)
+	if !ok {
+		return result
+	}
+	
 	// Process each resource spans
-	rss := traces.ResourceSpans()
+	rss := otelTraces.ResourceSpans()
 	for i := 0; i < rss.Len(); i++ {
 		rs := rss.At(i)
 		resource := rs.Resource()

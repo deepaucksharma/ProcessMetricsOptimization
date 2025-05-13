@@ -37,6 +37,9 @@ type Window interface {
 	
 	// SetRolloverCallback sets the function to call when a window rolls over
 	SetRolloverCallback(callback func())
+	
+	// SetState allows manual setting of window state (used for restoring from checkpoint)
+	SetState(id int64, start, end time.Time, count int64)
 }
 
 // CheckpointManager defines the interface for checkpoint persistence

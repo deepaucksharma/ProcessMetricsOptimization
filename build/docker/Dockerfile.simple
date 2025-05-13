@@ -1,0 +1,23 @@
+FROM golang:1.21 AS builder
+
+WORKDIR /src
+COPY . .
+
+# Build our verify script
+RUN go build -o /verify ./verify/verify.go
+
+# Build the collector - simplified version
+RUN go build -o /otelcol-reservoir ./apps/collector
+
+# ─── Stage 2: slim runtime image ────────────────────────────────────────────────
+FROM alpine:3.19
+
+RUN addgroup -g 10001 otel && adduser -D -G otel -u 10001 otel
+COPY --from=builder /verify /verify
+COPY --from=builder /otelcol-reservoir /otelcol-reservoir
+RUN mkdir -p /var/otelpersist/badger && chown -R otel:otel /var/otelpersist
+
+USER otel
+ENTRYPOINT ["/verify"]
+
+EXPOSE 4317 4318 8888

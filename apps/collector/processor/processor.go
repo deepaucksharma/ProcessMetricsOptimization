@@ -2,10 +2,10 @@ package processor
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/deepaucksharma/reservoir"
+	"github.com/deepaucksharma/trace-aware-reservoir-otel/apps/collector/adapter"
 	"github.com/robfig/cron/v3"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
@@ -146,7 +146,7 @@ func (p *reservoirProcessor) Start(ctx context.Context, host component.Host) err
 				p.window.SetState(windowID, startTime, endTime, windowCount)
 
 				// Restore reservoir spans
-				for hash, span := range spans {
+				for _, span := range spans {
 					p.reservoir.AddSpan(span.Span)
 				}
 

@@ -1,9 +1,5 @@
 package reservoir
 
-import (
-	"time"
-)
-
 // SpanData represents a single span in a trace-agnostic way
 type SpanData struct {
 	ID           string
