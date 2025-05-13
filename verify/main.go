@@ -109,6 +109,9 @@ type SimpleMetricsReporter struct {
 	sampledSpans    float64
 	traceBufferSize float64
 	evictions       float64
+	checkpointAge   float64
+	dbSize          float64
+	compactions     float64
 }
 
 func NewSimpleMetricsReporter() *SimpleMetricsReporter {
@@ -132,15 +135,15 @@ func (m *SimpleMetricsReporter) ReportEvictions(count int) {
 }
 
 func (m *SimpleMetricsReporter) ReportCheckpointAge(age time.Duration) {
-	// Not used in this test
+	m.checkpointAge = age.Seconds()
 }
 
 func (m *SimpleMetricsReporter) ReportDBSize(sizeBytes int64) {
-	// Not used in this test
+	m.dbSize = float64(sizeBytes)
 }
 
 func (m *SimpleMetricsReporter) ReportCompactions(count int) {
-	// Not used in this test
+	m.compactions += float64(count)
 }
 
 func (m *SimpleMetricsReporter) GetReservoirSize() float64 {
@@ -157,4 +160,35 @@ func (m *SimpleMetricsReporter) GetTraceBufferSize() float64 {
 
 func (m *SimpleMetricsReporter) GetEvictions() float64 {
 	return m.evictions
+}
+
+func (m *SimpleMetricsReporter) GetCheckpointAge() float64 {
+	return m.checkpointAge
+}
+
+func (m *SimpleMetricsReporter) GetDBSize() float64 {
+	return m.dbSize
+}
+
+func (m *SimpleMetricsReporter) GetCompactions() float64 {
+	return m.compactions
+}
+
+// Gauge functions for BadgerCheckpointManager
+func (m *SimpleMetricsReporter) GetCheckpointAgeGauge() func(float64) {
+	return func(v float64) {
+		m.checkpointAge = v
+	}
+}
+
+func (m *SimpleMetricsReporter) GetReservoirDbSizeGauge() func(float64) {
+	return func(v float64) {
+		m.dbSize = v
+	}
+}
+
+func (m *SimpleMetricsReporter) GetCompactionCountCounter() func(float64) {
+	return func(v float64) {
+		m.compactions += v
+	}
 }

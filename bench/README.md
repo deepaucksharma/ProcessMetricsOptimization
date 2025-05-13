@@ -10,21 +10,31 @@ The benchmark system uses a fan-out topology where identical traces are sent to 
 
 - **profiles/**: YAML files with different performance-oriented configurations
 - **kpis/**: Success criteria for each profile
-- **fanout/**: Fan-out collector configuration that duplicates traffic
-- **pte-kpi/**: Go tool that evaluates metrics against KPI criteria
-- **Makefile**: Automation for benchmark deployment and evaluation
+- **runner/**: Go-based benchmark orchestrator
+- **pte-kpi/**: KPI evaluation tool
 
 ## Quick Start
 
-```bash
-# From repo root:
-export IMAGE_TAG=bench
-make image VERSION=$IMAGE_TAG
-kind create cluster --config kind-config.yaml
-kind load docker-image ghcr.io/<your-org>/nrdot-reservoir:$IMAGE_TAG
+Use the Makefile targets from the repository root:
 
-# Run all benchmark profiles:
-make -C bench bench-all IMAGE_TAG=$IMAGE_TAG DURATION=10m
+```bash
+# Build the image
+make image VERSION=bench
+
+# Run benchmarks with all profiles
+make bench DURATION=10m
+
+# Run with specific profiles
+make bench PROFILES=max-throughput-traces,tiny-footprint-edge DURATION=5m
+
+# Run a quick benchmark test
+make bench-quick
+```
+
+Alternatively, use the benchmark runner script:
+
+```bash
+./scripts/run-benchmark.sh --mode kind --profiles max-throughput-traces --duration 5m
 ```
 
 ## Available Profiles
@@ -32,12 +42,6 @@ make -C bench bench-all IMAGE_TAG=$IMAGE_TAG DURATION=10m
 - **max-throughput-traces**: Optimized for maximum trace throughput
 - **tiny-footprint-edge**: Optimized for minimal resource usage in edge environments
 
-## Adding New Profiles
-
-1. Create a new YAML file in `profiles/`
-2. Define corresponding KPIs in `kpis/`
-3. Add endpoint to `fanout/values.yaml`
-
 ## For More Information
 
-See the detailed [Benchmark Implementation Guide](../docs/benchmark-implementation.md) for complete documentation.
+See the comprehensive [Benchmarking Guide](../docs/benchmarking-guide.md) for detailed instructions on running, customizing, and analyzing benchmarks.

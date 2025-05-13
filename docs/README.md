@@ -1,24 +1,20 @@
-# Documentation Index
+# Trace-Aware Reservoir Documentation
 
-This directory contains the documentation for the Trace-Aware Reservoir Sampling processor for OpenTelemetry.
+This directory contains comprehensive documentation for the Trace-Aware Reservoir Sampling for OpenTelemetry project. The documentation is organized into the following sections:
 
-## Contents
+## 📚 Core Documentation
+- [Project Overview](../README.md) - Main project overview, features, and quick start
+- [Core Library](../core/reservoir/README.md) - Details on the core reservoir sampling implementation
+- [Contributing Guide](../CONTRIBUTING.md) - Guidelines for contributing to the project
+- [Changelog](../CHANGELOG.md) - History of changes and releases
 
-- [Implementation Guide](implementation-guide.md) - Step-by-step guide for building and deploying
-- [Windows Development Guide](windows-guide.md) - Detailed setup instructions for Windows 10/11 environments
-- [Streamlined Workflow](streamlined-workflow.md) - Best practices for optimizing the development experience
-- [Implementation Status](implementation-status.md) - Current status and next steps
-- [NR-DOT Integration](nrdot-integration.md) - Details on the New Relic OpenTelemetry Distribution integration
-- [Benchmark Implementation](benchmark-implementation.md) - End-to-end benchmark guide with fan-out topology
+## 🛠️ Guides
+- [Development Guide](development-guide.md) - Complete guide for developing and deploying the project
+- [Windows Development](windows-guide.md) - Special considerations for Windows developers
+- [Benchmarking Guide](benchmarking-guide.md) - How to benchmark and evaluate performance
 
-## Performance Benchmarking
+## 🔄 Workflow
+- [Streamlined Workflow](streamlined-workflow.md) - Optimized development workflows for this project
+- [Integration Guide](integration-guide.md) - How to integrate with other systems (including NR-DOT)
 
-The project includes a comprehensive benchmarking system that allows for fair comparison of different configuration profiles using a fan-out topology. This ensures all profiles receive identical trace data during evaluation.
-
-Key features of the benchmark implementation:
-- Fan-out collector that duplicates traces to multiple profile collectors
-- Parallel KPI evaluation for all profiles
-- Integration with New Relic for visualization and analysis
-- Automated CI workflow for nightly benchmark runs
-
-See the [Benchmark Implementation Guide](benchmark-implementation.md) for detailed instructions.
+Each document is designed to be focused on a specific aspect of the project while avoiding redundancy and maintaining consistency across the documentation set.

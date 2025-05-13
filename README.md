@@ -15,7 +15,6 @@ trace-aware-reservoir-otel/
 ├── apps/                      # Applications
 │   ├── collector/             # OpenTelemetry collector with reservoir sampling
 │   └── tools/                 # Supporting tools
-│       └── kpi-evaluator/     # KPI evaluation tool
 │
 ├── bench/                     # Benchmarking framework
 │   ├── profiles/              # Benchmark configuration profiles
@@ -29,6 +28,8 @@ trace-aware-reservoir-otel/
 ├── build/                     # Build configurations
 │   ├── docker/                # Dockerfiles
 │   └── scripts/               # Build scripts
+│
+├── scripts/                   # Operational scripts
 │
 └── docs/                      # Documentation
 ```
@@ -44,33 +45,56 @@ This repository implements a statistically-sound reservoir sampling processor fo
 
 ## Quick Start
 
-### 1. Build the Docker Image
+### 1. Setup Development Environment
 
 ```bash
-make image
+# Install dependencies and setup development environment
+make setup
 ```
 
-### 2. Deploy to Kubernetes
+### 2. Build and Test
 
 ```bash
+# Run all tests
+make test
+
+# Build the application
+make build
+```
+
+### 3. Build Docker Images
+
+```bash
+# Build main Docker image
+make image
+
+# Build all images (main, benchmark)
+make images
+```
+
+### 4. Deploy to Kubernetes
+
+```bash
+# Create Kind cluster and load images
+make kind
+make kind-load
+
+# Deploy to Kubernetes
 export NEW_RELIC_KEY="your_license_key_here"
 make deploy
 ```
 
-### 3. Verify the Deployment
+### 5. Run Benchmarks
 
 ```bash
-make status
-make metrics
-```
+# Run full benchmarks
+make bench PROFILES=max-throughput-traces,tiny-footprint-edge DURATION=10m
 
-### 4. Run Benchmarks
+# Run quick benchmark test
+make bench-quick
 
-```bash
-# From repo root:
-export IMAGE_TAG=bench
-make image VERSION=$IMAGE_TAG
-make bench IMAGE=ghcr.io/<your-org>/nrdot-reservoir:$IMAGE_TAG DURATION=10m
+# Alternatively, use the flexible benchmark runner script
+./scripts/run-benchmark.sh --mode kind --profiles max-throughput-traces --duration 5m
 ```
 
 ## Implementation Details
@@ -88,12 +112,12 @@ The processor uses Algorithm R for reservoir sampling with these key characteris
 ┌─────────────┐     ┌───────────────────┐     ┌─────────────┐
 │ OTLP Input  │────▶│ Reservoir Sampler │────▶│ OTLP Output │
 └─────────────┘     └───────────────────┘     └─────────────┘
-                             │
-                             ▼
-                     ┌───────────────┐
-                     │ Badger DB     │
-                     │ Persistence   │
-                     └───────────────┘
+                            │
+                            ▼
+                    ┌───────────────┐
+                    │ Badger DB     │
+                    │ Persistence   │
+                    └───────────────┘
 ```
 
 ## Configuration
@@ -123,58 +147,81 @@ The project includes a benchmarking system with different performance profiles:
 
 These profiles can be benchmarked simultaneously against identical traffic using our fan-out topology, allowing for direct comparison of different configurations.
 
-## Development
+## Streamlined Development Workflow
 
-### Prerequisites
+Our enhanced workflow simplifies the development experience:
+
+### Unified Makefile Commands
+
+```bash
+# View all available commands with descriptions
+make help
+
+# Development tasks
+make deps            # Install dependencies
+make lint            # Run linters
+make test            # Run all tests
+make build           # Build the application
+
+# Docker image building
+make image           # Build main image
+make image-bench     # Build benchmark image
+make images          # Build all images
+
+# Kubernetes deployment
+make kind            # Create Kind cluster
+make kind-load       # Load images into cluster
+make deploy          # Deploy to Kubernetes
+make quickrun        # Quick build and load
+
+# Operations
+make status          # Check deployment status
+make logs            # Stream collector logs
+make metrics         # Check metrics
+make clean           # Clean up resources
+
+# Benchmarking
+make bench           # Run benchmarks
+make bench-quick     # Run a quick benchmark
+make bench-clean     # Clean up benchmark resources
+```
+
+### Flexible Benchmark Runner
+
+For more control over benchmarks, use the benchmark runner script:
+
+```bash
+# Run in Kind cluster with multiple profiles
+./scripts/run-benchmark.sh --mode kind --profiles max-throughput-traces,tiny-footprint-edge --duration 5m
+
+# Run in local simulator mode
+./scripts/run-benchmark.sh --mode local --port 9090
+
+# Run with existing Kubernetes cluster
+./scripts/run-benchmark.sh --mode existing --kubeconfig ~/.kube/my-cluster.yaml
+```
+
+## Prerequisites
 
 - Docker
 - Kubernetes cluster (e.g., Docker Desktop with Kubernetes enabled or KinD)
 - Helm (for Kubernetes deployment)
-- New Relic license key (optional)
+- New Relic license key (optional, for sending data to New Relic)
 - Go 1.21+
-
-### Building and Testing
-
-We've streamlined the development workflow using Make. Here are some common commands:
-
-```bash
-# Run unit tests
-make test
-
-# Run only core library tests
-make test-core
-
-# Build the binary
-make build
-
-# Build the Docker image
-make image
-
-# Deploy to Kubernetes
-make deploy
-
-# Run the complete development cycle
-make dev
-
-# View logs
-make logs
-
-# Run benchmarks
-make bench IMAGE=ghcr.io/<your-org>/nrdot-reservoir:latest
-```
-
-### Windows Development 
-
-For Windows 10/11 users, we recommend using WSL 2 (Windows Subsystem for Linux) with Ubuntu 22.04 to maintain full compatibility with the Linux-based tooling in this project.
-
-See our [Windows Development Guide](docs/windows-guide.md) for detailed setup instructions.
 
 ## Documentation
 
+- [Streamlined Workflow](docs/streamlined-workflow.md) - Comprehensive guide to our improved development workflow
 - [Implementation Guide](docs/implementation-guide.md) - Step-by-step guide for building and deploying
 - [Core Library](core/reservoir/README.md) - Documentation for the core reservoir sampling library
 - [Benchmark Implementation](docs/benchmark-implementation.md) - End-to-end benchmark guide with fan-out topology
 - [Contributing Guide](CONTRIBUTING.md) - Guidelines for contributing to the project
+
+## Windows Development 
+
+For Windows 10/11 users, we recommend using WSL 2 (Windows Subsystem for Linux) with Ubuntu 22.04 to maintain full compatibility with the Linux-based tooling in this project.
+
+See our [Windows Development Guide](docs/windows-guide.md) for detailed setup instructions.
 
 ## License
 

@@ -33,3 +33,8 @@ func (p *SimpleReservoirProcessor) Start(ctx context.Context, host component.Hos
 func (p *SimpleReservoirProcessor) Shutdown(ctx context.Context) error {
 	return nil
 }
+
+// Capabilities implements the processor.Traces interface
+func (p *SimpleReservoirProcessor) Capabilities() consumer.Capabilities {
+	return consumer.Capabilities{MutatesData: true}
+}
