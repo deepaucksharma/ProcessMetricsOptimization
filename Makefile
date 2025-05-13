@@ -60,6 +60,14 @@ validate:    ## Syntax check the config.yaml file
 			/config.yaml -d relaxed --no-warnings && echo "✅ config.yaml syntax is valid"; \
 	fi
 
+validate-otel: ## OTel semantic config validation
+	@echo "Validating OTel collector configuration..."
+	@docker run --rm \
+	  -v $(PWD)/config.yaml:/etc/nrdot-collector-host/config.yaml:ro \
+	  -e NR_USE_BALANCED=true \
+	  newrelic/nrdot-collector-host:1.1.0 \
+	  --config /etc/nrdot-collector-host/config.yaml
+
 clean:       ## Remove dangling docker volumes / kind data
 	docker system prune -f
 	kind delete cluster --name demo 2>/dev/null || true

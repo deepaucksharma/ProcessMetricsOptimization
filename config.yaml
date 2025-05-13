@@ -1,381 +1,292 @@
 ###############################################################################
-# NRDOT 1.1.0 – FIVE-PROFILE HOST-METRICS CONFIGURATION (PROCESS-FOCUSED) #
+# NRDOT 1.1.0 – FIVE-PROFILE HOST-METRICS CONFIGURATION (PROCESS-FOCUSED)   #
+#-----------------------------------------------------------------------------#
+# Profiles: ULTRA, BALANCED, OPTIMIZED, LEAN, MICRO                         #
+# This config focuses *only* on controlling process.* metrics via profiles.   #
+# For full host monitoring, ensure system scrapers (cpu, disk, etc.) are    #
+# enabled in a base receiver or a separate pipeline if desired.             #
+# Here, 'processes' scraper (system.processes.*) is included for context.   #
 ###############################################################################
 
 extensions:
   health_check: {}
+  # For lab/debug:
+  # pprof: {}
+  # zpages: {}
+  # prometheus: {endpoint: "0.0.0.0:8888"}
+
+
+###############################################################################
+# 1.  RECEIVERS – Separate hostmetrics block per profile interval/config      #
+###############################################################################
+
+# --- Reusable metric scraper configurations using YAML Anchors ---
+_process_metrics_full_detail: &process_metrics_full_detail # For ULTRA
+  metrics:
+    process.cpu.utilization:     {enabled: true}
+    process.cpu.time:            {enabled: true}
+    process.memory.usage:        {enabled: true} # RSS
+    process.memory.utilization:  {enabled: true}
+    process.disk.io:             {enabled: true}
+    process.disk.operations:     {enabled: true}
+    process.disk.operation_time: {enabled: true}
+    process.threads:             {enabled: true}
+    process.open_fds:            {enabled: true}
+    # Add others from the 9 if desired for ULTRA, like context_switches, page_faults, signals
+    # process.context_switches:    {enabled: true}
+    # process.page_faults:         {enabled: true}
+
+_process_metrics_core_no_noisy_types: &process_metrics_core_no_noisy_types # For BALANCED, OPTIMIZED
+  metrics:
+    process.cpu.utilization:     {enabled: true}
+    process.memory.usage:        {enabled: true}
+    # Noisy types (threads, FDs) are explicitly disabled at scrape time for efficiency.
+    process.threads:             {enabled: false}
+    process.open_fds:            {enabled: false}
+    # Other specific process metrics are implicitly disabled by not listing them as enabled.
+
+_process_metrics_minimal_cpu_rss: &process_metrics_minimal_cpu_rss # For LEAN, MICRO
+  metrics:
+    process.cpu.utilization:     {enabled: true} # Keep CPU %
+    process.memory.usage:        {enabled: true} # Keep RSS MB
+    # All other process.* metrics are implicitly disabled.
 
 receivers:
+  # --- Shared system metrics receiver (optional, if you want system metrics always on) ---
+  # hostmetrics_system_base:
+  #   root_path: ${env:HOST_ROOT_PATH:-/hostfs}
+  #   collection_interval: 60s # Or configurable
+  #   scrapers:
+  #     cpu: {}
+  #     memory: {}
+  #     disk: {}
+  #     filesystem: {}
+  #     network: {}
+  #     load: {}
+  #     paging: {}
+      # NO process or processes scrapers here
+
+  # --- ULTRA Profile Receiver (5s, full process detail) ---
   hostmetrics/ultra:
-    collection_interval: 5s
     root_path: ${env:HOST_ROOT_PATH:-/hostfs}
+    collection_interval: 5s
     scrapers:
-      cpu:
-        metrics:
-          system.cpu.utilization: {enabled: true}
-          system.cpu.time: {enabled: true}
-      disk:
-        metrics:
-          system.disk.io: {enabled: true}
-          system.disk.operations: {enabled: true}
-          system.disk.io_time: {enabled: true}
-          system.disk.operation.time: {enabled: true}
-          system.disk.pending_operations: {enabled: true}
-      filesystem:
-        metrics:
-          system.filesystem.usage: {enabled: true}
-          system.filesystem.utilization: {enabled: true}
-      load:
-        metrics:
-          system.cpu.load_average.1m: {enabled: true}
-          system.cpu.load_average.5m: {enabled: true}
-          system.cpu.load_average.15m: {enabled: true}
-      memory:
-        metrics:
-          system.memory.usage: {enabled: true}
-          system.memory.utilization: {enabled: true}
-      network:
-        metrics:
-          system.network.connections: {enabled: true}
-          system.network.dropped_packets: {enabled: true}
-          system.network.errors: {enabled: true}
-          system.network.io: {enabled: true}
-          system.network.packets: {enabled: true}
-      paging:
-        metrics:
-          system.paging.operations: {enabled: true}
-          system.paging.usage: {enabled: true}
-      process:
-        metrics:
-          process.cpu.time: {enabled: true}
-          process.cpu.utilization: {enabled: true}
-          process.memory.usage: {enabled: true}
-          process.memory.virtual: {enabled: true}
-          process.disk.io: {enabled: true}
-          process.threads: {enabled: true}
-          process.open_file_descriptors: {enabled: true}
-          process.context_switches: {enabled: true}
-          process.signals: {enabled: true}
-          process.pagefaults: {enabled: true}
+      process:   {<<: *process_metrics_full_detail}
+      processes: {} # system.processes.* counts
+
+  # --- BALANCED Profile Receiver (30s, core process types) ---
+  hostmetrics/balanced:
+    root_path: ${env:HOST_ROOT_PATH:-/hostfs}
+    collection_interval: 30s
+    scrapers:
+      process:   {<<: *process_metrics_core_no_noisy_types}
       processes: {}
 
-  hostmetrics/balanced:
-    collection_interval: 30s
-    root_path: ${env:HOST_ROOT_PATH:-/hostfs}
-    scrapers:
-      cpu:
-        metrics:
-          system.cpu.utilization: {enabled: true}
-          system.cpu.time: {enabled: true}
-      disk:
-        metrics:
-          system.disk.io: {enabled: true}
-          system.disk.io_time: {enabled: true}
-      filesystem:
-        metrics:
-          system.filesystem.usage: {enabled: true}
-          system.filesystem.utilization: {enabled: true}
-      load:
-        metrics:
-          system.cpu.load_average.1m: {enabled: true}
-          system.cpu.load_average.5m: {enabled: true}
-          system.cpu.load_average.15m: {enabled: true}
-      memory:
-        metrics:
-          system.memory.usage: {enabled: true}
-          system.memory.utilization: {enabled: true}
-      network:
-        metrics:
-          system.network.io: {enabled: true}
-          system.network.packets: {enabled: true}
-      process:
-        metrics:
-          process.cpu.utilization: {enabled: true}
-          process.memory.usage: {enabled: true}
-        include:
-          match_type: strict
-          processes: ["*"]
-          names: ["pid", "command", "exe_name"]
-
+  # --- OPTIMIZED Profile Receiver (60s, core process types) ---
   hostmetrics/optimized:
+    root_path: ${env:HOST_ROOT_PATH:-/hostfs}
     collection_interval: 60s
-    root_path: ${env:HOST_ROOT_PATH:-/hostfs}
     scrapers:
-      cpu:
-        metrics:
-          system.cpu.utilization: {enabled: true}
-      disk:
-        metrics:
-          system.disk.io: {enabled: true}
-          system.disk.io_time: {enabled: true}
-      filesystem:
-        metrics:
-          system.filesystem.utilization: {enabled: true}
-      load:
-        metrics:
-          system.cpu.load_average.5m: {enabled: true}
-          system.cpu.load_average.15m: {enabled: true}
-      memory:
-        metrics:
-          system.memory.utilization: {enabled: true}
-      network:
-        metrics:
-          system.network.io: {enabled: true}
-      process:
-        metrics:
-          process.cpu.utilization: {enabled: true}
-          process.memory.usage: {enabled: true}
-        include:
-          match_type: strict
-          processes: ["*"]
-          names: ["exe_name"]
+      process:   {<<: *process_metrics_core_no_noisy_types}
+      processes: {}
 
+  # --- LEAN Profile Receiver (120s, minimal CPU % & RSS only) ---
   hostmetrics/lean:
+    root_path: ${env:HOST_ROOT_PATH:-/hostfs}
     collection_interval: 120s
-    root_path: ${env:HOST_ROOT_PATH:-/hostfs}
     scrapers:
-      cpu:
-        metrics:
-          system.cpu.utilization: {enabled: true}
-      memory:
-        metrics:
-          system.memory.utilization: {enabled: true}
-      disk:
-        metrics:
-          system.disk.io_time: {enabled: true}
-      filesystem:
-        metrics:
-          system.filesystem.utilization: {enabled: true}
-      load:
-        metrics:
-          system.cpu.load_average.15m: {enabled: true}
       process:
-        metrics:
-          process.cpu.utilization:
-            enabled: true
-            report_per_cpu: false
-          process.memory.usage: {enabled: true}
-        include:
-          match_type: strict
-          processes: ["*"]
-          names: ["exe_name"]
-        exclude:
-          match_type: regexp
-          names:
-            - ".*kernel.*"
-            - ".*chrome.*helper.*"
-            - ".*plugin.*"
+        <<: *process_metrics_minimal_cpu_rss
+        include: {match_type: regexp, names: [".*"]} # Keep all execs by name initially
+        exclude: {match_type: regexp, names: ["$^"]}  # Drop none by name initially
+      processes: {}
 
+  # --- MICRO Profile Receiver (300s, minimal CPU % & RSS only) ---
   hostmetrics/micro:
-    collection_interval: 300s
     root_path: ${env:HOST_ROOT_PATH:-/hostfs}
+    collection_interval: 300s
     scrapers:
-      cpu:
-        metrics:
-          system.cpu.utilization: {enabled: true}
-      memory:
-        metrics:
-          system.memory.utilization: {enabled: true}
-      disk:
-        metrics:
-          system.disk.io_time: {enabled: true}
-      filesystem:
-        metrics:
-          system.filesystem.utilization: {enabled: true}
-      load:
-        metrics:
-          system.cpu.load_average.15m: {enabled: true}
-      # Micro profile focuses on system-level metrics
-      # No process scraper to minimize data volume
+      process:
+        <<: *process_metrics_minimal_cpu_rss
+        include: {match_type: regexp, names: [".*"]}
+        exclude: {match_type: regexp, names: ["$^"]}
+      processes: {}
 
+###############################################################################
+# 2.  PROCESSORS – Shared base + profile-specific stacks                    #
+###############################################################################
 processors:
+  # --- SHARED BASE PROCESSORS (used by all active pipelines) ---
   memory_limiter:
+    limit_mib: ${env:MEM_LIMIT_MIB:-100}
     check_interval: 1s
-    limit_mib: ${env:MEM_LIMIT_MIB:-256}
 
   resourcedetection:
     detectors: ["system"]
-    system:
-      hostname_sources: ["os"]
+    system: {hostname_sources:["os"]}
 
-  batch:
-    send_batch_size: 1000
-    timeout: 10s
+  resourcedetection/cloud:
+    detectors: ["gcp", "ec2", "azure"]
+    timeout: 2s
 
-  filter/process:
+  resourcedetection/env: # For OTEL_RESOURCE_ATTRIBUTES overrides
+    detectors: ["env"]
+    timeout: 2s
+    override: true
+
+  batch: {} # Standard batching for export efficiency
+
+  # --- PROCESSOR: TAGGING (Applied by each pipeline to identify its data) ---
+  attributes/tag_ultra:
+    actions: [{key: benchmark.profile, value: ultra, action: upsert}, {key: benchmark.demo_id, value: ${env:DEMO_ID:-default_demo}, action: upsert}]
+  attributes/tag_balanced:
+    actions: [{key: benchmark.profile, value: balanced, action: upsert}, {key: benchmark.demo_id, value: ${env:DEMO_ID:-default_demo}, action: upsert}]
+  attributes/tag_optimized:
+    actions: [{key: benchmark.profile, value: optimized, action: upsert}, {key: benchmark.demo_id, value: ${env:DEMO_ID:-default_demo}, action: upsert}]
+  attributes/tag_lean:
+    actions: [{key: benchmark.profile, value: lean, action: upsert}, {key: benchmark.demo_id, value: ${env:DEMO_ID:-default_demo}, action: upsert}]
+  attributes/tag_micro:
+    actions: [{key: benchmark.profile, value: micro, action: upsert}, {key: benchmark.demo_id, value: ${env:DEMO_ID:-default_demo}, action: upsert}]
+
+  # --- PROCESSORS: BALANCED Profile Stack ---
+  # Metric type suppression for threads/FDs is done in hostmetrics/balanced receiver.
+  attributes/balanced_drop_long_cli:
+    actions:
+      - {key: process.command_line, action: delete}
+      # process.pid is *kept* for BALANCED profile.
+
+  filter/balanced_idle_gate:
     metrics:
-      include:
+      datapoint:
+        - 'metric.name == "process.cpu.utilization" and value_double < ${env:IDLE_CPU_THRESHOLD:-0.005}'
+        - 'metric.name == "process.memory.usage"    and value_int   < ${env:IDLE_RSS_THRESHOLD:-31457280}'
+
+  # --- PROCESSORS: OPTIMIZED Profile Stack ---
+  attributes/optim_drop_pid_and_cli: # Combined for OPTIMIZED
+    actions:
+      - {key: process.pid, action: delete}
+      - {key: process.command_line, action: delete}
+
+  metricstransform/optim_aggregate_exe:
+    transforms:
+      - include: ^process\..*
         match_type: regexp
-        metric_names:
-          - process\\..*
-          - system\\..*
+        action: update
+        operations:
+          - action: aggregate_labels
+            label_set: [process.executable.name] # Consider adding host.name
+            aggregation_type: sum
 
-  # Transform metrics for optimized profile
-  metricstransform/optimized:
+  filter/optim_idle_gate: # Can use same env vars as BALANCED or dedicated ones
+    metrics:
+      datapoint:
+        - 'metric.name == "process.cpu.utilization" and value_double < ${env:IDLE_CPU_THRESHOLD:-0.005}'
+        - 'metric.name == "process.memory.usage"    and value_int   < ${env:IDLE_RSS_THRESHOLD:-31457280}'
+
+  # --- PROCESSORS: LEAN & MICRO Profile Stack (Shared Logic) ---
+  attributes/lean_micro_drop_pid_and_cli:
+    actions:
+      - {key: process.pid,           action: delete}
+      - {key: process.command_line,  action: delete}
+
+  metricstransform/lean_micro_aggregate_exe:
     transforms:
-      # Aggregate process CPU metrics by executable
-      - include: process.cpu.utilization
+      - include: ^process\..*
+        match_type: regexp
         action: update
         operations:
           - action: aggregate_labels
-            label_set: ["exe_name", "host.name", "os.type"]
+            label_set: [process.executable.name] # Consider adding host.name
             aggregation_type: sum
 
-      # Aggregate process memory metrics by executable
-      - include: process.memory.usage
-        action: update
-        operations:
-          - action: aggregate_labels
-            label_set: ["exe_name", "host.name", "os.type"]
-            aggregation_type: sum
+  filter/lean_micro_slo_value_gate:
+    metrics:
+      datapoint:
+        - 'metric.name == "process.cpu.utilization" and value_double < ${env:IDLE_CPU_THRESHOLD_LEAN_MICRO:-0.05}'
+        - 'metric.name == "process.memory.usage"    and value_int   < ${env:IDLE_RSS_THRESHOLD_LEAN_MICRO:-52428800}'
 
-  # Transform matched metrics using metricstransform processor for lean profile
-  metricstransform/lean:
-    transforms:
-      # Aggregate process CPU metrics by executable with higher thresholds
-      - include: process.cpu.utilization
-        action: update
-        operations:
-          - action: aggregate_labels
-            label_set: ["exe_name", "host.name", "os.type"]
-            aggregation_type: sum
-
-      # Aggregate process memory metrics by executable with higher thresholds
-      - include: process.memory.usage
-        action: update
-        operations:
-          - action: aggregate_labels
-            label_set: ["exe_name", "host.name", "os.type"]
-            aggregation_type: sum
-
-  attributes/ultra:
-    actions:
-      - key: benchmark.profile
-        value: "ultra"
-        action: upsert
-      - key: benchmark.demo_id
-        value: ${env:DEMO_ID:-demo-default}
-        action: upsert
-      - key: benchmark.collection_interval
-        value: "5s"
-        action: upsert
-
-  attributes/balanced:
-    actions:
-      - key: benchmark.profile
-        value: "balanced"
-        action: upsert
-      - key: benchmark.demo_id
-        value: ${env:DEMO_ID:-demo-default}
-        action: upsert
-      - key: benchmark.collection_interval
-        value: "30s"
-        action: upsert
-
-  attributes/optimized:
-    actions:
-      - key: benchmark.profile
-        value: "optimized"
-        action: upsert
-      - key: benchmark.demo_id
-        value: ${env:DEMO_ID:-demo-default}
-        action: upsert
-      - key: benchmark.collection_interval
-        value: "60s"
-        action: upsert
-
-  attributes/lean:
-    actions:
-      - key: benchmark.profile
-        value: "lean"
-        action: upsert
-      - key: benchmark.demo_id
-        value: ${env:DEMO_ID:-demo-default}
-        action: upsert
-      - key: benchmark.collection_interval
-        value: "120s"
-        action: upsert
-
-  attributes/micro:
-    actions:
-      - key: benchmark.profile
-        value: "micro"
-        action: upsert
-      - key: benchmark.demo_id
-        value: ${env:DEMO_ID:-demo-default}
-        action: upsert
-      - key: benchmark.collection_interval
-        value: "300s"
-        action: upsert
-
+###############################################################################
+# 3.  EXPORTER – Single HTTP endpoint, compression & delta temporality via ENV
+###############################################################################
 exporters:
   otlphttp:
     endpoint: ${env:OTEL_EXPORTER_OTLP_ENDPOINT:-https://otlp.nr-data.net}
     headers:
       api-key: ${env:NEW_RELIC_LICENSE_KEY}
     compression: ${env:OTEL_EXPORTER_OTLP_COMPRESSION:-zstd}
+    # For temporality, rely on global OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=delta
+    # This makes cumulativetodelta processor redundant if SDKs/receivers send cumulative counters.
 
+###############################################################################
+# 4.  PIPELINES – Gated by NR_USE_* environment variables (using OTel v0.86+ 'if:' syntax)
+###############################################################################
 service:
-  extensions: [health_check]
   pipelines:
+    # --- Optional: Base system metrics pipeline (always on, separate from process profiles) ---
+    # metrics/system:
+    #   receivers: [hostmetrics_system_base] # If defined above
+    #   processors: [memory_limiter, resourcedetection, resourcedetection/cloud, resourcedetection/env, batch]
+    #   exporters: [otlphttp]
+
+    # ---------- ULTRA (Full Fidelity, 5s interval) ----------
     metrics/ultra:
-      receivers: [hostmetrics/ultra]
-      processors:
-        - memory_limiter
-        - resourcedetection
-        - filter/process
-        - attributes/ultra
-        - batch
-      exporters: [otlphttp]
-      # This pipeline is enabled only when NR_USE_ULTRA=true
-      enabled: ${env:NR_USE_ULTRA:-false}
+      if: ${env:NR_USE_ULTRA:-false} # Default to false
+      receivers:  [hostmetrics/ultra]
+      processors: [memory_limiter,
+                   resourcedetection, resourcedetection/cloud, resourcedetection/env,
+                   attributes/tag_ultra,
+                   batch]
+      exporters:  [otlphttp]
 
+    # ---------- BALANCED (PID-Aware, 30s interval) --------
     metrics/balanced:
-      receivers: [hostmetrics/balanced]
-      processors:
-        - memory_limiter
-        - resourcedetection
-        - filter/process
-        - attributes/balanced
-        - batch
-      exporters: [otlphttp]
-      # This pipeline is enabled only when NR_USE_BALANCED=true
-      enabled: ${env:NR_USE_BALANCED:-false}
+      if: ${env:NR_USE_BALANCED:-true} # Default to true
+      receivers:  [hostmetrics/balanced]
+      processors: [memory_limiter,
+                   attributes/balanced_drop_long_cli,
+                   filter/balanced_idle_gate,
+                   resourcedetection, resourcedetection/cloud, resourcedetection/env,
+                   attributes/tag_balanced,
+                   batch]
+      exporters:  [otlphttp]
 
+    # ---------- OPTIMIZED (Executable-Aggregated, 60s interval) ---
     metrics/optimized:
-      receivers: [hostmetrics/optimized]
-      processors:
-        - memory_limiter
-        - resourcedetection
-        - filter/process
-        - metricstransform/optimized
-        - attributes/optimized
-        - batch
-      exporters: [otlphttp]
-      # This pipeline is enabled only when NR_USE_OPTIMIZED=true
-      enabled: ${env:NR_USE_OPTIMIZED:-false}
+      if: ${env:NR_USE_OPTIMIZED:-false} # Default to false
+      receivers:  [hostmetrics/optimized]
+      processors: [memory_limiter,
+                   attributes/optim_drop_pid_and_cli, # Combined drop for OPTIMIZED
+                   metricstransform/optim_aggregate_exe,
+                   filter/optim_idle_gate,
+                   resourcedetection, resourcedetection/cloud, resourcedetection/env,
+                   attributes/tag_optimized,
+                   batch]
+      exporters:  [otlphttp]
 
+    # ---------- LEAN (SLO-focused Aggregated, 120s interval) ---
     metrics/lean:
-      receivers: [hostmetrics/lean]
-      processors:
-        - memory_limiter
-        - resourcedetection
-        - filter/process
-        - metricstransform/lean
-        - attributes/lean
-        - batch
-      exporters: [otlphttp]
-      # This pipeline is enabled only when NR_USE_LEAN=true
-      enabled: ${env:NR_USE_LEAN:-false}
+      if: ${env:NR_USE_LEAN:-false} # Default to false
+      receivers:  [hostmetrics/lean]
+      processors: [memory_limiter,
+                   attributes/lean_micro_drop_pid_and_cli, # Shared logic
+                   metricstransform/lean_micro_aggregate_exe, # Shared logic
+                   filter/lean_micro_slo_value_gate, # Shared logic
+                   resourcedetection, resourcedetection/cloud, resourcedetection/env,
+                   attributes/tag_lean,
+                   batch]
+      exporters:  [otlphttp]
 
+    # ---------- MICRO (Minimal SLO Aggregated, 300s interval) ---
     metrics/micro:
-      receivers: [hostmetrics/micro]
-      processors:
-        - memory_limiter
-        - resourcedetection
-        - filter/process
-        - attributes/micro
-        - batch
-      exporters: [otlphttp]
-      # This pipeline is enabled only when NR_USE_MICRO=true
-      enabled: ${env:NR_USE_MICRO:-false}
+      if: ${env:NR_USE_MICRO:-false} # Default to false
+      receivers:  [hostmetrics/micro]
+      processors: [memory_limiter,
+                   attributes/lean_micro_drop_pid_and_cli, # Shared logic
+                   metricstransform/lean_micro_aggregate_exe, # Shared logic
+                   filter/lean_micro_slo_value_gate, # Shared logic
+                   resourcedetection, resourcedetection/cloud, resourcedetection/env,
+                   attributes/tag_micro,
+                   batch]
+      exporters:  [otlphttp]
+
+  extensions: [health_check] # , pprof, zpages, prometheus] # Add other extensions if needed & available
