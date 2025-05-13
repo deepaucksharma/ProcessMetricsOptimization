@@ -19,6 +19,14 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.21'
+      
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
       - name: Run tests for all modules
         run: |
@@ -26,14 +34,32 @@ jobs:
           echo "use (./core/reservoir ./)" > go.work
           make test
 
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Run linters
+        run: make lint
+
   build:
     name: Build Image
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, lint]
     if: ${{ github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -50,15 +76,37 @@ jobs:
           else
             echo "VERSION=latest" >> $GITHUB_OUTPUT
           fi
+      
+      - name: Extract metadata
+        id: meta
+        run: |
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+          echo "GIT_COMMIT=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Build and push image
+      - name: Build and push main image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./build/docker/Dockerfile.multistage
+          file: ./build/docker/Dockerfile.streamlined
+          target: production
           build-args: |
-            NRDOT_VERSION=v0.91.0
-            RS_VERSION=${{ steps.version.outputs.VERSION }}
+            VERSION=${{ steps.version.outputs.VERSION }}
+            BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
+            GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/nrdot-reservoir:${{ steps.version.outputs.VERSION }}
+            ghcr.io/${{ github.repository_owner }}/trace-reservoir:${{ steps.version.outputs.VERSION }}
+      
+      - name: Build and push benchmark image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./build/docker/Dockerfile.streamlined
+          target: benchmark
+          build-args: |
+            VERSION=${{ steps.version.outputs.VERSION }}
+            BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
+            GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/trace-reservoir-bench:${{ steps.version.outputs.VERSION }}

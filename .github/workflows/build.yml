@@ -1,4 +1,4 @@
-name: Build and Publish NR-DOT with Reservoir Sampler
+name: Build and Publish Images
 
 on:
   push:
@@ -33,20 +33,55 @@ jobs:
         uses: docker/setup-buildx-action@v2
         
       - name: Login to GitHub Container Registry
-        if: github.ref_type == 'tag'
+        if: github.ref_type == 'tag' || github.ref == 'refs/heads/main'
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        run: |
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+          echo "GIT_COMMIT=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           
-      - name: Build & push
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            # For tags, use the tag name as version
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            echo "TAGS=ghcr.io/${{ github.repository_owner }}/trace-reservoir:${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          elif [[ $GITHUB_REF == refs/heads/main ]]; then
+            # For main branch, use latest
+            echo "VERSION=latest" >> $GITHUB_OUTPUT
+            echo "TAGS=ghcr.io/${{ github.repository_owner }}/trace-reservoir:latest" >> $GITHUB_OUTPUT
+          else
+            # For pull requests, use PR number
+            echo "VERSION=pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+            echo "TAGS=ghcr.io/${{ github.repository_owner }}/trace-reservoir:pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Build & push main image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: build/docker/Dockerfile.multistage
+          file: build/docker/Dockerfile.streamlined
+          target: production
           build-args: |
-            NRDOT_VERSION=v0.91.0
-            RS_VERSION=${{ github.ref_type == 'tag' && github.ref_name || 'v0.1.0' }}
-          push: ${{ github.ref_type == 'tag' }}
-          tags: ghcr.io/${{ github.repository_owner }}/nrdot-reservoir:${{ github.ref_name }}
+            VERSION=${{ steps.meta.outputs.VERSION }}
+            BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
+            GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
+          push: ${{ github.ref_type == 'tag' || github.ref == 'refs/heads/main' }}
+          tags: ${{ steps.meta.outputs.TAGS }}
+      
+      - name: Build & push benchmark image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: build/docker/Dockerfile.streamlined
+          target: benchmark
+          build-args: |
+            VERSION=${{ steps.meta.outputs.VERSION }}
+            BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
+            GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
+          push: ${{ github.ref_type == 'tag' || github.ref == 'refs/heads/main' }}
+          tags: ghcr.io/${{ github.repository_owner }}/trace-reservoir-bench:${{ steps.meta.outputs.VERSION }}
