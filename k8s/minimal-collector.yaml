@@ -34,7 +34,7 @@ data:
       attributes:
         actions:
           - key: benchmark.demo_id
-            value: "test-minimal"
+            value: "k8s-demo"
             action: upsert
 
     exporters:
@@ -56,24 +56,20 @@ data:
 
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
-  name: nrdot-collector-minimal
+  name: nrdot-collector-host
   namespace: observability
   labels:
-    app: nrdot-collector-minimal
-    profile: minimal
+    app: nrdot-collector-host
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app: nrdot-collector-minimal
-      profile: minimal
+      app: nrdot-collector-host
   template:
     metadata:
       labels:
-        app: nrdot-collector-minimal
-        profile: minimal
+        app: nrdot-collector-host
     spec:
       serviceAccountName: nrdot-collector
       containers:
@@ -90,10 +86,16 @@ spec:
               key: NEW_RELIC_LICENSE_KEY
         - name: HOST_ROOT_PATH
           value: /hostfs
+        - name: DEMO_ID
+          value: "k8s-demo"
+        - name: NEW_RELIC_METADATA_DEMO_ID
+          value: "k8s-demo"
+        - name: NEW_RELIC_DISPLAY_NAME 
+          value: "k8s-collector"
         - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
-          value: "delta"
+          value: delta
         - name: OTEL_EXPORTER_OTLP_COMPRESSION
-          value: "zstd"
+          value: zstd
         volumeMounts:
         - name: hostfs
           mountPath: /hostfs
@@ -118,21 +120,3 @@ spec:
       - name: config
         configMap:
           name: minimal-collector-config
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: nrdot-collector-minimal-metrics
-  namespace: observability
-  labels:
-    app: nrdot-collector-minimal
-spec:
-  type: ClusterIP
-  ports:
-  - name: metrics
-    port: 8888
-    protocol: TCP
-    targetPort: 8888
-  selector:
-    app: nrdot-collector-minimal
