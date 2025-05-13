@@ -2,7 +2,7 @@
 
 A one-command demo environment for New Relic DOT (Distribution of Telemetry) with multiple collection profiles, showcasing Google's Online Boutique and Weaveworks' Sock Shop microservices.
 
-> **ℹ️ Important Note**: This project uses New Relic DOT 1.1.0, which is based on OpenTelemetry Collector v0.125.0 and has specific configuration requirements. The configuration approach has been updated to ensure compatibility.
+> **ℹ️ Important Note**: This project uses New Relic DOT 1.1.0, which is based on OpenTelemetry Collector v0.125.0.
 
 ## Overview
 
@@ -42,7 +42,6 @@ This project provides a simple way to spin up a complete observability demo envi
 
 ### Kubernetes Mode
 - Kind (Kubernetes in Docker)
-- Helm
 - kubectl
 - New Relic License Key
 
@@ -65,10 +64,7 @@ export NR_KEY=your_new_relic_license_key
 # Validate configuration before running
 make validate
 
-# Start the environment with simplified configuration (recommended)
-make simple-up
-
-# Or start with the original configuration
+# Start the environment with the default profile (balanced)
 make up
 
 # Follow collector logs
@@ -80,64 +76,62 @@ make query
 # Get link to filtered dashboard
 make dashboard
 
-# Test connectivity to New Relic endpoints
-./test-nr-connectivity.sh
-
 # When finished
 make down
 ```
 
-## Configuration Options
+## Configuration Approaches
 
-### Data Collection Profiles
+This demo lab provides two different approaches to configuring the NRDOT collector:
 
-#### Standard Configuration (using environment variables)
+### 1. Multi-Pipeline Profile Configuration (Default)
+
+The default approach uses a single YAML configuration file (`config.yaml`) with multiple conditional pipelines, each optimized for a specific profile. The appropriate pipeline is activated based on environment variables.
+
 ```bash
-# Ultra profile (maximum data, 5s interval)
-make down
-PROFILE=ultra make simple-up
+# Start with multi-pipeline configuration (balanced profile by default)
+make up
 
-# Balanced profile (recommended, 30s interval, ~8x reduction)
-make down
-PROFILE=balanced make simple-up
-
-# Optimized profile (60s interval, ~40-60x reduction)
-make down
-PROFILE=optimized make simple-up
-
-# Lean profile (120s interval, ~90x reduction)
-make down
-PROFILE=lean make simple-up
-
-# Micro profile (300s interval, ~250x+ reduction)
-make down
-PROFILE=micro make simple-up
-```
-
-#### Legacy Configuration (original approach)
-```bash
-# Ultra profile (maximum data, 5s interval)
-make down
+# Change the profile
 PROFILE=ultra make up
-
-# Balanced profile (recommended, 30s interval, ~8x reduction)
-make down
-PROFILE=balanced make up
-
-# Optimized profile (60s interval, ~40-60x reduction)
-make down
 PROFILE=optimized make up
-
-# Lean profile (120s interval, ~90x reduction)
-make down
 PROFILE=lean make up
-
-# Micro profile (300s interval, ~250x+ reduction)
-make down
 PROFILE=micro make up
 ```
 
-### Deployment Modes
+This approach is used by:
+- `make up` (Docker)
+- `MODE=kind make up` (Kubernetes)
+- GitHub Actions continuous monitoring
+
+### 2. Simplified Configuration
+
+The simplified approach uses a more streamlined configuration file (`updated-config.yaml`) with a single pipeline that adapts based on environment variables.
+
+```bash
+# Start with simplified configuration
+make simple-up
+
+# Change the profile
+PROFILE=ultra make simple-up
+PROFILE=optimized make simple-up
+PROFILE=lean make simple-up
+PROFILE=micro make simple-up
+```
+
+### 3. All Profiles Simultaneously
+
+For comparison purposes, you can run all five profiles in parallel:
+
+```bash
+# Run all profiles in Docker
+make all-profiles
+
+# Run all profiles in Kubernetes
+make k8s-all-profiles
+```
+
+## Deployment Modes
 
 ```bash
 # Docker mode (default)
@@ -214,12 +208,17 @@ For non-container deployments on VMs:
    cat > /etc/systemd/system/nrdot-collector-host.service.d/local.conf << EOL
    [Service]
    Environment="HOST_ROOT_PATH=/hostfs"
-   Environment="BENCHMARK_PROFILE=lean"
    
-   # Use simplified configuration variables
-   Environment="COLLECTION_INTERVAL=120s"
-   Environment="INCLUDE_THREADS=false"
-   Environment="INCLUDE_FDS=false"
+   # Multi-pipeline configuration
+   Environment="PROFILE=lean"
+   Environment="NR_USE_LEAN=true"
+   
+   # Or use simplified configuration
+   # Environment="COLLECTION_INTERVAL=120s"
+   # Environment="INCLUDE_THREADS=false"
+   # Environment="INCLUDE_FDS=false"
+   
+   # Common settings
    Environment="MEM_LIMIT_MIB=256"
    Environment="NEW_RELIC_LICENSE_KEY=your-license-key"
    EOL
@@ -242,11 +241,11 @@ For non-container deployments on VMs:
 ```
 .
 ├── Makefile                      # Main orchestration with multiple profiles
-├── docker-compose.yml            # Docker deployment of services
-├── docker-compose-simple.yml     # Simplified Docker deployment 
-├── config.yaml                   # New Relic DOT collector with 5 profiles
+├── docker-compose.yml            # Docker deployment with multi-pipeline config
+├── docker-compose-all-profiles.yml # Deploy all profiles simultaneously
+├── docker-compose-simplified.yml # Docker deployment with simplified config
+├── config.yaml                   # Multi-pipeline configuration (5 profiles)
 ├── updated-config.yaml           # Simplified configuration using env vars
-├── test-nr-connectivity.sh       # Tool to test New Relic connectivity
 ├── .env.example                  # Example environment variables
 ├── .github/                      # GitHub Actions integration
 │   ├── actions/start-lab/        # Reusable composite action
@@ -256,11 +255,20 @@ For non-container deployments on VMs:
 │       ├── matrix-lab.yml        # Approach 2: Matrix fan-out
 │       └── continuous-lab.yml    # Approach 3: Self-hosted continuous
 └── k8s/                          # Kubernetes configuration files
-    ├── namespace.yaml            # Observability namespace
+    ├── base/                     # Kustomize base configuration
+    │   ├── kustomization.yaml    # Base kustomization file
+    │   ├── namespace.yaml        # Observability namespace
+    │   └── collector-daemonset.yaml # Base collector DaemonSet
+    ├── overlays/                 # Kustomize profile-specific overlays
+    │   ├── ultra/                # Ultra profile overlay
+    │   ├── balanced/             # Balanced profile overlay
+    │   ├── optimized/            # Optimized profile overlay
+    │   ├── lean/                 # Lean profile overlay
+    │   └── micro/                # Micro profile overlay
     ├── boutique-helm-values.yaml # Helm values for Online Boutique
     ├── sockshop-helm-values.yaml # Helm values for Sock Shop
-    ├── collector-daemonset.yaml  # New Relic DOT collector DaemonSet
-    ├── collector-service.yaml    # Service for the collector
+    ├── minimal-demo.yaml         # Simple demo application (no Helm required)
+    ├── all-profiles-deployments.yaml # Deploy all profiles to K8s
     └── test-connectivity.yaml    # Kubernetes job to test connectivity
 ```
 
@@ -272,16 +280,16 @@ This lab runs the collector with `pid: host` and mounts the host filesystem, whi
 
 ### Common Issues
 
-1. **403 Errors in Logs**: If you see HTTP 403 errors when the collector tries to send data to New Relic, check your license key. Use the `test-nr-connectivity.sh` script to verify connectivity.
+1. **403 Errors in Logs**: If you see HTTP 403 errors when the collector tries to send data to New Relic, check your license key.
 
-2. **Configuration Parse Errors**: NRDOT 1.1.0 is based on OpenTelemetry Collector v0.125.0, which doesn't support the `if:` condition syntax in service pipelines. Use the simplified configuration approach with `make simple-up` to avoid this issue.
+2. **Filesystem Errors**: When running in a container, you may see errors about not being able to read filesystem usage. These are generally non-critical and won't prevent the collector from functioning properly.
 
-3. **Filesystem Errors**: When running in a container, you may see errors about not being able to read filesystem usage. These are generally non-critical and won't prevent the collector from functioning properly.
-
-4. **Missing Metrics**: If metrics aren't appearing in New Relic:
+3. **Missing Metrics**: If metrics aren't appearing in New Relic:
    - Check collector logs for errors with `make logs`
    - Verify the collection interval matches your profile (Ultra: 5s, Balanced: 30s, etc.)
    - Confirm your license key has the right permissions for metrics ingest
+
+4. **Kubernetes Profile Selection**: If the profile isn't changing in Kubernetes mode, ensure you're using the latest version of kubectl with Kustomize support. The Kustomize approach is used to dynamically select the profile.
 
 ## License
 
