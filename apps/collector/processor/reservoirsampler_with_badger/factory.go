@@ -2,14 +2,16 @@ package reservoirsampler_with_badger
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/deepaucksharma/reservoir"
 	"github.com/deepaucksharma/trace-aware-reservoir-otel/apps/collector/adapter"
 	"github.com/deepaucksharma/trace-aware-reservoir-otel/apps/collector/persistence"
-	"github.com/deepaucksharma/trace-aware-reservoir-otel/apps/collector/processor"
+	procimpl "github.com/deepaucksharma/trace-aware-reservoir-otel/apps/collector/processor"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/processor"
+	"go.uber.org/zap"
 )
 
 // NewFactoryWithBadger creates a new processor factory for the reservoir sampler
@@ -17,7 +19,7 @@ import (
 func NewFactoryWithBadger() processor.Factory {
 	return processor.NewFactory(
 		component.MustNewType("reservoir_sampler"),
-		reservoir.CreateDefaultConfig,
+		reservoir.DefaultConfig,
 		processor.WithTraces(createTracesProcessor, component.StabilityLevelBeta),
 	)
 }
@@ -34,9 +36,8 @@ func createTracesProcessor(
 	logger := ps.TelemetrySettings.Logger
 
 	// Create metrics manager
-	metricsManager := processor.NewMetricsManager(
+	metricsManager := procimpl.NewMetricsManager(
 		ctx,
-		ps.TelemetrySettings.MeterProvider.Meter("reservoirsampler"),
 	)
 
 	// Register metrics
@@ -64,11 +65,11 @@ func createTracesProcessor(
 		}
 	} else {
 		// Create a no-op checkpoint manager
-		checkpointManager = processor.NewNilCheckpointManager()
+		checkpointManager = procimpl.NewNilCheckpointManager()
 	}
 
 	// Create the processor
-	return processor.NewReservoirProcessor(
+	return procimpl.NewReservoirProcessor(
 		ctx,
 		ps.TelemetrySettings,
 		coreCfg,

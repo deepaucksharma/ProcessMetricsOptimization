@@ -4,7 +4,7 @@ WORKDIR /src
 COPY . .
 
 # Build our verify script
-RUN go build -o /verify ./verify/verify.go
+RUN go build -o /verify ./verify/main.go
 
 # Build the collector - simplified version
 RUN go build -o /otelcol-reservoir ./apps/collector

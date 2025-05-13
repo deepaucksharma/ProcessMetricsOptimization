@@ -21,22 +21,37 @@ func NewOTelPDataAdapter() *OTelPDataAdapter {
 
 // ConvertSpan converts an OTEL span to a domain model span
 func (a *OTelPDataAdapter) ConvertSpan(
-	span ptrace.Span,
-	resource pcommon.Resource,
-	scope pcommon.InstrumentationScope,
+	span interface{},
+	resource interface{},
+	scope interface{},
 ) reservoir.SpanData {
+	// Type assertion
+	pSpan, ok := span.(ptrace.Span)
+	if !ok {
+		return reservoir.SpanData{}
+	}
+	
+	pResource, ok := resource.(pcommon.Resource)
+	if !ok {
+		return reservoir.SpanData{}
+	}
+	
+	pScope, ok := scope.(pcommon.InstrumentationScope)
+	if !ok {
+		return reservoir.SpanData{}
+	}
 	// Extract span data
-	traceID := span.TraceID().String()
-	spanID := span.SpanID().String()
+	traceID := pSpan.TraceID().String()
+	spanID := pSpan.SpanID().String()
 	
 	var parentSpanID string
-	if !span.ParentSpanID().IsEmpty() {
-		parentSpanID = span.ParentSpanID().String()
+	if !pSpan.ParentSpanID().IsEmpty() {
+		parentSpanID = pSpan.ParentSpanID().String()
 	}
 	
 	// Extract attributes
 	attrs := make(map[string]interface{})
-	span.Attributes().Range(func(k string, v pcommon.Value) bool {
+	pSpan.Attributes().Range(func(k string, v pcommon.Value) bool {
 		switch v.Type() {
 		case pcommon.ValueTypeStr:
 			attrs[k] = v.Str()
@@ -52,9 +67,9 @@ func (a *OTelPDataAdapter) ConvertSpan(
 	})
 	
 	// Convert events
-	events := make([]reservoir.Event, span.Events().Len())
-	for i := 0; i < span.Events().Len(); i++ {
-		srcEvent := span.Events().At(i)
+	events := make([]reservoir.Event, pSpan.Events().Len())
+	for i := 0; i < pSpan.Events().Len(); i++ {
+		srcEvent := pSpan.Events().At(i)
 		eventAttrs := make(map[string]interface{})
 		
 		srcEvent.Attributes().Range(func(k string, v pcommon.Value) bool {
@@ -81,9 +96,9 @@ func (a *OTelPDataAdapter) ConvertSpan(
 	}
 	
 	// Convert links
-	links := make([]reservoir.Link, span.Links().Len())
-	for i := 0; i < span.Links().Len(); i++ {
-		srcLink := span.Links().At(i)
+	links := make([]reservoir.Link, pSpan.Links().Len())
+	for i := 0; i < pSpan.Links().Len(); i++ {
+		srcLink := pSpan.Links().At(i)
 		linkAttrs := make(map[string]interface{})
 		
 		srcLink.Attributes().Range(func(k string, v pcommon.Value) bool {
@@ -111,7 +126,7 @@ func (a *OTelPDataAdapter) ConvertSpan(
 	
 	// Create resource info
 	resourceAttrs := make(map[string]interface{})
-	resource.Attributes().Range(func(k string, v pcommon.Value) bool {
+	pResource.Attributes().Range(func(k string, v pcommon.Value) bool {
 		switch v.Type() {
 		case pcommon.ValueTypeStr:
 			resourceAttrs[k] = v.Str()
@@ -132,8 +147,8 @@ func (a *OTelPDataAdapter) ConvertSpan(
 	
 	// Create scope info
 	scopeInfo := reservoir.ScopeInfo{
-		Name:    scope.Name(),
-		Version: scope.Version(),
+		Name:    pScope.Name(),
+		Version: pScope.Version(),
 	}
 	
 	// Create the span data object
@@ -141,14 +156,14 @@ func (a *OTelPDataAdapter) ConvertSpan(
 		ID:           spanID,
 		TraceID:      traceID,
 		ParentID:     parentSpanID,
-		Name:         span.Name(),
-		StartTime:    span.StartTimestamp().AsTime().UnixNano(),
-		EndTime:      span.EndTimestamp().AsTime().UnixNano(),
+		Name:         pSpan.Name(),
+		StartTime:    pSpan.StartTimestamp().AsTime().UnixNano(),
+		EndTime:      pSpan.EndTimestamp().AsTime().UnixNano(),
 		Attributes:   attrs,
 		Events:       events,
 		Links:        links,
-		StatusCode:   int(span.Status().Code()),
-		StatusMsg:    span.Status().Message(),
+		StatusCode:   int(pSpan.Status().Code()),
+		StatusMsg:    pSpan.Status().Message(),
 		ResourceInfo: resourceInfo,
 		ScopeInfo:    scopeInfo,
 	}

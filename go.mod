@@ -8,10 +8,8 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	go.opentelemetry.io/collector/component v0.91.0
 	go.opentelemetry.io/collector/consumer v0.91.0
-	go.opentelemetry.io/collector/exporter v0.91.0
 	go.opentelemetry.io/collector/pdata v1.0.0
 	go.opentelemetry.io/collector/processor v0.91.0
-	go.opentelemetry.io/collector/receiver v0.91.0
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.26.0
 )

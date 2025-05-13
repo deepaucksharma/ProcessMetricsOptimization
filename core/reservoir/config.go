@@ -4,10 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"go.opentelemetry.io/collector/component"
 )
 
 // Config defines configuration for the reservoir sampler processor.
 type Config struct {
+	// OTel Collector component configuration
+	component.Config `mapstructure:",squash"`
+
 	// SizeK is the max number of spans to store in the reservoir
 	SizeK int `mapstructure:"size_k"`
 
