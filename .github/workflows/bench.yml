@@ -1,0 +1,89 @@
+name: Benchmarks
+
+on:
+  schedule:
+    - cron: "0 4 * * *" # Nightly at 4 AM UTC
+  workflow_dispatch: # Allows manual triggering
+  push:
+    branches:
+      - main
+    paths:
+      - 'bench/**'
+      - 'core/**'
+      - 'apps/**'
+      - 'infra/**'
+      - 'build/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Makefile'
+      - '.github/workflows/bench.yml'
+
+jobs:
+  run-benchmarks:
+    name: Run E2E Benchmark
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # For git commands to determine version/tag
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22'
+
+      - name: Create Go workspace
+        run: |
+          echo "use (./core/reservoir ./bench/runner ./)" > go.work
+          go work sync
+
+      - name: Set up KinD Cluster
+        uses: engineerd/setup-kind@v0.9.0
+        with:
+          version: v0.20.0
+          config: infra/kind/kind-config.yaml
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.12.0
+
+      - name: Build Collector Docker Image
+        id: build_image
+        run: |
+          # Use short SHA for image tag in CI benchmark runs
+          IMAGE_TAG_SHA=$(git rev-parse --short HEAD)
+          echo "IMAGE_TAG_SHA=${IMAGE_TAG_SHA}" >> $GITHUB_OUTPUT
+          # Build the image using the Makefile
+          make image VERSION=${IMAGE_TAG_SHA}
+        env:
+          NEW_RELIC_KEY: "DUMMY_FOR_BUILD"
+
+      - name: Load image into KinD
+        run: |
+          IMAGE_TAG_SHA=${{ steps.build_image.outputs.IMAGE_TAG_SHA }}
+          kind load docker-image ghcr.io/${{ github.repository_owner }}/nrdot-reservoir:${IMAGE_TAG_SHA}
+
+      - name: Run Benchmarks
+        run: |
+          IMAGE_TAG_SHA=${{ steps.build_image.outputs.IMAGE_TAG_SHA }}
+          # Run benchmarks using the Go runner
+          make bench IMAGE=ghcr.io/${{ github.repository_owner }}/nrdot-reservoir:${IMAGE_TAG_SHA} DURATION=15m
+        env:
+          NEW_RELIC_KEY: ${{ secrets.BENCHMARK_NEW_RELIC_KEY }}
+
+      - name: Upload KPI Results CSV
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kpi-results
+          path: /tmp/kpi_*.csv
+          retention-days: 7
+
+      - name: Clean up benchmark resources
+        if: always()
+        run: |
+          make bench-clean
