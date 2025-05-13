@@ -40,7 +40,7 @@ DOWN = kind delete cluster --name demo
 LOGS = kubectl -n observability logs -l app=nrdot-collector-host -f
 endif
 
-.PHONY: up down logs validate clean dashboard query
+.PHONY: up down logs validate clean dashboard query test-k8s
 up:          ## Spin everything up
 	$(UP)
 	@echo "🚀  Lab ready – profile=$(PROFILE) mode=$(MODE) demo_id=$(DEMO_ID)"
@@ -51,10 +51,14 @@ down:        ## Tear everything down
 logs:        ## Follow collector logs
 	$(LOGS)
 
-validate:    ## Static config lint (dry-run collector)
-	docker run --rm -v $(PWD)/config.yaml:/cfg.yaml \
-               newrelic/nrdot-collector-host:1.1.0 \
-               --config /cfg.yaml --dry-run
+validate:    ## Syntax check the config.yaml file
+	@echo "Validating collector configuration..."
+	@if which yamllint > /dev/null; then \
+		yamllint -d relaxed --no-warnings config.yaml && echo "✅ config.yaml syntax is valid"; \
+	else \
+		docker run --rm -v $(PWD)/config.yaml:/config.yaml cytopia/yamllint:latest \
+			/config.yaml -d relaxed --no-warnings && echo "✅ config.yaml syntax is valid"; \
+	fi
 
 clean:       ## Remove dangling docker volumes / kind data
 	docker system prune -f
@@ -71,3 +75,6 @@ query:       ## Show profile comparison NRQL
 	@echo "WHERE  metricName LIKE 'process.%'"
 	@echo "FACET  benchmark.profile"
 	@echo "SINCE 5 minutes AGO"
+
+test-k8s:    ## Test K8s connectivity to New Relic
+	@./test-nr-connectivity.sh

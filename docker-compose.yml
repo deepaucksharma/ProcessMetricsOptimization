@@ -3,21 +3,165 @@ networks:
 
 services:
   ###############################################################################
-  # Basic demo - Alpine Linux for simplicity
+  # Google's Online Boutique microservices demo app
   ###############################################################################
-  alpine:
-    image: alpine:latest
-    command: sh -c "while true; do echo 'Running demo...'; sleep 60; done"
+  boutique:
+    image: ghcr.io/google-cloud-platform/microservices-demo/frontend:v0.8.0
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - PRODUCT_CATALOG_SERVICE_ADDR=boutique-productcatalogservice:3550
+      - CURRENCY_SERVICE_ADDR=boutique-currencyservice:7000
+      - CART_SERVICE_ADDR=boutique-cartservice:7070
+      - RECOMMENDATION_SERVICE_ADDR=boutique-recommendationservice:8080
+      - SHIPPING_SERVICE_ADDR=boutique-shippingservice:50051
+      - CHECKOUT_SERVICE_ADDR=boutique-checkoutservice:5050
+      - AD_SERVICE_ADDR=boutique-adservice:9555
+      - ENV_PLATFORM=local
+    networks: [demo_net]
+    depends_on:
+      - boutique-productcatalogservice
+      - boutique-currencyservice
+      - boutique-cartservice
+      - boutique-recommendationservice
+      - boutique-shippingservice
+      - boutique-checkoutservice
+      - boutique-adservice
+
+  boutique-productcatalogservice:
+    image: ghcr.io/google-cloud-platform/microservices-demo/productcatalogservice:v0.8.0
     networks: [demo_net]
 
+  boutique-currencyservice:
+    image: ghcr.io/google-cloud-platform/microservices-demo/currencyservice:v0.8.0
+    networks: [demo_net]
+
+  boutique-cartservice:
+    image: ghcr.io/google-cloud-platform/microservices-demo/cartservice:v0.8.0
+    networks: [demo_net]
+
+  boutique-recommendationservice:
+    image: ghcr.io/google-cloud-platform/microservices-demo/recommendationservice:v0.8.0
+    networks: [demo_net]
+
+  boutique-shippingservice:
+    image: ghcr.io/google-cloud-platform/microservices-demo/shippingservice:v0.8.0
+    networks: [demo_net]
+
+  boutique-checkoutservice:
+    image: ghcr.io/google-cloud-platform/microservices-demo/checkoutservice:v0.8.0
+    networks: [demo_net]
+
+  boutique-adservice:
+    image: ghcr.io/google-cloud-platform/microservices-demo/adservice:v0.8.0
+    networks: [demo_net]
+
+  boutique-loadgenerator:
+    image: ghcr.io/google-cloud-platform/microservices-demo/loadgenerator:v0.8.0
+    environment:
+      - FRONTEND_ADDR=boutique:8080
+      - USERS=10
+    networks: [demo_net]
+    depends_on:
+      - boutique
+
   ###############################################################################
-  # NRDOT host collector (simplified for demo)
+  # Weaveworks' Sock Shop microservices demo app
+  ###############################################################################
+  sockshop-front-end:
+    image: weaveworksdemos/front-end:0.3.12
+    ports:
+      - "8079:8079"
+    environment:
+      - CATALOGUE_URL=http://sockshop-catalogue
+      - USER_URL=http://sockshop-user
+      - CART_URL=http://sockshop-cart
+      - SHIPPING_URL=http://sockshop-shipping
+      - PAYMENT_URL=http://sockshop-payment
+      - ORDERS_URL=http://sockshop-orders
+    networks: [demo_net]
+    depends_on:
+      - sockshop-catalogue
+      - sockshop-user
+      - sockshop-cart
+      - sockshop-shipping
+      - sockshop-payment
+      - sockshop-orders
+
+  sockshop-catalogue:
+    image: weaveworksdemos/catalogue:0.3.5
+    networks: [demo_net]
+
+  sockshop-user:
+    image: weaveworksdemos/user:0.4.7
+    networks: [demo_net]
+
+  sockshop-cart:
+    image: weaveworksdemos/cart:0.4.8
+    networks: [demo_net]
+
+  sockshop-shipping:
+    image: weaveworksdemos/shipping:0.4.8
+    networks: [demo_net]
+
+  sockshop-payment:
+    image: weaveworksdemos/payment:0.4.3
+    networks: [demo_net]
+
+  sockshop-orders:
+    image: weaveworksdemos/orders:0.4.7
+    networks: [demo_net]
+
+  sockshop-queue-master:
+    image: weaveworksdemos/queue-master:0.3.1
+    networks: [demo_net]
+
+  sockshop-loadtest:
+    image: weaveworksdemos/load-test:0.1.1
+    command: ["-h", "sockshop-front-end", "-r", "100", "-c", "10"]
+    networks: [demo_net]
+    depends_on:
+      - sockshop-front-end
+
+  ###############################################################################
+  # NRDOT host collector with 5-profile support
   ###############################################################################
   collector:
     image: newrelic/nrdot-collector-host:1.1.0
-    container_name: demo-local-collector
+    container_name: ${DEMO_ID:-demo-local}-collector-${PROFILE:-balanced}
+    network_mode: host
+    pid: host
+    user: root
     ports: 
-      - "8888:8888"  # For prometheus metrics
+      - "8888:8888"  # For health check/metrics
     volumes:
-      - ./simple-config.yaml:/etc/otel/config.yaml:ro
-    command: --config /etc/otel/config.yaml
+      - /:/hostfs:ro
+      - ./config.yaml:/etc/nrdot-collector-host/config.yaml:ro
+    environment:
+      # License key (required)
+      - NEW_RELIC_LICENSE_KEY=${NR_KEY:-replace_me}
+      
+      # Host information
+      - HOST_ROOT_PATH=/hostfs
+      
+      # Demo metadata
+      - DEMO_ID=${DEMO_ID:-demo-local}
+      - NEW_RELIC_METADATA_DEMO_ID=${DEMO_ID:-demo-local}
+      - NEW_RELIC_DISPLAY_NAME=${DEMO_ID:-demo-local}-collector
+      
+      # Global OTEL settings
+      - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=delta
+      - OTEL_EXPORTER_OTLP_COMPRESSION=zstd
+      
+      # Profile selection (set by Makefile)
+      - NR_USE_ULTRA=${NR_USE_ULTRA:-false}
+      - NR_USE_BALANCED=${NR_USE_BALANCED:-false}
+      - NR_USE_OPTIMIZED=${NR_USE_OPTIMIZED:-false}
+      - NR_USE_LEAN=${NR_USE_LEAN:-false}
+      - NR_USE_MICRO=${NR_USE_MICRO:-false}
+      
+      # Memory settings
+      - MEM_LIMIT_MIB=256
+    restart: unless-stopped
+    command: --config /etc/nrdot-collector-host/config.yaml

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nrdot-collector-metrics
+  namespace: observability
+  labels:
+    app: nrdot-collector-host
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 8888
+    protocol: TCP
+    targetPort: 8888
+  selector:
+    app: nrdot-collector-host
