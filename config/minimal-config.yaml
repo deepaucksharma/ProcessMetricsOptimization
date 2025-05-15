@@ -1,0 +1,114 @@
+# Minimal OpenTelemetry Collector Configuration (Compatible with basic otelcol)
+
+extensions:
+  health_check: {}
+
+receivers:
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization: {enabled: true}
+      memory:
+        metrics:
+          system.memory.usage: {enabled: true}
+      disk:
+        metrics:
+          system.disk.io: {enabled: true}
+      process:
+        mute_process_user_error: true
+        mute_process_exe_error: true
+        metrics:
+          process.cpu.utilization: {enabled: true}
+          process.memory.usage: {enabled: true}
+        include:
+          match_type: regexp
+          names: [".*"]
+        exclude:
+          match_type: regexp
+          names: ["NOMATCH_PATTERN_XYZ"]
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 250
+    spike_limit_mib: 150
+  
+  # Add trace-aware attributes
+  attributes:
+    actions:
+      - key: instrumentation.name
+        value: "opentelemetry"
+        action: upsert
+      - key: collector.name
+        value: "trace-aware-collector"
+        action: upsert
+      - key: trace.aware.collector
+        value: "true"
+        action: upsert
+      - key: trace.aware.version
+        value: "1.0"
+        action: upsert
+  
+  # Set resource information
+  resource:
+    attributes:
+      - key: service.name
+        value: "otel-collector-host"
+        action: upsert
+      - key: host.id
+        value: "host-collector-id"
+        action: upsert
+      - key: host.name
+        value: "otel-host"
+        action: upsert
+      - key: entity.type
+        value: "HOST"
+        action: upsert
+      - key: deployment.environment
+        value: "production"
+        action: upsert
+  
+  # Batch metrics before export
+  batch:
+    send_batch_size: 1000
+    timeout: 10s
+
+exporters:
+  otlphttp:
+    endpoint: "https://otlp.nr-data.net"
+    headers:
+      api-key: "${NEW_RELIC_LICENSE_KEY}"
+    compression: "gzip"
+    timeout: 30s
+    sending_queue:
+      enabled: true
+      num_consumers: 4
+      queue_size: 5000
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 5m
+
+  debug:
+    verbosity: detailed
+
+service:
+  telemetry:
+    logs:
+      level: "info"
+      development: true
+  
+  extensions: [health_check]
+  
+  pipelines:
+    metrics:
+      receivers: [hostmetrics]
+      processors:
+        [memory_limiter,
+         attributes,
+         resource,
+         batch]
+      exporters: [debug, otlphttp]
