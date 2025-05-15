@@ -1,0 +1,18 @@
+services:
+  hello-processor:
+    # Use official OpenTelemetry Collector Contrib image
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: hello-processor
+    ports:
+      - "13133:13133"  # Health check
+    volumes:
+      - /:/hostfs:ro # For hostmetrics
+      - ./config.yaml:/etc/otel/config.yaml:ro
+    environment:
+      - OTEL_LOG_LEVEL=info
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M

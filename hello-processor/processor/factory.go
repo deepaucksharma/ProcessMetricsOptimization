@@ -1,4 +1,4 @@
-package traceawareprocessor
+package helloprocessor
 
 import (
 	"context"
@@ -10,10 +10,10 @@ import (
 
 const (
 	// TypeStr is the value of "type" key in configuration.
-	TypeStr = "traceaware"
+	TypeStr = "hello"
 )
 
-// NewFactory creates a factory for the trace-aware processor.
+// NewFactory creates a factory for the hello world processor.
 func NewFactory() processor.Factory {
 	return processor.NewFactory(
 		TypeStr,
@@ -24,7 +24,7 @@ func NewFactory() processor.Factory {
 
 func createDefaultConfig() component.Config {
 	return &Config{
-		Profile: "default",
+		Message: "Hello from OpenTelemetry!",
 	}
 }
 
@@ -35,5 +35,5 @@ func createMetricsProcessor(
 	nextConsumer consumer.Metrics,
 ) (processor.Metrics, error) {
 	pCfg := cfg.(*Config)
-	return newTraceAwareProcessor(set.Logger, pCfg, nextConsumer)
+	return newHelloProcessor(set.Logger, pCfg, nextConsumer)
 }

@@ -1,82 +1,56 @@
-# Trace-Aware Reservoir OpenTelemetry Collector
+# Hello World OpenTelemetry Processor
 
-This repository contains configuration and setup tools for running an OpenTelemetry collector with trace-aware attributes to improve metric visibility in New Relic.
+A simple OpenTelemetry processor example that adds "Hello World" attributes to your metrics.
 
-## Features
+## 🔍 What It Does
 
-- Trace-aware attribute addition to metrics
-- Entity synthesis optimization for proper New Relic visualization
-- Multi-environment support (Docker and Mac)
-- Resource detection for proper host identification
-- Process metrics collection with detailed attributes
+This simple processor adds the following attributes to your metrics:
 
-## Getting Started
+- At the resource level: `hello.world` = "Hello from OpenTelemetry!"
+- At the datapoint level: `hello.processor` = "Hello from OpenTelemetry!"
 
-### Prerequisites
+These attributes can be used to identify metrics processed by this component and demonstrate how OpenTelemetry processors can modify telemetry data.
 
-- Docker (for container deployment)
-- New Relic account with a valid license key
-- For local Mac execution: macOS with terminal access
+## 🚀 Quick Start
 
-### Setup
+The easiest way to run this example is using Docker:
 
-1. Clone this repository:
-   ```
-   git clone https://github.com/your-repo/trace-aware-reservoir-otel.git
-   cd trace-aware-reservoir-otel
-   ```
-
-2. Copy the environment template:
-   ```
-   cp .env.example .env
-   ```
-
-3. Edit `.env` and add your New Relic license key:
-   ```
-   NEW_RELIC_LICENSE_KEY=your_license_key_here
-   ```
-
-4. Run the environment setup script:
-   ```
-   ./run-environments.sh
-   ```
-
-5. Choose your preferred environment:
-   - Docker: For containerized deployment
-   - Mac: For local execution on macOS
-   - Both: Run in both environments simultaneously
-
-## Configuration Files
-
-- `config/entity-fixed-config.yaml`: Enhanced configuration with proper entity synthesis
-- `config/fixed-nr-config.yaml`: Alternative configuration with different attribute structure
-- `config/trace-aware-config.yaml`: Basic configuration with trace-aware attributes
-
-## Troubleshooting
-
-If metrics are not appearing correctly in New Relic:
-
-1. Check `ENTITY_SYNTHESIS.md` for detailed troubleshooting steps
-2. Follow the NRQL queries in the `run-environments.sh` output
-3. Verify the license key is valid and connection to New Relic is working
-
-## Guides
-
-- `ENTITY_SYNTHESIS.md`: Detailed guide for New Relic entity synthesis
-- `TROUBLESHOOTING.md`: General troubleshooting steps for collector issues
-
-## Docker Configuration
-
-The Docker setup uses the standard OpenTelemetry collector image with a custom configuration:
-
-```
-docker-compose -f docker-compose-entity-fixed.yml up -d
+```bash
+cd hello-processor
+chmod +x run.sh
+./run.sh
 ```
 
-## Mac Configuration
+This will:
+- Start a Docker container with the OpenTelemetry Collector
+- Configure it to use the Hello World processor
+- Collect basic host metrics and add the Hello World attributes
+- Output the metrics to the logs for easy viewing
 
-The Mac setup downloads and runs the OpenTelemetry collector binary locally:
+## 🔧 Configuration
 
+The main configuration file is `config.yaml`. You can customize the greeting message:
+
+```yaml
+processors:
+  hello:
+    message: "Your custom message here"
 ```
-./run-entity-fixed.sh
-```
+
+## 💡 Learning OpenTelemetry Processors
+
+This project demonstrates:
+
+1. How to structure a basic OpenTelemetry processor
+2. How to add attributes to metrics at both resource and datapoint levels
+3. How to configure and run an OpenTelemetry collector with a custom processor
+
+## 📂 Directory Structure
+
+- `hello-processor/processor/` - The Go code for the processor implementation
+  - `processor.go` - Core implementation
+  - `config.go` - Configuration structure
+  - `factory.go` - Factory for creating processor instances
+- `hello-processor/config.yaml` - Example configuration
+- `hello-processor/docker-compose.yml` - Docker setup
+- `hello-processor/run.sh` - Convenience script to run everything
