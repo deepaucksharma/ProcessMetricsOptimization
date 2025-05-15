@@ -4,8 +4,9 @@ otelcol_*
 bin/
 
 # Log files
-*.log
-otel-collector*.log
+otel-collector.log
+*copy.log
+# Sample logs are tracked
 
 # Environment variables
 .env
