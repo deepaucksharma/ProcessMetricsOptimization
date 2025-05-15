@@ -1,0 +1,58 @@
+receivers:
+  hostmetrics:
+    collection_interval: ${COLLECTION_INTERVAL:30s}
+    scrapers:
+      cpu:
+      memory:
+      load:
+      disk:
+      filesystem:
+      network:
+      paging:
+      process:
+        include:
+          match_type: regexp
+          processes: [".*"]
+
+processors:
+  batch:
+    send_batch_size: ${BATCH_SEND_SIZE:1000}
+    timeout: ${BATCH_TIMEOUT:10s}
+  
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: ${NEW_RELIC_MEMORY_LIMIT_MIB:250}
+    spike_limit_mib: ${NEW_RELIC_MEMORY_SPIKE_LIMIT_MIB:150}
+  
+  helloworld:
+    message: "Hello from NRDOT Process-Metrics Optimization!"
+    add_to_resource: true
+
+exporters:
+  otlphttp:
+    endpoint: ${NEW_RELIC_OTLP_ENDPOINT:https://otlp.nr-data.net/v1/metrics}
+    headers:
+      api-key: ${NEW_RELIC_LICENSE_KEY}
+  
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    namespace: otelcol
+
+extensions:
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+service:
+  extensions: [zpages]
+  pipelines:
+    metrics:
+      receivers: [hostmetrics]
+      processors: [memory_limiter, helloworld, batch]
+      exporters: [otlphttp, prometheus]
+  
+  telemetry:
+    logs:
+      level: ${OTEL_LOG_LEVEL:info}
+    metrics:
+      level: detailed
+      address: 0.0.0.0:8888

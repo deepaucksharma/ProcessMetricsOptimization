@@ -1,0 +1,73 @@
+version: '3'
+services:
+  # OpenTelemetry Collector with Hello World processor
+  otel-collector:
+    image: ${COLLECTOR_IMAGE:-nrdot-process-optimization:latest}
+    container_name: otel-collector
+    build:
+      context: ..
+      dockerfile: build/Dockerfile
+    command: ["--config=/etc/otel/config/base.yaml"]
+    volumes:
+      - ../config:/etc/otel/config
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8888:8888"   # Metrics endpoint
+      - "8889:8889"   # Prometheus exporter
+      - "55679:55679" # zPages
+    environment:
+      - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
+      - NEW_RELIC_OTLP_ENDPOINT=${NEW_RELIC_OTLP_ENDPOINT:-https://otlp.nr-data.net/v1/metrics}
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-otel-collector-host}
+      - OTEL_DEPLOYMENT_ENVIRONMENT=${OTEL_DEPLOYMENT_ENVIRONMENT:-development}
+      - OTEL_LOG_LEVEL=${OTEL_LOG_LEVEL:-info}
+      - COLLECTION_INTERVAL=${COLLECTION_INTERVAL:-30s}
+      - BATCH_SEND_SIZE=${BATCH_SEND_SIZE:-1000}
+      - BATCH_TIMEOUT=${BATCH_TIMEOUT:-10s}
+      - NEW_RELIC_MEMORY_LIMIT_MIB=${NEW_RELIC_MEMORY_LIMIT_MIB:-250}
+      - NEW_RELIC_MEMORY_SPIKE_LIMIT_MIB=${NEW_RELIC_MEMORY_SPIKE_LIMIT_MIB:-150}
+    depends_on:
+      - mock-nr
+      - prometheus
+
+  # Mock New Relic endpoint for local testing
+  mock-nr:
+    image: mendhak/http-https-echo:latest
+    container_name: mock-nr
+    ports:
+      - "8080:8080"
+    environment:
+      - HTTP_PORT=8080
+      - HTTPS_PORT=8443
+  
+  # Prometheus for self-observability
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ../build/prom-config.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9090:9090"
+  
+  # Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+      - ../build/grafana-provisioning:/etc/grafana/provisioning
+      - ../dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
