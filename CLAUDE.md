@@ -49,6 +49,10 @@ Familiarize yourself with this structure to locate relevant code and configurati
 │   ├── DEVELOPING_PROCESSORS.md        # How to build new custom processors
 │   └── NRDOT_PROCESSOR_SELF_OBSERVABILITY.md # Standards for processor metrics
 ├── examples/                           # Standalone example code
+│   └── README.md                       # Describes planned examples for the project
+├── internal/                           # Internal shared packages
+│   └── banding/                        # Support for AdaptiveTopK processor implementation
+│       └── README.md                   # Documents planned functionality for banding package
 ├── processors/                         # Location for all custom OTel processors
 │   └── helloworld/                     # Phase 0: Example "Hello World" processor
 │       ├── config.go                   # Configuration struct and validation

@@ -203,6 +203,10 @@ The Makefile is the primary entry point for most development tasks.
 │   ├── DEVELOPING_PROCESSORS.md        # Guide for creating new custom processors
 │   └── NRDOT_PROCESSOR_SELF_OBSERVABILITY.md # Standards for processor metrics
 ├── examples/                           # Example code directory
+│   └── README.md                       # Describes planned examples for the project
+├── internal/                           # Internal shared packages
+│   └── banding/                        # Support for AdaptiveTopK processor implementation
+│       └── README.md                   # Documents planned functionality for banding package
 ├── processors/                         # Custom OpenTelemetry processors
 │   └── helloworld/                     # Phase 0: Example "Hello World" processor
 │   └── prioritytagger/                 # Phase 1: L0: Critical process tagging
