@@ -7,7 +7,6 @@ import (
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
-	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 )
@@ -59,7 +58,7 @@ func (p *helloWorldProcessor) Capabilities() consumer.Capabilities {
 
 func (p *helloWorldProcessor) ConsumeMetrics(ctx context.Context, md pmetric.Metrics) error {
 	// Start the metrics observation
-	ctx, numPoints := p.obsrecv.StartMetricsOp(ctx)
+	ctx = p.obsrecv.StartMetricsOp(ctx)
 
 	// Add Hello World attribute to each metric
 	metricCount := p.processMetrics(ctx, md)

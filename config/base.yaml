@@ -22,17 +22,22 @@ processors:
     limit_mib: 250
     spike_limit_mib: 150
   
-  # We can't use the prioritytagger as it's a custom processor.
-  # Using filter processor to include only process metrics
-  filter:
-    metrics:
-      include:
-        match_type: strict
-        metric_names:
-          - process.cpu.time
-          - process.cpu.utilization
-          - process.memory.physical_usage
-          - process.memory.virtual_usage
+  # Using our custom prioritytagger processor to tag critical processes
+  prioritytagger:
+    critical_executables:
+      - systemd
+      - kubelet
+      - dockerd
+      - containerd
+    critical_executable_patterns:
+      - ".*java.*"
+      - ".*node.*"
+    cpu_steady_state_threshold: 0.5
+    memory_rss_threshold_mib: 500
+    priority_attribute_name: "nr.priority"
+    critical_attribute_value: "critical"
+    
+  # We removed the filter processor since it's not available in our custom build
   
   # Using the attributes processor to add the Hello World message instead
   attributes:
@@ -60,7 +65,7 @@ service:
   pipelines:
     metrics:
       receivers: [hostmetrics]
-      processors: [filter, memory_limiter, attributes, batch]
+      processors: [prioritytagger, memory_limiter, attributes, batch]
       exporters: [otlphttp, prometheus]
   
   telemetry:

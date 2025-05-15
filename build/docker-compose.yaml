@@ -1,7 +1,10 @@
 services:
-  # Using standard OTel collector contrib 
+  # Using our custom OTel collector with prioritytagger processor
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
+    build:
+      context: ..
+      dockerfile: build/Dockerfile
+    image: nrdot-process-optimization:latest
     container_name: otel-collector
     command: ["--config=/etc/otel/config/base.yaml"]
     volumes:

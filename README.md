@@ -9,12 +9,12 @@ The pipeline will achieve this by progressively **Tagging → Filtering → Aggr
 
 ## Project Status & Roadmap Snapshot
 
-The project is developed in phases. **Currently, Phase 0 is complete.**
+The project is developed in phases. **Currently, Phases 0 and 1 are complete.**
 
 | Phase | Focus                                          | Status        |
 |-------|------------------------------------------------|---------------|
 | 0     | Foundation: Hello World processor & Local Dev Stack | ✅ **Complete** |
-| 1     | **L0: PriorityTagger** – Tag critical processes  | ⏳ Pending     |
+| 1     | **L0: PriorityTagger** – Tag critical processes  | ✅ **Complete** |
 | 2     | **L1: AdaptiveTopK** – Keep busiest K processes | ⏳ Pending     |
 | 3     | **L2: OthersRollup** – Aggregate the rest     | ⏳ Pending     |
 | 4     | **L3: ReservoirSampler** – Sample the long tail  | ⏳ Pending     |
@@ -60,9 +60,9 @@ make compose-down
 Local Development Stack Service URLs (when make compose-up is running):
 | Service | URL | Purpose |
 |---------|-----|---------|
-| Collector zPages | http://localhost:55679 | Debugging collector internals (pipelines, etc.) |
-| Prometheus UI | http://localhost:9090 | Querying metrics (collector & custom) |
-| Grafana UI | http://localhost:3000 | Visualizing metrics (login: admin/admin) |
+| Collector zPages | http://localhost:15679 | Debugging collector internals (pipelines, etc.) |
+| Prometheus UI | http://localhost:19090 | Querying metrics (collector & custom) |
+| Grafana UI | http://localhost:13000 | Visualizing metrics (login: admin/admin) |
 | Mock OTLP Sink Logs | View via make logs | Verifying OTLP data exported by the collector |
 
 ## "Hello World" Processor (Phase 0 Deliverable)
@@ -85,6 +85,52 @@ Key Self-Metrics (visible in Prometheus/Grafana via the local dev stack):
 | nrdot_helloworld_mutations_total | Counter | Custom metric: Total number of metric points modified. |
 | otelcol_processor_helloworld_latency_bucket | Histogram | Standard obsreport: Latency of processing. |
 
+## "PriorityTagger" Processor (Phase 1 Deliverable)
+
+The second phase implements the first layer (L0) of our optimization pipeline - the `prioritytagger` processor. This processor:
+
+1. Identifies and tags process metrics that are considered critical based on various criteria
+2. Preserves full visibility for these critical processes in subsequent pipeline stages
+3. Serves as the foundation for the selective optimization approach
+
+Key Features:
+- Tag processes as critical based on:
+  - Exact executable name matches (e.g., "systemd", "kubelet")
+  - Regular expression pattern matches (e.g., "kube.*", "docker.*")
+  - CPU utilization thresholds
+  - Memory RSS thresholds
+- Add configurable attributes to mark critical processes (default: "nr.priority=critical")
+- Support for both integer and double type metric values
+- Comprehensive test coverage and observability
+
+Configuration (base.yaml example):
+```yaml
+processors:
+  prioritytagger:
+    critical_executables:
+      - systemd
+      - kubelet
+      - dockerd
+      - containerd
+    critical_executable_patterns:
+      - ".*java.*"
+      - ".*node.*"
+    cpu_steady_state_threshold: 0.5
+    memory_rss_threshold_mib: 500
+    priority_attribute_name: "nr.priority"
+    critical_attribute_value: "critical"
+```
+
+Key Self-Metrics:
+| Metric Name | Type | Description |
+|-------------|------|-------------|
+| otelcol_otelcol_processor_prioritytagger_processed_metric_points | Counter | Standard obsreport: Count of metric points processed. |
+| otelcol_processor_dropped_metric_points | Counter | Standard obsreport: Count of metric points dropped due to errors. |
+
+Note: The metrics naming follows the OpenTelemetry collector conventions, with the collector adding a prefix to standard metrics. Custom metrics like `nrdot_prioritytagger_critical_processes_tagged_total` require additional Prometheus configuration for visibility.
+
+For detailed documentation, see [processors/prioritytagger/README.md](processors/prioritytagger/README.md).
+
 ## Local Development Environment Deep Dive
 
 The make compose-up command, utilizing build/docker-compose.yaml, orchestrates a multi-container environment:
@@ -93,11 +139,12 @@ The make compose-up command, utilizing build/docker-compose.yaml, orchestrates a
    - Built using build/Dockerfile, which compiles cmd/collector/main.go.
    - Configured by config/base.yaml, which defines a pipeline:
      - hostmetrics receiver (collecting process metrics, CPU, memory, etc.).
+     - prioritytagger processor (our L0 processor for tagging critical processes).
      - memory_limiter processor.
-     - helloworld processor (our custom component).
+     - attributes processor (adds Hello World message).
      - batch processor.
      - Exporters: otlphttp (to the mock sink) and prometheus (for its own metrics).
-   - Its zPages are exposed on http://localhost:55679.
+   - Its zPages are exposed on http://localhost:15679 (mapped from port 55679 in the container).
    - Its Prometheus-compatible metrics endpoints are scraped by the Prometheus service.
 
 2. **Mock OTLP Sink** (mock-otlp-sink service):
@@ -108,12 +155,12 @@ The make compose-up command, utilizing build/docker-compose.yaml, orchestrates a
    - Pre-configured to scrape metrics from:
      - The custom Collector's telemetry metrics endpoint (e.g., otel-collector:8888/metrics inside the Docker network).
      - The custom Collector's Prometheus exporter endpoint (e.g., otel-collector:8889/metrics inside the Docker network).
-   - Accessible at http://localhost:9090.
+   - Accessible at http://localhost:19090.
 
 4. **Grafana** (grafana service):
    - Pre-configured with Prometheus as a data source.
    - Automatically provisions the "NRDOT Custom Processor Starter KPIs" dashboard from dashboards/grafana-nrdot-custom-processor-starter-kpis.json.
-   - Accessible at http://localhost:3000.
+   - Accessible at http://localhost:13000.
 
 ## Development Workflow & Key Makefile Targets
 
@@ -158,7 +205,7 @@ The Makefile is the primary entry point for most development tasks.
 ├── examples/                           # Example code directory
 ├── processors/                         # Custom OpenTelemetry processors
 │   └── helloworld/                     # Phase 0: Example "Hello World" processor
-│   └── (prioritytagger/)               # (Future) L0: Critical process tagging
+│   └── prioritytagger/                 # Phase 1: L0: Critical process tagging
 │   └── (adaptivetopk/)                 # (Future) L1: Top-K process selection
 │   └── (othersrollup/)                 # (Future) L2: Non-priority/top process aggregation
 │   └── (reservoirsampler/)             # (Future) L3: Statistical sampling
@@ -179,16 +226,17 @@ The Makefile is the primary entry point for most development tasks.
 
 ## Configuration Highlights
 
-### config/base.yaml (Current - Phase 0)
+### config/base.yaml (Current)
 
-This file configures the collector for the "Hello World" demonstration and local development:
+This file configures the collector for the PriorityTagger and Hello World demonstration in local development:
 
 - **Receivers**:
   - hostmetrics: Collects process metrics, CPU, memory, disk, network, etc., from the host where the collector runs. collection_interval is configurable.
 
 - **Processors**:
   - memory_limiter: Prevents the collector from consuming excessive memory.
-  - helloworld: Our custom processor, configured with its message.
+  - prioritytagger: Our custom L0 processor that identifies and tags critical processes.
+  - helloworld: Our custom demonstration processor that adds attributes to metrics.
   - batch: Batches metrics before exporting, configured with send_batch_size and timeout.
 
 - **Exporters**:
@@ -205,17 +253,17 @@ This configuration file will be developed in later phases. It will define the fu
 hostmetrics -> L0:PriorityTagger -> L1:AdaptiveTopK -> L2:OthersRollup -> L3:ReservoirSampler -> batch -> otlphttp (to New Relic)
 It may also include a "cold path" exporter for raw data (e.g., to Parquet/S3) for archival or deep analysis.
 
-## The Optimization Pipeline (Future Processors)
+## The Optimization Pipeline
 
 The core of this project is the development of a series of custom OpenTelemetry processors designed to work in concert:
 
-1. **L0: PriorityTagger**: Identifies and tags metrics belonging to critical processes (e.g., based on executable name or high resource usage). Tagged metrics can bypass or receive special handling in subsequent layers.
+1. **L0: PriorityTagger** ✅: Identifies and tags metrics belonging to critical processes (e.g., based on executable name, regex patterns, CPU utilization, or memory usage). Tagged metrics can bypass or receive special handling in subsequent layers. Supports both integer and double metric value types for proper threshold comparison.
 
-2. **L1: AdaptiveTopK**: Selects metrics from the top 'K' most resource-intensive processes (e.g., by CPU or memory). The value of 'K' can be dynamically adjusted based on overall host load.
+2. **L1: AdaptiveTopK** ⏳: Selects metrics from the top 'K' most resource-intensive processes (e.g., by CPU or memory). The value of 'K' can be dynamically adjusted based on overall host load.
 
-3. **L2: OthersRollup**: Aggregates metrics from all other non-priority, non-TopK processes into a single summary series (e.g., _other_ process). This drastically reduces cardinality while retaining a sense of overall system load from less significant processes.
+3. **L2: OthersRollup** ⏳: Aggregates metrics from all other non-priority, non-TopK processes into a single summary series (e.g., _other_ process). This drastically reduces cardinality while retaining a sense of overall system load from less significant processes.
 
-4. **L3: ReservoirSampler**: Applies statistical sampling (e.g., reservoir sampling) to the remaining long-tail of processes not captured by L0, L1, or L2. This provides representative insight into a subset of these processes without exporting all of them.
+4. **L3: ReservoirSampler** ⏳: Applies statistical sampling (e.g., reservoir sampling) to the remaining long-tail of processes not captured by L0, L1, or L2. This provides representative insight into a subset of these processes without exporting all of them.
 
 ## Contributing
 

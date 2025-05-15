@@ -10,13 +10,21 @@ This document provides specific context and guidelines for AI coding assistants 
 
 * **Primary Goal:** To build a custom OpenTelemetry (OTel) Collector distribution that significantly reduces process metric ingest costs (aiming for ≥90% reduction) for New Relic, while preserving essential visibility into host processes.
 * **Mechanism:** A multi-layer pipeline of custom OTel processors (L0-L3) that progressively Tag, Filter, Aggregate, and Sample process metrics.
-* **Current Status (Phase 0 - Complete):**
-  * A foundational "Hello World" (`helloworld`) custom processor is implemented and functional.
-  * A robust local development environment using Docker Compose is established, including the custom Collector, Prometheus, Grafana, and a Mock OTLP Sink.
-  * Standardized ports and service interactions are defined.
-  * Core documentation (`README.md`, this `CLAUDE.md`, `IMPLEMENTATION_PLAN.md`, processor development guides) is in place.
-  * CI for build, lint, unit tests, and basic vulnerability checks is operational.
-* **Next Steps:** Proceed with implementing the L0-L3 optimization processors as outlined in the [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
+* **Current Status:**
+  * **Phase 0 - Complete:**
+    * A foundational "Hello World" (`helloworld`) custom processor is implemented and functional.
+    * A robust local development environment using Docker Compose is established, including the custom Collector, Prometheus, Grafana, and a Mock OTLP Sink.
+    * Standardized ports and service interactions are defined.
+    * Core documentation (`README.md`, this `CLAUDE.md`, `IMPLEMENTATION_PLAN.md`, processor development guides) is in place.
+    * CI for build, lint, unit tests, and basic vulnerability checks is operational.
+  * **Phase 1 - Complete:**
+    * The L0 PriorityTagger (`prioritytagger`) processor is fully implemented.
+    * It supports tagging critical processes by name, regex pattern, CPU utilization, and memory usage.
+    * Handles both integer and double metric value types for proper threshold comparison.
+    * Comprehensive unit tests and benchmarks are in place.
+    * The processor is integrated into the custom collector and verified to be processing metrics.
+    * Standard metric `otelcol_otelcol_processor_prioritytagger_processed_metric_points` confirms processing activity.
+* **Next Steps:** Proceed with implementing the L1-L3 optimization processors (AdaptiveTopK, OthersRollup, ReservoirSampler) as outlined in the [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 
 ---
 
@@ -48,7 +56,15 @@ Familiarize yourself with this structure to locate relevant code and configurati
 │       ├── obsreport.go                # Helper for obsreport (can be integrated directly)
 │       ├── processor.go                # Core processor logic (ConsumeMetrics, etc.)
 │       └── processor_test.go           # Unit tests for the processor
-│   └── (prioritytagger/)               # (Future) L0 Processor
+│   └── prioritytagger/                 # Phase 1: L0 Processor - Tag critical processes
+│       ├── config.go                   # Configuration with critical process criteria
+│       ├── factory.go                  # Factory implementation
+│       ├── obsreport.go                # Metrics for processor monitoring
+│       ├── processor.go                # Logic for identifying and tagging critical processes
+│       ├── processor_test.go           # Unit tests
+│       ├── integration_test.go         # Pipeline integration tests
+│       ├── benchmark_test.go           # Performance benchmark tests
+│       └── README.md                   # Processor documentation
 │   └── (adaptivetopk/)                 # (Future) L1 Processor
 │   └── (othersrollup/)                 # (Future) L2 Processor
 │   └── (reservoirsampler/)             # (Future) L3 Processor
@@ -89,9 +105,9 @@ The Makefile is your primary interface for common tasks. Refer to it (`make help
 5. Restart the local stack with the new image: `make compose-up` (it will stop and recreate the collector service).
 6. Observe behavior:
    - Check logs: `make logs` (especially the `mock-otlp-sink` and `otel-collector`).
-   - Inspect zPages: http://localhost:55679.
-   - Query metrics in Prometheus: http://localhost:9090.
-   - View dashboards in Grafana: http://localhost:3000 (login: admin/admin).
+   - Inspect zPages: http://localhost:15679.
+   - Query metrics in Prometheus: http://localhost:19090.
+   - View dashboards in Grafana: http://localhost:13000 (login: admin/admin).
 7. Repeat until the processor behaves as expected.
 
 ## 4. Coding Standards & Processor Development Conventions
@@ -165,9 +181,9 @@ When the local stack is running (`make compose-up`), use these endpoints for obs
 
 | Service | URL | Key Usage for Processor Development |
 |---------|-----|--------------------------------------|
-| Collector zPages | http://localhost:55679 | View active pipelines, component status, basic metric counts. Useful for checking if your processor is loaded and receiving data. |
-| Prometheus UI | http://localhost:9090 | Query for standard `otelcol_processor_*` metrics and your custom `nrdot_<processor_name>_*` metrics. Example query: `rate(nrdot_helloworld_mutations_total[1m])`. |
-| Grafana UI | http://localhost:3000 | View the "NRDOT Custom Processor Starter KPIs" dashboard. Add panels for your new processor's metrics to this dashboard or a new one. |
+| Collector zPages | http://localhost:15679 | View active pipelines, component status, basic metric counts. Useful for checking if your processor is loaded and receiving data. |
+| Prometheus UI | http://localhost:19090 | Query for standard `otelcol_processor_*` metrics and your custom `nrdot_<processor_name>_*` metrics. Example query: `rate(otelcol_otelcol_processor_helloworld_processed_metric_points[1m])`. |
+| Grafana UI | http://localhost:13000 | View the "NRDOT Processors - HelloWorld & PriorityTagger KPIs" dashboard. Add panels for your new processor's metrics to this dashboard or a new one. |
 | Mock OTLP Sink Logs | Via `make logs` | Inspect the actual OTLP metric data being exported by the collector after it has passed through your processor. Verify attribute changes, filtering, aggregation, etc. |
 | Collector Service Logs | Via `make logs` | Check for logs from your processor (e.g., debug statements, error messages). Filter for the `otel-collector` service. |
 
@@ -208,9 +224,9 @@ In addition to the Makefile, the project includes a unified run script (`run.sh`
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| zPages | http://localhost:55679 | Debugging collector internals |
-| Prometheus | http://localhost:9090 | Querying metrics |
-| Grafana | http://localhost:3000 (admin/admin) | Visualizing metrics |
+| zPages | http://localhost:15679 | Debugging collector internals |
+| Prometheus | http://localhost:19090 | Querying metrics |
+| Grafana | http://localhost:13000 (admin/admin) | Visualizing metrics |
 | Mock OTLP Sink | View via `./run.sh logs` | Verifying OTLP data |
 
 ## 8. General Guidance for AI Prompts

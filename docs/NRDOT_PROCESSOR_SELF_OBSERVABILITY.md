@@ -22,7 +22,7 @@
      - `nrdot_reservoirsampler_fill_ratio` (gauge)
 
 3. **zPages Debugging** - All processors get zpages by default when configured in collector
-   - Accessible at http://localhost:55679 when running the collector
+   - Accessible at http://localhost:15679 when running the collector
    - Shows pipelines, metric stats, and traces
    - Critical for local debugging
 

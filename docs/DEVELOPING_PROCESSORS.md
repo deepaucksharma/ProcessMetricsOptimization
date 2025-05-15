@@ -57,9 +57,9 @@ The Hello World processor demonstrates the core self-observability patterns:
 
 You can view your processor's self-metrics through:
 
-1. **zPages**: Browse to http://localhost:55679 when running locally
-2. **Prometheus**: Browse to http://localhost:9090 when running locally
-3. **Grafana**: Browse to http://localhost:3000 when running locally
+1. **zPages**: Browse to http://localhost:15679 when running locally
+2. **Prometheus**: Browse to http://localhost:19090 when running locally
+3. **Grafana**: Browse to http://localhost:13000 when running locally
    - Use the pre-loaded "NRDOT Custom Processor Starter KPIs" dashboard
 
 ## Best Practices
