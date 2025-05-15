@@ -128,8 +128,17 @@ func main() {
 		port = "8080"
 	}
 	
+	// Get HOST from environment or use all interfaces
+	host := os.Getenv("HOST")
+	if host == "" {
+		host = "0.0.0.0"
+	}
+	
 	// Start server
-	fmt.Printf("Starting NRDOT Hello World Processor Demo on port %s...\n", port)
-	fmt.Printf("Open http://localhost:%s in your browser\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	fmt.Printf("Starting NRDOT Hello World Processor Demo on %s:%s...\n", host, port)
+	fmt.Printf("Access this demo from your browser using one of these URLs:\n")
+	fmt.Printf("  - http://localhost:%s (if on the same machine)\n", port)
+	fmt.Printf("  - Try your machine's IP address: http://<your-ip-address>:%s\n", port)
+	
+	log.Fatal(http.ListenAndServe(host+":"+port, nil))
 }

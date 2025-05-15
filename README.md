@@ -6,11 +6,27 @@ A production-grade, five-layer process-metrics pipeline for the New Relic Distri
 
 To get started with the hello world processor:
 
+### Simple Demo Version
+
 ```bash
 # Clone the repository
 git clone https://github.com/newrelic/nrdot-process-optimization.git
 cd nrdot-process-optimization
 
+# Option 1: Use the script (displays your machine's IP for remote access)
+./run-demo.sh
+
+# Option 2: Run directly
+go run main.go
+
+# Access in your browser:
+# - If on the same machine: http://localhost:8080
+# - From another device: http://<your-machine-ip>:8080
+```
+
+### Full OpenTelemetry Version
+
+```bash
 # Build the Docker image
 make docker-build
 
