@@ -1,0 +1,161 @@
+# Streamlined OpenTelemetry Collector Configuration with Entity Synthesis
+
+extensions:
+  health_check: {}
+
+receivers:
+  hostmetrics:
+    collection_interval: ${COLLECTION_INTERVAL:-30s}
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization: {enabled: true}
+          system.cpu.time: {enabled: true}
+      memory:
+        metrics:
+          system.memory.usage: {enabled: true}
+          system.memory.utilization: {enabled: true}
+      disk:
+        metrics:
+          system.disk.io: {enabled: true}
+          system.disk.operations: {enabled: true}
+      filesystem:
+        metrics:
+          system.filesystem.usage: {enabled: true}
+          system.filesystem.utilization: {enabled: true}
+      load:
+        metrics:
+          system.cpu.load_average.1m: {enabled: true}
+      network:
+        metrics:
+          system.network.io: {enabled: true}
+      process:
+        mute_process_user_error: true
+        mute_process_exe_error: true
+        metrics:
+          process.cpu.utilization: {enabled: true}
+          process.memory.usage: {enabled: true}
+        include:
+          match_type: regexp
+          names: [".*"]
+        exclude:
+          match_type: regexp
+          names: ["NOMATCH_PATTERN_XYZ"]
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: ${NEW_RELIC_MEMORY_LIMIT_MIB:-250}
+    spike_limit_mib: ${NEW_RELIC_MEMORY_SPIKE_LIMIT_MIB:-150}
+  
+  resourcedetection:
+    detectors: [system, env]
+    system:
+      hostname_sources: ["os"]
+      resource_attributes:
+        host.id: {enabled: true}
+        host.name: {enabled: true}
+  
+  metricstransform:
+    transforms:
+      - include: process.cpu.utilization
+        action: update
+        new_name: process.cpu.pct
+        operations:
+          - action: multiply
+            new_value: 100
+  
+  filter:
+    metrics:
+      include:
+        match_type: strict
+        metric_names:
+          - process.cpu.utilization
+          - process.cpu.pct
+          - process.memory.usage
+  
+  attributes:
+    actions:
+      - key: instrumentation.name
+        value: "opentelemetry"
+        action: upsert
+      - key: collector.name
+        value: "trace-aware-collector"
+        action: upsert
+      - key: trace.aware.collector
+        value: "true"
+        action: upsert
+      - key: trace.aware.version
+        value: "1.0"
+        action: upsert
+  
+  resource:
+    attributes:
+      - key: service.name
+        value: "${OTEL_SERVICE_NAME:-otel-collector-host}"
+        action: upsert
+      - key: service.instance.id
+        value: "otel-${HOST_ID:-unknown}"
+        action: upsert
+      - key: entity.type
+        value: "HOST"
+        action: upsert
+      - key: deployment.environment
+        value: "${OTEL_DEPLOYMENT_ENVIRONMENT:-production}"
+        action: upsert
+      - key: collector.profile
+        value: "balanced"
+        action: upsert
+  
+  cumulativetodelta:
+    metrics:
+      - process.cpu.pct
+      - process.cpu.utilization
+      - system.cpu.utilization
+      - system.network.io
+  
+  batch:
+    send_batch_size: ${BATCH_SEND_SIZE:-1000}
+    timeout: ${BATCH_TIMEOUT:-10s}
+
+exporters:
+  otlphttp:
+    endpoint: "https://otlp.nr-data.net"
+    headers:
+      api-key: "${NEW_RELIC_LICENSE_KEY}"
+    compression: "gzip"
+    timeout: 30s
+    sending_queue:
+      enabled: true
+      num_consumers: ${OTLP_SENDING_QUEUE_CONSUMERS:-4}
+      queue_size: ${OTLP_SENDING_QUEUE_SIZE:-5000}
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 5m
+
+  debug:
+    verbosity: detailed
+
+service:
+  telemetry:
+    logs:
+      level: "${OTEL_LOG_LEVEL:-info}"
+      development: true
+  
+  extensions: [health_check]
+  
+  pipelines:
+    metrics:
+      receivers: [hostmetrics]
+      processors:
+        [memory_limiter,
+         resourcedetection,
+         metricstransform,
+         filter,
+         attributes,
+         resource,
+         cumulativetodelta,
+         batch]
+      exporters: [debug, otlphttp]

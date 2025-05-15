@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.125.0
+    container_name: otel-collector
+    ports:
+      - "13133:13133" # Health Check
+    volumes:
+      - /:/hostfs:ro # For hostmetrics
+      - ./config/streamlined-config.yaml:/etc/otel/config.yaml:ro
+    environment:
+      # License Keys
+      - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
+      
+      # Entity Info
+      - OTEL_DEPLOYMENT_ENVIRONMENT=${OTEL_DEPLOYMENT_ENVIRONMENT:-production}
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-otel-collector-host}
+      - OTEL_RESOURCE_ATTRIBUTES=host.name=${HOSTNAME:-unknown},entity.type=HOST
+      - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=delta
+      
+      # Host Path
+      - HOST_ROOT_PATH=/hostfs
+      
+      # Collection Settings
+      - COLLECTION_INTERVAL=${COLLECTION_INTERVAL:-30s}
+      - BATCH_SEND_SIZE=${BATCH_SEND_SIZE:-1000}
+      - BATCH_TIMEOUT=${BATCH_TIMEOUT:-10s}
+      
+      # Memory Settings
+      - NEW_RELIC_MEMORY_LIMIT_MIB=${NEW_RELIC_MEMORY_LIMIT_MIB:-250}
+      - NEW_RELIC_MEMORY_SPIKE_LIMIT_MIB=${NEW_RELIC_MEMORY_SPIKE_LIMIT_MIB:-150}
+      
+      # Process Filtering
+      - PROCESS_INCLUDE=.*
+      - PROCESS_EXCLUDE=NOMATCH_PATTERN_XYZ
+      
+      # Logging
+      - OTEL_LOG_LEVEL=${OTEL_LOG_LEVEL:-info}
+    
+    command: ["--config=/etc/otel/config.yaml"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:13133/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 300M
