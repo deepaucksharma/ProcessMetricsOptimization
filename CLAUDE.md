@@ -1,184 +1,176 @@
-# CLAUDE.md
+# CLAUDE.md - AI Development Assistant Guide
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This document provides specific context and guidelines for AI coding assistants (like Claude, ChatGPT, etc.) when working with the **NRDOT Process-Metrics Optimization** repository. Its aim is to help the AI understand the project's goals, structure, current state, and conventions, leading to more effective and aligned assistance.
 
-## Project Overview
+---
 
-NRDOT Process-Metrics Optimization is a production-grade, five-layer process-metrics pipeline for the New Relic Distribution of OpenTelemetry (NRDOT). The project is designed to significantly reduce the ingest cost of process metrics while maintaining visibility into the most important processes.
+## 1. Project Core Objective & Current Status
 
-The pipeline consists of four key custom optimization processors (L0-L3) that progressively filter and optimize process metrics, leading to hot path export (L4) and optional cold path export (L5):
-1. L0: PriorityTagger - Tags critical processes to ensure they're always monitored
-2. L1: AdaptiveTopK - Selects top K resource-intensive processes based on host load
-3. L2: OthersRollup - Aggregates metrics from non-priority, non-top processes
-4. L3: ReservoirSampler - Takes a statistically representative sample of remaining processes
+* **Primary Goal:** To build a custom OpenTelemetry (OTel) Collector distribution that significantly reduces process metric ingest costs (aiming for ≥90% reduction) for New Relic, while preserving essential visibility into host processes.
+* **Mechanism:** A multi-layer pipeline of custom OTel processors (L0-L3) that progressively Tag, Filter, Aggregate, and Sample process metrics.
+* **Current Status (Phase 0 - Complete):**
+  * A foundational "Hello World" (`helloworld`) custom processor is implemented and functional.
+  * A robust local development environment using Docker Compose is established, including the custom Collector, Prometheus, Grafana, and a Mock OTLP Sink.
+  * Standardized ports and service interactions are defined.
+  * Core documentation (`README.md`, this `CLAUDE.md`, `IMPLEMENTATION_PLAN.md`, processor development guides) is in place.
+  * CI for build, lint, unit tests, and basic vulnerability checks is operational.
+* **Next Steps:** Proceed with implementing the L0-L3 optimization processors as outlined in the [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 
-This approach reduces metric series from potentially 250k+ per day to under 100, providing substantial cost savings while maintaining observability.
+---
 
-## Development Commands
+## 2. Key Project Files & Directory Structure
 
-```bash
-# Build the project
-make build
-
-# Run all tests
-make test
-
-# Run just unit tests
-make test-unit
-
-# Run integration tests
-make test-integration
-
-# Run end-to-end tests
-make test-e2e
-
-# Run benchmarks
-make bench
-
-# Run linting and static analysis
-make lint
-
-# Build Docker image
-make docker-build
-
-# Run local development stack with Docker Compose
-make compose-up
-
-# Generate SBOM
-make sbom
-
-# Vulnerability scanning
-make vuln-scan
-
-# Clean build artifacts
-make clean
-```
-
-## Project Structure
+Familiarize yourself with this structure to locate relevant code and configurations:
 
 ```
 📁 nrdot-process-optimization/
-├── cmd/collector/        # Main application entrypoint
-├── processors/           # Custom OTEL processors
-│   ├── prioritytagger/   # L0: Critical process tagging
-│   ├── adaptivetopk/     # L1: Top-K process selection
-│   ├── othersrollup/     # L2: Non-priority/top process aggregation
-│   ├── reservoirsampler/ # L3: Statistical sampling
-│   └── (legacy_examples/helloworld/) # The initial starter kit
-├── internal/             # Shared utilities
-│   ├── attributes/       # Efficient pcommon.Map operations
-│   ├── banding/          # Host load to K-value mapping for AdaptiveTopK
-│   ├── obsreport/        # Standardized obsreport wrapper
-│   ├── configvalidation/ # JSON schema validation
-│   └── testhelpers/      # Utilities for testing (e.g., pmetric generation)
-├── config/               # YAML configuration files
-├── build/                # Docker, Compose, etc.
-├── charts/               # Helm chart
-└── test/                 # Test suites
+├── .github/                            # GitHub Actions CI/CD Workflows
+├── build/                              # Docker & Docker Compose files
+│   ├── Dockerfile                      # Builds the custom collector image
+│   └── docker-compose.yaml             # Orchestrates the local dev stack
+├── cmd/collector/                      # Main entry point for the custom OTel Collector
+│   └── main.go                         # Registers all components (processors, receivers, etc.)
+├── config/                             # Collector configuration files
+│   └── base.yaml                       # Config for Phase 0 (hostmetrics + helloworld pipeline)
+│   └── (opt-plus.yaml)                 # (Future) Config for the full L0-L3 optimization pipeline
+├── dashboards/                         # Grafana dashboard JSON files
+│   └── grafana-nrdot-custom-processor-starter-kpis.json
+├── docs/                               # Developer documentation and guides
+│   ├── DEVELOPING_PROCESSORS.md        # How to build new custom processors
+│   └── NRDOT_PROCESSOR_SELF_OBSERVABILITY.md # Standards for processor metrics
+├── examples/                           # Standalone example code
+│   └── simple_demo/                    # Minimal Go HTTP demo application
+│       └── main.go
+├── processors/                         # Location for all custom OTel processors
+│   └── helloworld/                     # Phase 0: Example "Hello World" processor
+│       ├── config.go                   # Configuration struct and validation
+│       ├── factory.go                  # Processor factory implementation
+│       ├── obsreport.go                # Helper for obsreport (can be integrated directly)
+│       ├── processor.go                # Core processor logic (ConsumeMetrics, etc.)
+│       └── processor_test.go           # Unit tests for the processor
+│   └── (prioritytagger/)               # (Future) L0 Processor
+│   └── (adaptivetopk/)                 # (Future) L1 Processor
+│   └── (othersrollup/)                 # (Future) L2 Processor
+│   └── (reservoirsampler/)             # (Future) L3 Processor
+├── test/                               # Test suites and helper scripts
+│   └── url_check.sh                    # Checks local dev stack service URLs
+├── Makefile                            # Central build and task automation script
+├── go.mod / go.sum                     # Go module definitions
+├── README.md                           # Main project overview and quick start
+├── IMPLEMENTATION_PLAN.md              # Phased development roadmap
+└── CLAUDE.md                           # This file
 ```
 
-## Configuration
+(Parentheses () denote components planned for future phases.)
 
-The project uses a YAML configuration file (config/opt-plus.yaml) with the following key parameters, configurable via environment variables:
+## 3. Core Development Workflow & Makefile Commands
 
-```yaml
-processors:
-  prioritytagger:
-    critical_executables: [systemd, sshd, dockerd, kubelet, newrelic-infra]
-    cpu_utilization_threshold: ${NR_PRIORITY_CPU:0.8}
-  
-  adaptivetopk:
-    key_metric: process.cpu.utilization
-    bands: { "0.2": 5, "0.5": 20, "0.8": 35, "1": 50 }
-    hysteresis_duration: ${NR_TOPK_HYSTERESIS:15s}
-  
-  othersrollup:
-    output_pid_attribute_value: "-1"
-    output_executable_name_attribute_value: "_other_"
-    aggregations:
-      process.cpu.utilization: avg
-      process.memory.usage: sum
-      process.fd.open: sum
-      process.threads: sum
-  
-  reservoirsampler:
-    reservoir_size: ${NR_RESERVOIR:25}
-    
-  # (Standard processors like 'batch' and 'memory_limiter' are also present in the full config)
-```
+The Makefile is your primary interface for common tasks. Refer to it (`make help`) for a full list.
 
-Key environment variables:
-- `NEW_RELIC_LICENSE_KEY`: Required for sending data to New Relic
-- `NEW_RELIC_OTLP_ENDPOINT`: Endpoint for sending data (default: https://otlp.nr-data.net/v1/metrics or region-specific variants like https://otlp.eu01.nr-data.net/v1/metrics)
-- `NR_INTERVAL`: Metric collection interval (default: 15s)
-- `NR_PRIORITY_CPU`: CPU threshold for priority tagging (default: 0.8)
-- `NR_TOPK_HYSTERESIS`: How long to keep a process in Top-K after it drops below threshold (default: 15s)
-- `NR_RESERVOIR`: Size of the reservoir sample (default: 25)
-- `S3_BUCKET`: Bucket name for cold storage export (if enabled)
-- `S3_PREFIX`: Object key prefix for cold storage export
-- `AWS_REGION`: Region for S3 cold storage
-- `AWS_ROLE_ARN`: IAM role ARN for S3 access (if using IAM role authentication)
+### Most Frequently Used Targets:
 
-## Coding Standards and Best Practices
+| Command | Description |
+|---------|-------------|
+| `make build` | Compiles the custom OTel collector binary (`./bin/otelcol`). |
+| `make docker-build` | Builds the Docker image for the custom collector using `build/Dockerfile`. |
+| `make compose-up` | Starts the local development stack (Collector, Prometheus, Grafana, Mock Sink) via Docker Compose. |
+| `make compose-down` | Stops the local development stack. |
+| `make logs` | Tails logs from all services in the Docker Compose stack. |
+| `make test` | Runs all available tests (unit, URL checks; future: integration, E2E). |
+| `make test-unit` | Runs Go unit tests (`go test ./...`). |
+| `make lint` | Runs Go static analysis tools (`go vet`, `go fmt`, `golangci-lint` if available). |
+| `make run-demo` | Executes the simple Go demo in `examples/simple_demo/main.go`. |
 
-1. Go 1.22 or higher is required
-2. Code must pass staticcheck, govet, and govulncheck
-3. Follow idiomatic Go practices
-4. No global variables in processors; share functionality via internal packages
-5. All processors must emit self-metrics for observability
-6. Use allocation-efficient methods from internal/attributes for pdata operations
-7. Include thorough unit tests with ≥80% coverage
-8. Add benchmarks for performance-critical code paths
-9. Processors should aim for statelessness regarding global variables; all state managed via configuration or instance members
-10. Concurrency safety must be ensured if internal state is modified across multiple goroutines (though typically OTel pipelines serialize calls to a single processor instance for a given signal type)
+### Typical Local Development Loop for a Processor:
 
-## Testing Strategy
+1. Make code changes within a `processors/<name>/` directory.
+2. Write/update unit tests (`_test.go` files).
+3. Run `make test-unit` and `make lint` frequently.
+4. Rebuild the collector image: `make docker-build`.
+5. Restart the local stack with the new image: `make compose-up` (it will stop and recreate the collector service).
+6. Observe behavior:
+   - Check logs: `make logs` (especially the `mock-otlp-sink` and `otel-collector`).
+   - Inspect zPages: http://localhost:55679.
+   - Query metrics in Prometheus: http://localhost:9090.
+   - View dashboards in Grafana: http://localhost:3000.
+7. Repeat until the processor behaves as expected.
 
-1. Unit tests for each processor and utility package
-2. Integration tests for processor chains
-3. End-to-end tests using Docker Compose
-4. Benchmark tests for performance-critical code
-5. Golden file fixtures for verifying complex processor behavior
+## 4. Coding Standards & Processor Development Conventions
 
-## Metrics and Observability
+Adherence to these standards is crucial for consistency and maintainability.
 
-Each processor emits custom self-metrics:
+### Go Version: 
+Go 1.22 or higher.
 
-- `nrdot_prioritytagger_critical_processes_tagged_total`
-- `otelcol_processor_adaptivetopk_dropped_metric_points_total`
-- `nrdot_adaptivetopk_current_k`
-- `nrdot_othersrollup_aggregated_series_count_total`
-- `nrdot_reservoirsampler_fill_ratio`
-- `nrdot_reservoirsampler_selected_identities_count`
+### Formatting & Linting:
+Code must pass `go fmt`, `go vet`. `golangci-lint` (configured in `.golangci.yml` if present, or via `make lint`) is highly encouraged.
 
-Standard obsreport metrics (e.g., `otelcol_processor_[processor_name]_processed_metric_points`, `otelcol_processor_[processor_name]_dropped_metric_points`, latency histograms) are also available for each processor and should be monitored via Grafana dashboard 15983/18309 or zPages.
+### Processor Structure:
+Each custom processor resides in its own sub-directory under `processors/` (e.g., `processors/myprocessor/`) and typically includes:
 
-Key Grafana dashboards are provided for monitoring these metrics.
+- **config.go**: Defines the processor's configuration struct (implementing `component.Config`, `config.Validator`, and `confmap.Unmarshaler`), including default values.
+- **factory.go**: Implements `processor.Factory` (using `processor.NewFactory`) to create instances of the processor and its default configuration. Specifies the processor `typeStr` (e.g., "myprocessor") and stability level.
+- **processor.go**: Contains the core logic, implementing `processor.Metrics` (primarily the `ConsumeMetrics` method). It also handles capabilities (`MutatesData`) and lifecycle hooks (`Start`, `Shutdown`).
+- **processor_test.go**: Unit tests for the processor, covering configuration, metric transformation, edge cases, and error handling.
+- **obsreport.go** (Optional): If a dedicated helper for obsreport is preferred. Otherwise, obsreport usage can be directly integrated into processor.go. The helloworld processor shows an example.
 
-## Security Considerations
+### Self-Observability:
 
-1. Run as non-root (UID 10001)
-2. Use distroless container images
-3. Generate and validate SBOM
-4. Scan for vulnerabilities in dependencies
-5. No hardcoded secrets
+- **Standard Metrics**: All processors MUST use `go.opentelemetry.io/collector/obsreport` (e.g., `obsreport.NewProcessor` and its `StartMetricsOp`/`EndMetricsOp` methods) to emit standard OTel processor metrics like `otelcol_processor_<name>_processed_metric_points`, `otelcol_processor_<name>_dropped_metric_points`, and latency histograms.
+- **Custom Metrics**: Implement processor-specific Key Performance Indicators (KPIs) using `go.opentelemetry.io/otel/metric` obtained via `component.TelemetrySettings.MeterProvider.Meter("<processor_type_str>")`. Custom metric names MUST be prefixed with `nrdot_<processor_name>_` (e.g., `nrdot_helloworld_mutations_total`).
 
-## Development Tips
+### pdata Manipulation:
+Processors operate on `pmetric.Metrics`. Be mindful of efficient manipulation of these structures.
 
-1. Refer to the OpenTelemetry Collector docs when implementing processors
-2. Test changes with the provided Docker Compose setup
-3. Benchmark before/after for performance-critical changes
-4. Use NRQL queries from the docs/NRQL_EXAMPLES.md file to validate data output
-5. Follow the sequence diagram in README.md to understand the data flow
-6. Check config/opt-plus.yaml against schemas/opt-plus.schema.json when making changes
-7. Understand the role of internal/obsreport wrapper for consistent self-metric emission
-8. For Top-K and Reservoir Sampler, pay close attention to how process.pid is handled (retained for Top-K, sampled for Reservoir, stripped for Others) to manage cardinality
+### Error Handling:
+Log errors using the `zap.Logger` provided in `processor.CreateSettings`. Propagate errors up the call stack where appropriate.
 
-## Integration Testing
+### Configuration:
+Define clear, well-documented configuration options in `config.go`. Provide sensible defaults. Ensure validation logic is robust.
 
-When developing or testing export to New Relic:
-1. Ensure the correct endpoint is set: `https://otlp.nr-data.net/v1/metrics`
-2. Use a valid `NEW_RELIC_LICENSE_KEY` in your .env file
-3. Validate with NRQL: `FROM Metric SELECT uniqueCount(process.pid) FACET nr.priority SINCE 30 MINUTES`
-4. Check overall cardinality reduction: `FROM Metric SELECT uniqueCount(timeseries) WHERE metricName = 'process.cpu.utilization' SINCE 30 MINUTES COMPARE WITH 1 DAY AGO`
-5. Ensure only the critical and Top-K processes have individual PIDs: `FROM Metric SELECT count(*) WHERE process.pid != '-1' AND process.pid IS NOT NULL FACET process.executable.name SINCE 30 MINUTES LIMIT 100`
+### Testing:
+
+- Aim for high unit test coverage (≥80%) for all processor logic.
+- Use table-driven tests for varying inputs and conditions.
+- Utilize `go.opentelemetry.io/collector/consumer/consumertest` (e.g., `consumertest.NewNop()`) to mock downstream consumers in tests.
+- For pmetric generation in tests, use helpers from `go.opentelemetry.io/collector/pdata/testdata` or construct `pmetric.Metrics` objects directly.
+
+### Idempotency:
+Consider if a processor's actions should be idempotent, especially if metrics might be reprocessed under certain conditions (though rare in typical OTel flows).
+
+### Documentation:
+Each new processor should have a README.md in its directory explaining its purpose, configuration options, and any notable behaviors.
+
+## 5. Local Development Environment Observability
+
+When the local stack is running (`make compose-up`), use these endpoints for observation and debugging:
+
+| Service | URL | Key Usage for Processor Development |
+|---------|-----|--------------------------------------|
+| Collector zPages | http://localhost:55679 | View active pipelines, component status, basic metric counts. Useful for checking if your processor is loaded and receiving data. |
+| Prometheus UI | http://localhost:9090 | Query for standard `otelcol_processor_*` metrics and your custom `nrdot_<processor_name>_*` metrics. Example query: `rate(nrdot_helloworld_mutations_total[1m])`. |
+| Grafana UI | http://localhost:3000 | View the "NRDOT Custom Processor Starter KPIs" dashboard. Add panels for your new processor's metrics to this dashboard or a new one. |
+| Mock OTLP Sink Logs | Via `make logs` | Inspect the actual OTLP metric data being exported by the collector after it has passed through your processor. Verify attribute changes, filtering, aggregation, etc. |
+| Collector Service Logs | Via `make logs` | Check for logs from your processor (e.g., debug statements, error messages). Filter for the `otel-collector` service. |
+
+## 6. Configuration Files Overview
+
+- **config/base.yaml**: This is the active configuration for local development (Phase 0). It defines a pipeline including the `hostmetrics` receiver, `helloworld` processor, and standard processors like `memory_limiter` and `batch`. It exports to the `mock-otlp-sink` and `prometheus`. When developing a new processor, you'll add it to a pipeline in this file (or a copy) for testing.
+
+- **config/opt-plus.yaml** (Future): This will be the target configuration for the full L0-L3 optimization pipeline, intended for production-like scenarios. It will include `prioritytagger`, `adaptivetopk`, `othersrollup`, and `reservoirsampler`.
+
+- **Environment Variables**: Key settings in `config/base.yaml` (and the future `opt-plus.yaml`) can be overridden by environment variables (e.g., `COLLECTION_INTERVAL`, `NEW_RELIC_LICENSE_KEY`, `NEW_RELIC_OTLP_ENDPOINT`). The `docker-compose.yaml` file often sets some of these, especially to route the OTLP exporter to the `mock-otlp-sink` service within the Docker network.
+
+## 7. General Guidance for AI Prompts
+
+- **Be Specific**: Instead of "write a processor," ask "Create the factory.go file for a new OpenTelemetry processor named 'myprocessor', ensuring it registers a default configuration struct named Config and uses processor.StabilityLevelDevelopment."
+
+- **Provide Context**: Reference existing files (e.g., "Similar to processors/helloworld/processor.go, implement the ConsumeMetrics method for myprocessor...").
+
+- **Iterate**: Ask for one part at a time (e.g., config struct, then factory, then processor logic).
+
+- **Request Tests**: "Write unit tests for the Validate() method in processors/myprocessor/config.go."
+
+- **Focus on OTel SDKs**: Emphasize usage of `go.opentelemetry.io/collector/component`, `pdata`, `consumer`, `processor` packages.
+
+This guide helps ensure AI contributions align with project standards and accelerate development. Refer to specific `docs/*.md` files for deeper technical details on processor development and observability.
