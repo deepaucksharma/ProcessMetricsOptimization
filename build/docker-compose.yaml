@@ -1,21 +1,17 @@
-version: '3'
 services:
-  # OpenTelemetry Collector with Hello World processor
+  # Using standard OTel collector contrib 
   otel-collector:
-    image: ${COLLECTOR_IMAGE:-nrdot-process-optimization:latest}
+    image: otel/opentelemetry-collector-contrib:latest
     container_name: otel-collector
-    build:
-      context: ..
-      dockerfile: build/Dockerfile
     command: ["--config=/etc/otel/config/base.yaml"]
     volumes:
       - ../config:/etc/otel/config
     ports:
-      - "4317:4317"   # OTLP gRPC
-      - "4318:4318"   # OTLP HTTP
-      - "8888:8888"   # Metrics endpoint
-      - "8889:8889"   # Prometheus exporter
-      - "55679:55679" # zPages
+      - "14317:4317"   # OTLP gRPC
+      - "14318:4318"   # OTLP HTTP
+      - "18888:8888"   # Metrics endpoint
+      - "18889:8889"   # Prometheus exporter
+      - "15679:55679"  # zPages
     environment:
       - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
       - NEW_RELIC_OTLP_ENDPOINT=${NEW_RELIC_OTLP_ENDPOINT:-https://otlp.nr-data.net/v1/metrics}
@@ -30,16 +26,20 @@ services:
     depends_on:
       - mock-nr
       - prometheus
+    networks:
+      - otel-network
 
   # Mock New Relic endpoint for local testing
   mock-nr:
     image: mendhak/http-https-echo:latest
     container_name: mock-nr
     ports:
-      - "8080:8080"
+      - "18080:8080"
     environment:
       - HTTP_PORT=8080
       - HTTPS_PORT=8443
+    networks:
+      - otel-network
   
   # Prometheus for self-observability
   prometheus:
@@ -53,7 +53,9 @@ services:
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
     ports:
-      - "9090:9090"
+      - "19090:9090"
+    networks:
+      - otel-network
   
   # Grafana for dashboards
   grafana:
@@ -68,6 +70,12 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
     ports:
-      - "3000:3000"
+      - "13000:3000"
     depends_on:
       - prometheus
+    networks:
+      - otel-network
+
+networks:
+  otel-network:
+    driver: bridge

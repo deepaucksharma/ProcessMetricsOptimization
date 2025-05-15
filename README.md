@@ -26,25 +26,7 @@ Detailed milestones and technical plans for each phase are documented in [IMPLEM
 
 ## Quick Start
 
-There are two primary ways to engage with this project:
-
-### Option A ▪ Standalone Go Demo *(Illustrative Example Only)*
-
-This option runs a minimal Go HTTP application. **It is NOT the OpenTelemetry collector.** It's a very simple, standalone example to conceptually demonstrate how a processor might modify data, using the original `main.go` content.
-
-```bash
-# 1. Clone the repository (if you haven't already)
-git clone https://github.com/newrelic/nrdot-process-optimization.git
-cd nrdot-process-optimization
-
-# 2. Run the simple demo
-go run examples/simple_demo/main.go
-
-# 3. Access in your browser:
-#    → http://localhost:8080
-```
-
-### Option B ▪ Full Dockerized OpenTelemetry Collector *(Recommended for Development)*
+### Dockerized OpenTelemetry Collector
 
 This option builds and runs the actual custom OpenTelemetry collector (which includes the "Hello World" processor) within a Dockerized local development environment.
 
@@ -149,7 +131,6 @@ The Makefile is the primary entry point for most development tasks.
 | make compose-down | Stops the local development stack. |
 | make logs | Follows logs from all services in the Docker Compose stack. |
 | make run | Starts services using run.sh docker up (alternative to compose-up). |
-| make run-demo | Runs the standalone Go demo via run.sh demo. |
 | make sbom | Generates a Software Bill of Materials (SBOM) using Syft (if installed). |
 | make vuln-scan | Runs Go dependency vulnerability scanning (govulncheck). |
 | make clean | Removes build artifacts. |
@@ -174,9 +155,7 @@ The Makefile is the primary entry point for most development tasks.
 ├── docs/                               # Project documentation
 │   ├── DEVELOPING_PROCESSORS.md        # Guide for creating new custom processors
 │   └── NRDOT_PROCESSOR_SELF_OBSERVABILITY.md # Standards for processor metrics
-├── examples/                           # Standalone example code
-│   └── simple_demo/                    # Minimal Go HTTP demo application
-│       └── main.go
+├── examples/                           # Example code directory
 ├── processors/                         # Custom OpenTelemetry processors
 │   └── helloworld/                     # Phase 0: Example "Hello World" processor
 │   └── (prioritytagger/)               # (Future) L0: Critical process tagging
@@ -193,8 +172,7 @@ The Makefile is the primary entry point for most development tasks.
 ├── go.mod                              # Go module definition
 ├── go.sum                              # Go module checksums
 ├── README.md                           # This file
-├── run-demo.sh                         # Legacy script, prefer `make run-demo` or `run.sh demo`
-└── run.sh                              # Unified script for running demo or Docker stack
+└── run.sh                              # Unified script for running Docker stack
 ```
 
 (Parentheses () indicate planned or future components not yet fully implemented in Phase 0.)

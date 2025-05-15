@@ -20,7 +20,6 @@ This foundational phase established the core project structure, development envi
 | **CI/CD Basics**                                                             | ✅     | GitHub Actions for build, lint, unit tests (`go test ./...`), and `govulncheck`.                                                                                                        |
 | **Core Documentation & Dashboards**                                          | ✅     | `README.md`, `CLAUDE.MD`, `DEVELOPING_PROCESSORS.md`, `NRDOT_PROCESSOR_SELF_OBSERVABILITY.md`, this `IMPLEMENTATION_PLAN.MD`, and "NRDOT Custom Processor Starter KPIs" Grafana dashboard. |
 | **`Makefile` for Dev Workflow**                                              | ✅     | Comprehensive targets for build, test, Docker ops, linting, etc. (`make help` for details).                                                                                             |
-| **Relocated Simple Demo**                                                    | ✅     | Original top-level `main.go` moved to `examples/simple_demo/main.go`.                                                                                                                 |
 
 ---
 

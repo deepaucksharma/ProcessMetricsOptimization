@@ -1,4 +1,4 @@
-.PHONY: build test test-unit test-integration test-e2e test-urls bench lint docker-build compose-up compose-down logs sbom vuln-scan clean run run-demo help
+.PHONY: build test test-unit test-integration test-e2e test-urls bench lint docker-build compose-up compose-down logs sbom vuln-scan clean run help
 
 # Build variables
 COLLECTOR_IMAGE := nrdot-process-optimization:latest
@@ -20,7 +20,7 @@ help:
 	@echo "  build              Build the project"
 	@echo "  docker-build       Build Docker image"
 	@echo "  run                Start services with Docker"
-	@echo "  run-demo           Run the simple demo app"
+	@echo ""
 	@echo ""
 	@echo "Docker Operations:"
 	@echo "  compose-up         Start services with Docker Compose"
@@ -98,9 +98,6 @@ logs:
 run:
 	./run.sh up
 
-# Run the simple demo app
-run-demo:
-	./run.sh demo
 
 # Generate SBOM
 sbom:

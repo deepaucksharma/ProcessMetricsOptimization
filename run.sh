@@ -12,13 +12,9 @@ NC='\033[0m' # No Color
 display_usage() {
   echo -e "${YELLOW}NRDOT Process-Metrics Optimization - Runner${NC}"
   echo
-  echo -e "Usage: ./run.sh [mode] [command] [options]"
+  echo -e "Usage: ./run.sh [command] [options]"
   echo
-  echo -e "Modes:"
-  echo -e "  docker    Run using Docker containers (default)"
-  echo -e "  demo      Run simple demo app directly"
-  echo
-  echo -e "Docker Commands:"
+  echo -e "Commands:"
   echo -e "  up        Start all services"
   echo -e "  down      Stop all services"
   echo -e "  logs      Follow logs from all services"
@@ -29,13 +25,10 @@ display_usage() {
   echo -e "  --open-urls    Open URLs in the browser (default)"
   echo
   echo -e "Examples:"
-  echo -e "  ./run.sh docker up                Start services with Docker"
-  echo -e "  ./run.sh demo                     Run the simple demo"
-  echo -e "  ./run.sh up                       Start services with Docker (default mode)"
-  echo -e "  ./run.sh up --no-browser          Start services without opening URLs"
-  echo -e "  ./run.sh demo --no-browser        Run demo without opening browser"
+  echo -e "  ./run.sh up                     Start services with Docker"
+  echo -e "  ./run.sh up --no-browser        Start services without opening URLs"
   echo
-  echo -e "Access Points (Docker mode):"
+  echo -e "Access Points:"
   echo -e "  zPages: http://localhost:15679"
   echo -e "  Prometheus: http://localhost:19090"
   echo -e "  Grafana: http://localhost:13000 (admin/admin)"
@@ -43,7 +36,7 @@ display_usage() {
   echo
 }
 
-# Check Docker is running (for Docker mode)
+# Check Docker is running
 check_docker() {
   if ! docker info >/dev/null 2>&1; then
     echo -e "${RED}Error: Docker is not running or not installed.${NC}"
@@ -60,28 +53,12 @@ load_env() {
   fi
 }
 
-# Check if NEW_RELIC_LICENSE_KEY is set (for Docker mode)
+# Check if NEW_RELIC_LICENSE_KEY is set
 check_license_key() {
   if [ -z "$NEW_RELIC_LICENSE_KEY" ]; then
     echo -e "${YELLOW}Warning: NEW_RELIC_LICENSE_KEY environment variable is not set.${NC}"
     echo -e "Data will not be sent to New Relic. For production use, set this key in .env file."
   fi
-}
-
-# Get the machine's IP address (for demo mode)
-get_ip_address() {
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS
-    IP=$(ifconfig | grep "inet " | grep -v 127.0.0.1 | awk '{print $2}' | head -n 1)
-  elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    # Linux
-    IP=$(hostname -I | awk '{print $1}')
-  else
-    # Other
-    IP="<your-ip-address>"
-  fi
-  
-  echo $IP
 }
 
 # Function to open a URL in the default browser
@@ -123,37 +100,7 @@ open_url() {
   return 0
 }
 
-# Run the simple demo
-run_demo() {
-  echo -e "${YELLOW}Starting NRDOT Hello World Processor Demo...${NC}"
-  
-  IP=$(get_ip_address)
-  
-  echo -e "${GREEN}Detected IP Address: ${BLUE}${IP}${NC}"
-  echo -e "${GREEN}Starting server...${NC}"
-  echo -e "${GREEN}You can access the demo at:${NC}"
-  echo -e "  - ${BLUE}http://localhost:8080${NC} (if on the same machine)"
-  echo -e "  - ${BLUE}http://${IP}:8080${NC} (from other devices on the same network)"
-  echo -e ""
-  echo -e "${YELLOW}Press Ctrl+C to stop the server${NC}"
-  echo -e ""
-  
-  # Open demo URL in browser
-  if [ "${OPEN_URLS:-true}" = "true" ]; then
-    # Open in background to allow server to start
-    (
-      # Wait a moment for the server to start
-      sleep 1
-      echo -e "${GREEN}Opening demo in your browser...${NC}"
-      open_url "http://localhost:8080" || true
-    ) &
-  fi
-  
-  # Run the demo
-  go run main.go
-}
-
-# Docker mode operations
+# Docker operations
 docker_up() {
   echo -e "${GREEN}Starting services with Docker Compose...${NC}"
   docker-compose -f build/docker-compose.yaml up -d
@@ -199,14 +146,13 @@ docker_restart() {
   echo -e "${GREEN}Services restarted successfully${NC}"
 }
 
-# Determine the mode and command
+# Determine the command
 if [ $# -eq 0 ]; then
   display_usage
   exit 1
 fi
 
-# Set default mode to docker and default options
-MODE="docker"
+# Set default options
 CMD=""
 OPEN_URLS="true"
 
@@ -217,17 +163,8 @@ if [ "$1" == "--help" ] || [ "$1" == "-h" ] || [ "$1" == "help" ]; then
 fi
 
 # Parse arguments
-if [ "$1" == "docker" ] || [ "$1" == "demo" ]; then
-  MODE="$1"
-  shift
-  CMD="$1"
-  if [ -n "$CMD" ]; then
-    shift
-  fi
-else
-  CMD="$1"
-  shift
-fi
+CMD="$1"
+shift
 
 # Parse options
 while [ $# -gt 0 ]; do
@@ -252,43 +189,27 @@ export OPEN_URLS
 
 echo -e "${YELLOW}Starting NRDOT Process-Metrics Optimization...${NC}"
 
-# Process based on mode
-case "$MODE" in
-  docker)
-    # Load environment variables and check Docker is running
-    load_env
-    check_docker
-    check_license_key
-    
-    # Process Docker commands
-    case "$CMD" in
-      up|"")
-        docker_up
-        ;;
-      down)
-        docker_down
-        ;;
-      logs)
-        docker_logs
-        ;;
-      restart)
-        docker_restart
-        ;;
-      *)
-        echo -e "${RED}Unknown command for docker mode: $CMD${NC}"
-        display_usage
-        exit 1
-        ;;
-    esac
+# Load environment variables and check Docker is running
+load_env
+check_docker
+check_license_key
+
+# Process commands
+case "$CMD" in
+  up)
+    docker_up
     ;;
-  
-  demo)
-    # Run the demo directly
-    run_demo
+  down)
+    docker_down
     ;;
-  
+  logs)
+    docker_logs
+    ;;
+  restart)
+    docker_restart
+    ;;
   *)
-    echo -e "${RED}Unknown mode: $MODE${NC}"
+    echo -e "${RED}Unknown command: $CMD${NC}"
     display_usage
     exit 1
     ;;

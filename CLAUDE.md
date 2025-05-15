@@ -1,6 +1,8 @@
-# CLAUDE.md - AI Development Assistant Guide
+# CLAUDE.md
 
-This document provides specific context and guidelines for AI coding assistants (like Claude, ChatGPT, etc.) when working with the **NRDOT Process-Metrics Optimization** repository. Its aim is to help the AI understand the project's goals, structure, current state, and conventions, leading to more effective and aligned assistance.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+This document provides specific context and guidelines for AI coding assistants when working with the **NRDOT Process-Metrics Optimization** repository. Its aim is to help the AI understand the project's goals, structure, current state, and conventions, leading to more effective and aligned assistance.
 
 ---
 
@@ -39,8 +41,6 @@ Familiarize yourself with this structure to locate relevant code and configurati
 │   ├── DEVELOPING_PROCESSORS.md        # How to build new custom processors
 │   └── NRDOT_PROCESSOR_SELF_OBSERVABILITY.md # Standards for processor metrics
 ├── examples/                           # Standalone example code
-│   └── simple_demo/                    # Minimal Go HTTP demo application
-│       └── main.go
 ├── processors/                         # Location for all custom OTel processors
 │   └── helloworld/                     # Phase 0: Example "Hello World" processor
 │       ├── config.go                   # Configuration struct and validation
@@ -79,7 +79,6 @@ The Makefile is your primary interface for common tasks. Refer to it (`make help
 | `make test` | Runs all available tests (unit, URL checks; future: integration, E2E). |
 | `make test-unit` | Runs Go unit tests (`go test ./...`). |
 | `make lint` | Runs Go static analysis tools (`go vet`, `go fmt`, `golangci-lint` if available). |
-| `make run-demo` | Executes the simple Go demo in `examples/simple_demo/main.go`. |
 
 ### Typical Local Development Loop for a Processor:
 
@@ -92,7 +91,7 @@ The Makefile is your primary interface for common tasks. Refer to it (`make help
    - Check logs: `make logs` (especially the `mock-otlp-sink` and `otel-collector`).
    - Inspect zPages: http://localhost:55679.
    - Query metrics in Prometheus: http://localhost:9090.
-   - View dashboards in Grafana: http://localhost:3000.
+   - View dashboards in Grafana: http://localhost:3000 (login: admin/admin).
 7. Repeat until the processor behaves as expected.
 
 ## 4. Coding Standards & Processor Development Conventions
@@ -120,7 +119,26 @@ Each custom processor resides in its own sub-directory under `processors/` (e.g.
 - **Custom Metrics**: Implement processor-specific Key Performance Indicators (KPIs) using `go.opentelemetry.io/otel/metric` obtained via `component.TelemetrySettings.MeterProvider.Meter("<processor_type_str>")`. Custom metric names MUST be prefixed with `nrdot_<processor_name>_` (e.g., `nrdot_helloworld_mutations_total`).
 
 ### pdata Manipulation:
-Processors operate on `pmetric.Metrics`. Be mindful of efficient manipulation of these structures.
+Processors operate on `pmetric.Metrics`. These structures are hierarchical and require careful traversal:
+
+```
+pmetric.Metrics
+  └─ ResourceMetrics[]
+       └─ Resource (attributes)
+       └─ ScopeMetrics[]
+            └─ Scope (instrumentation info)
+            └─ Metrics[]
+                 └─ Metric (name, description, unit)
+                     └─ DataPoints[] (based on metric type)
+```
+
+When implementing a processor, you'll typically:
+1. Iterate through ResourceMetrics, ScopeMetrics, and Metrics
+2. Check metric type (Gauge, Sum, Histogram, etc.)
+3. Process the appropriate DataPoints for that type
+4. Modify attributes, values, or filter data points as needed
+
+Be mindful of efficient manipulation of these structures. Refer to `processors/helloworld/processor.go` for a reference implementation.
 
 ### Error Handling:
 Log errors using the `zap.Logger` provided in `processor.CreateSettings`. Propagate errors up the call stack where appropriate.
@@ -161,7 +179,41 @@ When the local stack is running (`make compose-up`), use these endpoints for obs
 
 - **Environment Variables**: Key settings in `config/base.yaml` (and the future `opt-plus.yaml`) can be overridden by environment variables (e.g., `COLLECTION_INTERVAL`, `NEW_RELIC_LICENSE_KEY`, `NEW_RELIC_OTLP_ENDPOINT`). The `docker-compose.yaml` file often sets some of these, especially to route the OTLP exporter to the `mock-otlp-sink` service within the Docker network.
 
-## 7. General Guidance for AI Prompts
+## 7. Command Line Usage and Unified Run Script
+
+In addition to the Makefile, the project includes a unified run script (`run.sh`) that provides consistent command-line interface for Docker-based operations:
+
+### Basic Usage:
+
+```bash
+# Start the Docker development stack
+./run.sh up
+
+# View logs from all services
+./run.sh logs
+
+# Stop all services
+./run.sh down
+
+# Show help
+./run.sh --help
+```
+
+### Advanced Options:
+
+- `--no-browser`: Disable automatic browser opening
+- `--open-urls`: Enable automatic browser opening (default)
+
+### Service URLs (when running with Docker):
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| zPages | http://localhost:55679 | Debugging collector internals |
+| Prometheus | http://localhost:9090 | Querying metrics |
+| Grafana | http://localhost:3000 (admin/admin) | Visualizing metrics |
+| Mock OTLP Sink | View via `./run.sh logs` | Verifying OTLP data |
+
+## 8. General Guidance for AI Prompts
 
 - **Be Specific**: Instead of "write a processor," ask "Create the factory.go file for a new OpenTelemetry processor named 'myprocessor', ensuring it registers a default configuration struct named Config and uses processor.StabilityLevelDevelopment."
 

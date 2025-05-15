@@ -3,89 +3,81 @@ package main
 import (
 	"log"
 
+	// Our custom processors
 	"github.com/newrelic/nrdot-process-optimization/processors/helloworld"
+	"github.com/newrelic/nrdot-process-optimization/processors/prioritytagger"
+	
+	// OTel core
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/extension"
+	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/collector/receiver"
-	"go.opentelemetry.io/collector/service"
 	
-	"go.opentelemetry.io/collector/exporter/otlpexporter"
-	"go.opentelemetry.io/collector/exporter/otlphttpexporter"
-	"go.opentelemetry.io/collector/exporter/prometheusexporter"
-	"go.opentelemetry.io/collector/extension/zpagesextension"
+	// Standard processors
 	"go.opentelemetry.io/collector/processor/batchprocessor"
 	"go.opentelemetry.io/collector/processor/memorylimiterprocessor"
-	"go.opentelemetry.io/collector/receiver/hostmetricsreceiver"
-	"go.opentelemetry.io/collector/receiver/otlpreceiver"
+	
+	// Standard exporters
+	"go.opentelemetry.io/collector/exporter/otlphttpexporter"
+	
+	// Standard extensions
+	"go.opentelemetry.io/collector/extension/zpagesextension"
+	
+	// Contrib packages for processors, exporters and receivers
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusexporter"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver"
 )
 
 func main() {
-	factories, err := components()
-	if err != nil {
-		log.Fatalf("Failed to build components: %v", err)
-	}
-
 	info := component.BuildInfo{
 		Command:     "nrdot-process-optimization",
 		Description: "New Relic Distribution of OpenTelemetry Process Metrics Optimization",
 		Version:     "0.1.0",
 	}
 
-	if err = service.Run(service.CollectorSettings{
-		BuildInfo:     info,
-		Factories:     factories,
-		ConfigSources: service.ConfigSources{},
-	}); err != nil {
+	// Create collector settings
+	settings := otelcol.CollectorSettings{
+		BuildInfo: info,
+		Factories: components,
+	}
+
+	// Create the collector command
+	cmd := otelcol.NewCommand(settings)
+
+	// Execute the command
+	if err := cmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func components() (component.Factories, error) {
-	factories := component.Factories{
+// components returns the set of components used by the collector.
+func components() (otelcol.Factories, error) {
+	factories := otelcol.Factories{
 		Extensions: make(map[component.Type]extension.Factory),
 		Receivers:  make(map[component.Type]receiver.Factory),
 		Processors: make(map[component.Type]processor.Factory),
 		Exporters:  make(map[component.Type]exporter.Factory),
 	}
-
-	// Register extensions
-	extensions := []extension.Factory{
-		zpagesextension.NewFactory(),
-	}
-	for _, ext := range extensions {
-		factories.Extensions[ext.Type()] = ext
-	}
-
-	// Register receivers
-	receivers := []receiver.Factory{
-		hostmetricsreceiver.NewFactory(),
-		otlpreceiver.NewFactory(),
-	}
-	for _, rcv := range receivers {
-		factories.Receivers[rcv.Type()] = rcv
-	}
-
-	// Register processors
-	processors := []processor.Factory{
-		batchprocessor.NewFactory(),
-		memorylimiterprocessor.NewFactory(),
-		helloworld.NewFactory(),
-	}
-	for _, proc := range processors {
-		factories.Processors[proc.Type()] = proc
-	}
-
-	// Register exporters
-	exporters := []exporter.Factory{
-		otlpexporter.NewFactory(),
-		otlphttpexporter.NewFactory(),
-		prometheusexporter.NewFactory(),
-	}
-	for _, exp := range exporters {
-		factories.Exporters[exp.Type()] = exp
-	}
+	
+	// Add receivers
+	factories.Receivers[hostmetricsreceiver.NewFactory().Type()] = hostmetricsreceiver.NewFactory()
+	
+	// Add processors
+	factories.Processors[helloworld.NewFactory().Type()] = helloworld.NewFactory()
+	factories.Processors[prioritytagger.NewFactory().Type()] = prioritytagger.NewFactory()
+	factories.Processors[attributesprocessor.NewFactory().Type()] = attributesprocessor.NewFactory()
+	factories.Processors[batchprocessor.NewFactory().Type()] = batchprocessor.NewFactory()
+	factories.Processors[memorylimiterprocessor.NewFactory().Type()] = memorylimiterprocessor.NewFactory()
+	
+	// Add exporters
+	factories.Exporters[prometheusexporter.NewFactory().Type()] = prometheusexporter.NewFactory()
+	factories.Exporters[otlphttpexporter.NewFactory().Type()] = otlphttpexporter.NewFactory()
+	
+	// Add extensions
+	factories.Extensions[zpagesextension.NewFactory().Type()] = zpagesextension.NewFactory()
 
 	return factories, nil
 }

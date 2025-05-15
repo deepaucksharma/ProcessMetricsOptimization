@@ -1,6 +1,6 @@
 receivers:
   hostmetrics:
-    collection_interval: ${COLLECTION_INTERVAL:30s}
+    collection_interval: 30s
     scrapers:
       cpu:
       memory:
@@ -10,27 +10,40 @@ receivers:
       network:
       paging:
       process:
-        include:
-          match_type: regexp
-          processes: [".*"]
+        mute_process_name_error: true
 
 processors:
   batch:
-    send_batch_size: ${BATCH_SEND_SIZE:1000}
-    timeout: ${BATCH_TIMEOUT:10s}
+    send_batch_size: 1000
+    timeout: 10s
   
   memory_limiter:
     check_interval: 1s
-    limit_mib: ${NEW_RELIC_MEMORY_LIMIT_MIB:250}
-    spike_limit_mib: ${NEW_RELIC_MEMORY_SPIKE_LIMIT_MIB:150}
+    limit_mib: 250
+    spike_limit_mib: 150
   
-  helloworld:
-    message: "Hello from NRDOT Process-Metrics Optimization!"
-    add_to_resource: true
+  # We can't use the prioritytagger as it's a custom processor.
+  # Using filter processor to include only process metrics
+  filter:
+    metrics:
+      include:
+        match_type: strict
+        metric_names:
+          - process.cpu.time
+          - process.cpu.utilization
+          - process.memory.physical_usage
+          - process.memory.virtual_usage
+  
+  # Using the attributes processor to add the Hello World message instead
+  attributes:
+    actions:
+      - key: hello.processor
+        value: "Hello from NRDOT Process-Metrics Optimization!"
+        action: insert
 
 exporters:
   otlphttp:
-    endpoint: ${NEW_RELIC_OTLP_ENDPOINT:https://otlp.nr-data.net/v1/metrics}
+    endpoint: https://otlp.nr-data.net/v1/metrics
     headers:
       api-key: ${NEW_RELIC_LICENSE_KEY}
   
@@ -47,12 +60,12 @@ service:
   pipelines:
     metrics:
       receivers: [hostmetrics]
-      processors: [memory_limiter, helloworld, batch]
+      processors: [filter, memory_limiter, attributes, batch]
       exporters: [otlphttp, prometheus]
   
   telemetry:
     logs:
-      level: ${OTEL_LOG_LEVEL:info}
+      level: info
     metrics:
       level: detailed
       address: 0.0.0.0:8888
