@@ -1,0 +1,106 @@
+###############################################################################
+# Simplified NRDOT Configuration with Hello World Processor                   #
+###############################################################################
+
+extensions:
+  health_check:
+    endpoint: "0.0.0.0:13133"
+
+receivers:
+  hostmetrics_balanced:
+    root_path: "/hostfs"
+    collection_interval: "30s"
+    scrapers:
+      processes: {}
+      process:
+        metrics:
+          process.cpu.utilization: {enabled: true}
+          process.memory.usage: {enabled: true}
+          process.disk.io: {enabled: true}
+        include: {match_type: regexp, names: [".*"]}
+        exclude: {match_type: regexp, names: ["$^"]}
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 250
+    spike_limit_mib: 150
+  
+  metricstransform/drop_idle_state:
+    transforms:
+      - include: ^process\.cpu\.utilization$
+        action: update
+        operations: [{action: delete_label_value, label: state, label_value: idle}]
+
+  metricstransform/rename_util:
+    transforms:
+      - include: ^process\.cpu\.utilization$
+        action: update
+        operations: [{action: rename_metric, new_name: process.cpu.pct}]
+      - include: ^process\.memory\.usage$
+        action: update
+        operations: [{action: rename_metric, new_name: process.mem.bytes}]
+
+  cumulativetodelta: {}
+  
+  # Common attributes for all telemetry
+  attributes/common_attrs:
+    actions:
+      - {key: deployment.environment, value: "production", action: upsert}
+      - {key: service.name, value: "nrdot-collector-host", action: upsert}
+  
+  # Hello World processor - adds a custom attribute to metrics
+  attributes/hello_world:
+    actions:
+      - key: hello.world.processor
+        value: "ran_successfully"
+        action: upsert
+  
+  resourcedetection:
+    detectors: [system]
+  
+  batch:
+    send_batch_size: 8192
+    timeout: 10s
+
+exporters:
+  otlphttp:
+    endpoint: "https://otlp.nr-data.net"
+    headers:
+      api-key: ${env:NEW_RELIC_LICENSE_KEY}
+    compression: zstd
+    sending_queue:
+      enabled: true
+      num_consumers: 4
+      queue_size: 10000
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 5m
+
+  debug:
+    verbosity: detailed
+
+service:
+  telemetry:
+    logs:
+      level: "debug"
+      development: true
+      encoding: console
+  
+  extensions: [health_check]
+  
+  pipelines:
+    metrics/balanced:
+      receivers: [hostmetrics_balanced]
+      processors:
+        [memory_limiter,
+         metricstransform/drop_idle_state,
+         metricstransform/rename_util,
+         cumulativetodelta,
+         attributes/common_attrs,
+         attributes/hello_world,
+         resourcedetection,
+         batch]
+      exporters: [debug, otlphttp]

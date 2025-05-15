@@ -1,0 +1,24 @@
+# Binary files
+otelcol
+otelcol_*
+bin/
+
+# Log files
+*.log
+otel-collector*.log
+
+# Environment variables
+.env
+
+# Backup files
+*.bak
+*copy*
+
+# Temporary files
+tmp/
+temp/
+.DS_Store
+
+# Downloaded packages
+*.tar.gz
+*.zip
