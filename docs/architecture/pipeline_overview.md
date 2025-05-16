@@ -13,7 +13,7 @@ The pipeline consists of four custom processors that work together in sequence:
 3. **L3: ReservoirSampler** - Statistically samples a representative subset of non-critical, non-top processes
 4. **L2: OthersRollup** - Aggregates all remaining processes into a single "_other_" process series
 
-![Pipeline Architecture](../docs/PIPELINE_DIAGRAM.md)
+![Pipeline Architecture](pipeline_diagram.md)
 
 ## Pipeline Architecture
 

@@ -20,7 +20,7 @@ The project is developed in phases. **All phases are now complete, including the
 | 4     | **L3: ReservoirSampler** – Sample the long tail  | ✅ **Complete** |
 | 5     | Full "Opt-Plus" Pipeline Integration & Testing  | ✅ **Complete** |
 
-Detailed milestones and technical plans for each phase are documented in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
+Detailed milestones and technical plans for each phase are documented in [docs/development/implementation_plan.md](docs/development/implementation_plan.md).
 
 ---
 
@@ -188,7 +188,7 @@ Key Self-Metrics:
 | otelcol_processor_dropped_metric_points | Counter | Standard obsreport: Count of metric points dropped due to errors. |
 | nrdot_prioritytagger_critical_processes_tagged_total | Counter | Custom: Count of processes tagged as critical. |
 
-For detailed documentation, see [processors/prioritytagger/README.md](processors/prioritytagger/README.md).
+For detailed documentation, see [docs/processors/prioritytagger.md](docs/processors/prioritytagger.md).
 
 ## "AdaptiveTopK" Processor (Phase 2 Deliverable)
 
@@ -242,7 +242,7 @@ Key Self-Metrics:
 | nrdot_adaptivetopk_topk_processes_selected_total | Counter | Number of non-critical processes selected for Top K. |
 | nrdot_adaptivetopk_current_k_value | Gauge | Current K value when using dynamic K. |
 
-For detailed documentation, see [processors/adaptivetopk/README.md](processors/adaptivetopk/README.md).
+For detailed documentation, see [docs/processors/adaptivetopk.md](docs/processors/adaptivetopk.md).
 
 ## "OthersRollup" Processor (Phase 3 Deliverable)
 
@@ -287,7 +287,7 @@ Key Self-Metrics:
 | nrdot_othersrollup_aggregated_series_count_total | Counter | Number of new "_other_" series generated. |
 | nrdot_othersrollup_input_series_rolled_up_total | Counter | Count of input series aggregated into "_other_". |
 
-For detailed documentation, see [processors/othersrollup/README.md](processors/othersrollup/README.md).
+For detailed documentation, see [docs/processors/othersrollup.md](docs/processors/othersrollup.md).
 
 ## "ReservoirSampler" Processor (Phase 4 Deliverable)
 
@@ -334,7 +334,7 @@ Key Self-Metrics:
 | nrdot_reservoirsampler_eligible_identities_seen_total | Counter | Total unique eligible identities encountered. |
 | nrdot_reservoirsampler_new_identities_added_to_reservoir_total | Counter | Count of new identities added to the reservoir. |
 
-For detailed documentation, see [processors/reservoirsampler/README.md](processors/reservoirsampler/README.md).
+For detailed documentation, see [docs/processors/reservoirsampler.md](docs/processors/reservoirsampler.md).
 
 ## Full "Opt-Plus" Pipeline Integration (Phase 5 Deliverable)
 
@@ -352,7 +352,34 @@ Key Features:
 - Algorithm-specific dashboards for deep insights into each processor
 - Optimized pipeline order for maximum effectiveness
 
-For comprehensive documentation of the complete optimization pipeline, see [docs/OPTIMIZATION_PIPELINE.md](docs/OPTIMIZATION_PIPELINE.md).
+For comprehensive documentation of the complete optimization pipeline, see [docs/architecture/pipeline_overview.md](docs/architecture/pipeline_overview.md).
+
+## Documentation
+
+The project documentation has been organized into the following structure:
+
+- [Documentation Index](docs/index.md) - Main documentation hub
+- Architecture
+  - [Pipeline Overview](docs/architecture/pipeline_overview.md)
+  - [Pipeline Diagram](docs/architecture/pipeline_diagram.md)
+  - [Metrics Schema](docs/architecture/metrics_schema.md)
+- Processors
+  - [PriorityTagger (L0)](docs/processors/prioritytagger.md)
+  - [AdaptiveTopK (L1)](docs/processors/adaptivetopk.md)
+  - [OthersRollup (L2)](docs/processors/othersrollup.md)
+  - [ReservoirSampler (L3)](docs/processors/reservoirsampler.md)
+- Development
+  - [Developing Processors](docs/development/developing_processors.md)
+  - [Implementation Plan](docs/development/implementation_plan.md)
+  - [Processor Self-Observability](docs/development/processor_self_observability.md)
+  - [Metric Naming Conventions](docs/development/metric_naming_conventions.md)
+- Operations
+  - [Observability Stack Setup](docs/operations/observability_stack_setup.md)
+  - [Dashboard Metrics Audit](docs/operations/dashboard_metrics_audit.md)
+  - [Completing Phase 5](docs/operations/completing_phase_5.md)
+- Dashboards
+  - [Grafana Dashboard Design](docs/dashboards/grafana_dashboard_design.md)
+  - [Dashboard Overview](docs/dashboards/dashboard_overview.md)
 
 ## Monitoring & Observability
 
@@ -373,7 +400,7 @@ This project includes several Grafana dashboards for comprehensive monitoring:
 
 These dashboards show the internal decision-making processes of each processor algorithm, providing deep visibility into how cardinality reduction is achieved.
 
-For detailed information on dashboard setup and usage, see [dashboards/README.md](dashboards/README.md) and [docs/GRAFANA_DASHBOARD_DESIGN.md](docs/GRAFANA_DASHBOARD_DESIGN.md).
+For detailed information on dashboard setup and usage, see [dashboards/README.md](dashboards/README.md) and [docs/dashboards/grafana_dashboard_design.md](docs/dashboards/grafana_dashboard_design.md).
 
 ## Local Development Environment Deep Dive
 
@@ -391,7 +418,7 @@ The make compose-up command, utilizing build/docker-compose.yaml, orchestrates a
      - batch processor.
      - Exporters: otlphttp (to the mock sink) and prometheus (for its own metrics).
    - Its zPages are exposed on http://localhost:15679 (mapped from port 55679 in the container).
-   - Its Prometheus-compatible metrics endpoints are scraped by the Prometheus service. The setup for this stack is detailed in [docs/OBSERVABILITY_STACK_SETUP.md](docs/OBSERVABILITY_STACK_SETUP.md).
+   - Its Prometheus-compatible metrics endpoints are scraped by the Prometheus service. The setup for this stack is detailed in [docs/operations/observability_stack_setup.md](docs/operations/observability_stack_setup.md).
 
 2. **Mock OTLP Sink** (mock-otlp-sink service):
    - A simple service that listens for OTLP/HTTP metric data.
@@ -401,13 +428,13 @@ The make compose-up command, utilizing build/docker-compose.yaml, orchestrates a
    - Pre-configured to scrape metrics from:
      - The custom Collector's telemetry metrics endpoint (e.g., otel-collector:8888/metrics inside the Docker network).
      - The custom Collector's Prometheus exporter endpoint (e.g., otel-collector:8889/metrics inside the Docker network).
-   - Accessible at http://localhost:19090. For details on integrating Prometheus and Grafana with the collector, see [docs/OBSERVABILITY_STACK_SETUP.md](docs/OBSERVABILITY_STACK_SETUP.md).
+   - Accessible at http://localhost:19090. For details on integrating Prometheus and Grafana with the collector, see [docs/operations/observability_stack_setup.md](docs/operations/observability_stack_setup.md).
 
 4. **Grafana** (grafana service):
    - Pre-configured with Prometheus as a data source.
    - Automatically provisions dashboards from the dashboards/ directory.
    - Accessible at http://localhost:13000.
-   - For a more detailed guide on creating comprehensive dashboards, see [docs/GRAFANA_DASHBOARD_DESIGN.md](docs/GRAFANA_DASHBOARD_DESIGN.md). For details on integrating Prometheus and Grafana with the collector, see [docs/OBSERVABILITY_STACK_SETUP.md](docs/OBSERVABILITY_STACK_SETUP.md).
+   - For a more detailed guide on creating comprehensive dashboards, see [docs/dashboards/grafana_dashboard_design.md](docs/dashboards/grafana_dashboard_design.md). For details on integrating Prometheus and Grafana with the collector, see [docs/operations/observability_stack_setup.md](docs/operations/observability_stack_setup.md).
 
 ## Development Workflow & Key Makefile Targets
 
@@ -455,13 +482,28 @@ The Makefile is the primary entry point for most development tasks.
 │   ├── grafana-nrdot-prioritytagger-processor.json
 │   └── grafana-nrdot-system-overview.json
 ├── docs/                               # Project documentation
-│   ├── COMPLETING_PHASE_5.md           # Guide for completing the full pipeline integration
-│   ├── DEVELOPING_PROCESSORS.md        # Guide for creating new custom processors
-│   ├── NRDOT_PROCESSOR_SELF_OBSERVABILITY.md # Standards for processor metrics
-│   ├── GRAFANA_DASHBOARD_DESIGN.md     # Detailed guide for creating Grafana dashboards
-│   ├── OBSERVABILITY_STACK_SETUP.md    # Guide for setting up Prometheus, Grafana with the collector
-│   ├── OPTIMIZATION_PIPELINE.md        # Detailed documentation of the complete pipeline
-│   └── PIPELINE_DIAGRAM.md             # Visual documentation of the pipeline architecture
+│   ├── index.md                        # Documentation hub
+│   ├── architecture/                   # Architecture documentation
+│   │   ├── pipeline_overview.md        # Comprehensive pipeline details
+│   │   ├── pipeline_diagram.md         # Visual pipeline diagrams
+│   │   └── metrics_schema.md           # Metrics data model
+│   ├── processors/                     # Processor documentation
+│   │   ├── prioritytagger.md           # L0 processor documentation
+│   │   ├── adaptivetopk.md             # L1 processor documentation
+│   │   ├── othersrollup.md             # L2 processor documentation
+│   │   └── reservoirsampler.md         # L3 processor documentation
+│   ├── development/                    # Development guides
+│   │   ├── developing_processors.md    # How to build new custom processors
+│   │   ├── processor_self_observability.md # Standards for processor metrics
+│   │   ├── metric_naming_conventions.md # Naming standards for metrics
+│   │   └── implementation_plan.md      # Phased development roadmap
+│   ├── operations/                     # Operational guides
+│   │   ├── observability_stack_setup.md # Setting up monitoring infrastructure
+│   │   ├── dashboard_metrics_audit.md  # Auditing metrics in dashboards
+│   │   └── completing_phase_5.md       # Final integration steps
+│   └── dashboards/                     # Dashboard documentation
+│       ├── grafana_dashboard_design.md # Dashboard design principles
+│       └── dashboard_overview.md       # Overview of available dashboards
 ├── examples/                           # Example code directory
 │   └── README.md                       # Describes planned examples for the project
 ├── internal/                           # Internal shared packages
@@ -477,7 +519,7 @@ The Makefile is the primary entry point for most development tasks.
 │   └── url_check.sh                    # Script to check local dev stack service URLs
 │   └── test_opt_plus_pipeline.sh       # End-to-end test for the full optimization pipeline
 ├── CLAUDE.md                           # Guidance for AI-assisted development
-├── IMPLEMENTATION_PLAN.md              # Detailed project implementation roadmap
+# Implementation plan moved to docs/development/implementation_plan.md
 ├── Makefile                            # Makefile for development tasks
 ├── go.mod                              # Go module definition
 ├── go.sum                              # Go module checksums
@@ -517,17 +559,42 @@ This multi-layer approach strategically reduces cardinality while preserving vis
 
 4. **L3: ReservoirSampler** ✅: Applies statistical sampling (e.g., reservoir sampling) to the remaining long-tail of processes. This provides representative insight into a subset of these processes without exporting all of them. Adds sample rate metadata to enable proper scaling during analysis.
 
-For a detailed visualization of the pipeline and data transformations, see [docs/PIPELINE_DIAGRAM.md](docs/PIPELINE_DIAGRAM.md).
+For a detailed visualization of the pipeline and data transformations, see [docs/architecture/pipeline_diagram.md](docs/architecture/pipeline_diagram.md).
 
 ## Contributing
 
 Contributions are highly welcome!
 
-- To understand the current development focus and upcoming features, please review the [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
-- For guidance on developing new custom processors, see docs/DEVELOPING_PROCESSORS.md.
-- For standards on processor self-observability and metrics, refer to docs/NRDOT_PROCESSOR_SELF_OBSERVABILITY.md.
-- For detailed guidance on designing effective Grafana dashboards for this project, see [docs/GRAFANA_DASHBOARD_DESIGN.md](docs/GRAFANA_DASHBOARD_DESIGN.md).
-- For setting up the overall observability stack with the NRDOT collector, refer to [docs/OBSERVABILITY_STACK_SETUP.md](docs/OBSERVABILITY_STACK_SETUP.md).
-- If using AI for assistance, CLAUDE.md provides project-specific context.
+## Documentation
+
+All project documentation is organized in the `docs/` directory with the main entry point at [docs/index.md](docs/index.md).
+
+### Architecture Documentation
+- [Pipeline Overview](docs/architecture/pipeline_overview.md) - Comprehensive details of the optimization pipeline
+- [Pipeline Diagram](docs/architecture/pipeline_diagram.md) - Visual representation of the pipeline architecture
+- [Metrics Schema](docs/architecture/metrics_schema.md) - Details of the metrics data model
+
+### Processor Documentation
+- [PriorityTagger (L0)](docs/processors/prioritytagger.md) - Documentation for the L0 processor
+- [AdaptiveTopK (L1)](docs/processors/adaptivetopk.md) - Documentation for the L1 processor
+- [OthersRollup (L2)](docs/processors/othersrollup.md) - Documentation for the L2 processor
+- [ReservoirSampler (L3)](docs/processors/reservoirsampler.md) - Documentation for the L3 processor
+
+### Development Guides
+- [Implementation Plan](docs/development/implementation_plan.md) - Project roadmap and development phases
+- [Developing Processors](docs/development/developing_processors.md) - Guide for creating new custom processors
+- [Processor Self-Observability](docs/development/processor_self_observability.md) - Standards for processor metrics
+- [Metric Naming Conventions](docs/development/metric_naming_conventions.md) - Standards for metric naming
+
+### Operations Guides
+- [Observability Stack Setup](docs/operations/observability_stack_setup.md) - Setting up Prometheus and Grafana
+- [Dashboard Metrics Audit](docs/operations/dashboard_metrics_audit.md) - Auditing metrics in dashboards
+- [Completing Phase 5](docs/operations/completing_phase_5.md) - Final integration steps
+
+### Dashboard Documentation
+- [Dashboard Design](docs/dashboards/grafana_dashboard_design.md) - Dashboard design principles
+- [Dashboard Overview](docs/dashboards/dashboard_overview.md) - Overview of available dashboards
+
+If using AI for assistance, CLAUDE.md provides project-specific context.
 
 Please feel free to open issues for bugs, feature requests, or ideas. Pull requests are encouraged.

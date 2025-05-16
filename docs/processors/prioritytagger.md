@@ -1,7 +1,5 @@
 # PriorityTagger Processor
 
-> **Note:** The full documentation for this processor has been moved to [docs/processors/prioritytagger.md](../../docs/processors/prioritytagger.md)
-
 > **L0 Processor** - Tags critical processes for preservation in subsequent pipeline stages
 
 ## Overview

@@ -15,7 +15,7 @@ This document provides specific context and guidelines for AI coding assistants 
     * A foundational "Hello World" (`helloworld`) custom processor is implemented and functional.
     * A robust local development environment using Docker Compose is established, including the custom Collector, Prometheus, Grafana, and a Mock OTLP Sink.
     * Standardized ports and service interactions are defined.
-    * Core documentation (`README.md`, this `CLAUDE.md`, `IMPLEMENTATION_PLAN.md`, processor development guides) is in place.
+    * Core documentation (`README.md`, this `CLAUDE.md`, `docs/development/implementation_plan.md`, processor development guides) is in place.
     * CI for build, lint, unit tests, and basic vulnerability checks is operational.
   * **Phase 1 - Complete:**
     * The L0 PriorityTagger (`prioritytagger`) processor is fully implemented.
@@ -64,10 +64,28 @@ Familiarize yourself with this structure to locate relevant code and configurati
 ├── dashboards/                         # Grafana dashboard JSON files
 │   └── grafana-nrdot-custom-processor-starter-kpis.json
 ├── docs/                               # Developer documentation and guides
-│   ├── DEVELOPING_PROCESSORS.md        # How to build new custom processors
-│   ├── NRDOT_PROCESSOR_SELF_OBSERVABILITY.md # Standards for processor metrics
-│   ├── GRAFANA_DASHBOARD_DESIGN.md     # Detailed guide for advanced Grafana dashboards
-│   └── OBSERVABILITY_STACK_SETUP.md    # Guide for setting up Prometheus, Grafana with the collector
+│   ├── index.md                        # Documentation hub
+│   ├── architecture/                   # Architecture documentation
+│   │   ├── pipeline_overview.md        # Comprehensive pipeline details
+│   │   ├── pipeline_diagram.md         # Visual pipeline diagrams
+│   │   └── metrics_schema.md           # Metrics data model
+│   ├── processors/                     # Processor documentation
+│   │   ├── prioritytagger.md           # L0 processor documentation
+│   │   ├── adaptivetopk.md             # L1 processor documentation
+│   │   ├── othersrollup.md             # L2 processor documentation
+│   │   └── reservoirsampler.md         # L3 processor documentation
+│   ├── development/                    # Development guides
+│   │   ├── developing_processors.md    # How to build new custom processors
+│   │   ├── processor_self_observability.md # Standards for processor metrics
+│   │   ├── metric_naming_conventions.md # Naming standards for metrics
+│   │   └── implementation_plan.md      # Phased development roadmap
+│   ├── operations/                     # Operational guides
+│   │   ├── observability_stack_setup.md # Setting up monitoring infrastructure
+│   │   ├── dashboard_metrics_audit.md  # Auditing metrics in dashboards
+│   │   └── completing_phase_5.md       # Final integration steps
+│   └── dashboards/                     # Dashboard documentation
+│       ├── grafana_dashboard_design.md # Dashboard design principles
+│       └── dashboard_overview.md       # Overview of available dashboards
 ├── examples/                           # Standalone example code
 │   └── README.md                       # Describes planned examples for the project
 ├── internal/                           # Internal shared packages
@@ -112,7 +130,6 @@ Familiarize yourself with this structure to locate relevant code and configurati
 ├── Makefile                            # Central build and task automation script
 ├── go.mod / go.sum                     # Go module definitions
 ├── README.md                           # Main project overview and quick start
-├── IMPLEMENTATION_PLAN.md              # Phased development roadmap
 └── CLAUDE.md                           # This file
 ```
 

@@ -94,7 +94,7 @@ To test your processor as part of the complete optimization pipeline:
 5. Check metrics in Prometheus/Grafana
 6. Run the automated pipeline test: `./test/test_opt_plus_pipeline.sh`
 
-See [docs/COMPLETING_PHASE_5.md](COMPLETING_PHASE_5.md) for additional integration testing guidance.
+See [docs/operations/completing_phase_5.md](../operations/completing_phase_5.md) for additional integration testing guidance.
 
 ## Best Practices
 

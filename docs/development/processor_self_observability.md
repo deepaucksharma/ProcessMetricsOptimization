@@ -2,7 +2,7 @@
 
 ## Guiding Philosophy
 
-**Instrument once, visualize everywhere** - All NRDOT custom processors must implement a comprehensive self-observability framework that allows their performance, capacity, and behavior to be monitored across multiple surfaces. The setup of the overall observability stack is detailed in [docs/OBSERVABILITY_STACK_SETUP.md](docs/OBSERVABILITY_STACK_SETUP.md).
+**Instrument once, visualize everywhere** - All NRDOT custom processors must implement a comprehensive self-observability framework that allows their performance, capacity, and behavior to be monitored across multiple surfaces. The setup of the overall observability stack is detailed in [docs/operations/observability_stack_setup.md](docs/operations/observability_stack_setup.md).
 
 ## Required Metrics
 

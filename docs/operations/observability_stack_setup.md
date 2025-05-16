@@ -71,7 +71,7 @@ Grafana visualizes the metrics scraped by Prometheus, providing dashboards for m
 ---
 
 ### 3. Design Grafana Dashboards for End-to-End Monitoring
-Dashboards should cover the entire collector pipeline. See `docs/GRAFANA_DASHBOARD_DESIGN.md` for detailed designs.
+Dashboards should cover the entire collector pipeline. See `docs/dashboards/grafana_dashboard_design.md` for detailed designs.
 
 #### Key Metrics:
 - **Collector Health**: CPU (`rate(process_cpu_seconds_total[1m])`), Memory (`process_resident_memory_bytes`).
@@ -100,4 +100,4 @@ Monitor the entire data flow using `obsreport` and custom metrics (e.g., `nrdot_
 ---
 
 ## Conclusion
-This setup ensures full visibility into the NRDOT collector's operation using Prometheus, Grafana, and `obsreport`. It complements dashboard designs in `docs/GRAFANA_DASHBOARD_DESIGN.md`.
+This setup ensures full visibility into the NRDOT collector's operation using Prometheus, Grafana, and `obsreport`. It complements dashboard designs in `docs/dashboards/grafana_dashboard_design.md`.

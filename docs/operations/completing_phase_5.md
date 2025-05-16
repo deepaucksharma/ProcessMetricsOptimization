@@ -33,7 +33,7 @@ All phases of the NRDOT Process-Metrics Optimization project have been successfu
 
 ### 3. Documentation Enhancements ✅
 
-- Created detailed documentation in `docs/OPTIMIZATION_PIPELINE.md`
+- Created detailed documentation in `docs/architecture/pipeline_overview.md`
 - Updated all processor READMEs with comprehensive configuration details
 - Updated the main README.md to reflect all completed phases
 - Enhanced Grafana dashboard documentation

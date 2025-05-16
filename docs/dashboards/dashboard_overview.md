@@ -1,7 +1,5 @@
 # NRDOT Dashboards
 
-> **Note:** The full documentation for dashboards has been moved to [docs/dashboards/](../docs/dashboards/)
-
 This directory contains Grafana dashboards for monitoring the NRDOT Process-Metrics Optimization pipeline. These dashboards provide comprehensive visibility into the pipeline's performance, health, and effectiveness.
 
 ## Dashboard Overview
@@ -106,4 +104,4 @@ Ensure you keep these dashboards up-to-date as processors evolve:
 3. Adjust thresholds as performance characteristics change
 4. Regularly review for continued relevance and effectiveness
 
-For detailed information on dashboard design principles and best practices, see the documentation in [docs/dashboards/grafana_dashboard_design.md](../docs/dashboards/grafana_dashboard_design.md).
+For detailed information on dashboard design principles and best practices, see the documentation in `/docs/dashboards/grafana_dashboard_design.md`.

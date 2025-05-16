@@ -1,7 +1,5 @@
 # AdaptiveTopK Processor
 
-> **Note:** The full documentation for this processor has been moved to [docs/processors/adaptivetopk.md](../../docs/processors/adaptivetopk.md)
-
 The `adaptivetopk` processor selects metrics from the 'K' most resource-intensive processes, and ensures that already-prioritized processes are passed through. Its goal is to focus on the most significant processes while dropping metrics from less impactful ones.
 
 'K' can be a fixed value or dynamically adjusted based on overall host load.

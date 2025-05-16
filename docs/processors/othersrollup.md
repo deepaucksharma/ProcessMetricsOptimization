@@ -1,7 +1,5 @@
 # OthersRollup Processor
 
-> **Note:** The full documentation for this processor has been moved to [docs/processors/othersrollup.md](../../docs/processors/othersrollup.md)
-
 The `othersrollup` processor aggregates metrics from non-priority, non-TopK processes into a single "_other_" summary series. This significantly reduces cardinality while retaining a sense of overall system load from less significant processes.
 
 It should typically be placed after `prioritytagger` and `adaptivetopk` processors in the pipeline.

@@ -1,7 +1,5 @@
 # ReservoirSampler Processor
 
-> **Note:** The full documentation for this processor has been moved to [docs/processors/reservoirsampler.md](../../docs/processors/reservoirsampler.md)
-
 The `reservoirsampler` processor selects a statistically representative sample of metrics from "long-tail" processes. These are typically processes that are not tagged as critical by `prioritytagger` and not selected by `adaptivetopk`.
 
 The goal is to provide insights into a subset of these less significant processes without incurring the cost of exporting all of them. This processor often works in conjunction with `othersrollup`, where this sampler might pick representatives *before* the rest are rolled up.
