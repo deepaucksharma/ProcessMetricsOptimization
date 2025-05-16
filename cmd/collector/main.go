@@ -4,8 +4,11 @@ import (
 	"log"
 
 	// Our custom processors
+	"github.com/newrelic/nrdot-process-optimization/processors/adaptivetopk"
 	"github.com/newrelic/nrdot-process-optimization/processors/helloworld"
+	"github.com/newrelic/nrdot-process-optimization/processors/othersrollup"
 	"github.com/newrelic/nrdot-process-optimization/processors/prioritytagger"
+	"github.com/newrelic/nrdot-process-optimization/processors/reservoirsampler"
 	
 	// OTel core
 	"go.opentelemetry.io/collector/component"
@@ -68,6 +71,9 @@ func components() (otelcol.Factories, error) {
 	// Add processors
 	factories.Processors[helloworld.NewFactory().Type()] = helloworld.NewFactory()
 	factories.Processors[prioritytagger.NewFactory().Type()] = prioritytagger.NewFactory()
+	factories.Processors[adaptivetopk.NewFactory().Type()] = adaptivetopk.NewFactory()
+	factories.Processors[othersrollup.NewFactory().Type()] = othersrollup.NewFactory()
+	factories.Processors[reservoirsampler.NewFactory().Type()] = reservoirsampler.NewFactory()
 	factories.Processors[attributesprocessor.NewFactory().Type()] = attributesprocessor.NewFactory()
 	factories.Processors[batchprocessor.NewFactory().Type()] = batchprocessor.NewFactory()
 	factories.Processors[memorylimiterprocessor.NewFactory().Type()] = memorylimiterprocessor.NewFactory()

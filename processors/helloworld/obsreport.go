@@ -19,7 +19,7 @@ func newObsreportHelper(settings component.TelemetrySettings) (*obsreportHelper,
 	meter := settings.MeterProvider.Meter("helloworld")
 	
 	processedPoints, err := meter.Int64Counter(
-		"otelcol_processor_helloworld_processed_metric_points",
+		"otelcol_otelcol_processor_helloworld_processed_metric_points",
 		metric.WithDescription("Number of metric points processed by the hello world processor"),
 	)
 	if err != nil {
@@ -27,7 +27,7 @@ func newObsreportHelper(settings component.TelemetrySettings) (*obsreportHelper,
 	}
 	
 	droppedPoints, err := meter.Int64Counter(
-		"otelcol_processor_helloworld_dropped_metric_points",
+		"otelcol_otelcol_processor_helloworld_dropped_metric_points",
 		metric.WithDescription("Number of metric points dropped by the hello world processor"),
 	)
 	if err != nil {

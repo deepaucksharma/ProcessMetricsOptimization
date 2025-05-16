@@ -1,8 +1,8 @@
 # NRDOT Processor Self-Observability
 
-> **Guiding Philosophy:** Instrument once, visualize everywhere
+## Guiding Philosophy
 
-All NRDOT custom processors must implement comprehensive self-observability to monitor performance, capacity, and behavior across multiple surfaces.
+**Instrument once, visualize everywhere** - All NRDOT custom processors must implement a comprehensive self-observability framework that allows their performance, capacity, and behavior to be monitored across multiple surfaces. The setup of the overall observability stack is detailed in [docs/OBSERVABILITY_STACK_SETUP.md](docs/OBSERVABILITY_STACK_SETUP.md).
 
 ## Required Metrics
 
@@ -10,21 +10,29 @@ All NRDOT custom processors must implement comprehensive self-observability to m
 
 | Metric | Type | Description |
 |--------|------|-------------|
-| `otelcol_processor_<name>_processed_metric_points` | Counter | Number of metric points processed |
-| `otelcol_processor_<name>_dropped_metric_points` | Counter | Number of metric points dropped |
-| `otelcol_processor_<name>_refused_metric_points` | Counter | Number of metric points refused |
-| `otelcol_processor_<name>_latency` | Histogram | Processing time |
+| `otelcol_otelcol_otelcol_processor_<name>_processed_metric_points` | Counter | Number of metric points processed |
+| `otelcol_processor_dropped_metric_points` | Counter | Number of metric points dropped |
+| `otelcol_processor_refused_metric_points` | Counter | Number of metric points refused |
+| `otelcol_processor_latency_bucket` | Histogram | Processing time |
 
 ### Custom Processor KPIs
 
-- All custom metrics **MUST** use the prefix `nrdot_<processor_name>_`
+- All custom metrics **MUST** use the prefix `otelcol_nrdot_<processor_name>_`
 - Implement using `go.opentelemetry.io/otel/metric` via `component.TelemetrySettings`
 
-**Examples:**
-- `nrdot_prioritytagger_critical_processes_tagged_total` (counter)
-- `nrdot_adaptivetopk_current_k` (gauge)
-- `nrdot_othersrollup_aggregated_series_count_total` (counter)
-- `nrdot_reservoirsampler_fill_ratio` (gauge)
+**Implemented Examples:**
+
+| Processor | Metric | Type | Description |
+|-----------|--------|------|-------------|
+| **HelloWorld** | `otelcol_nrdot_helloworld_mutations_total` | Counter | Number of metric points modified |
+| **PriorityTagger** | `otelcol_nrdot_prioritytagger_critical_processes_tagged_total` | Counter | Number of unique processes tagged as critical |
+| **AdaptiveTopK** | `otelcol_nrdot_adaptivetopk_topk_processes_selected_total` | Counter | Number of non-critical processes selected for TopK |
+| **AdaptiveTopK** | `otelcol_nrdot_adaptivetopk_current_k_value` | Gauge | Current K value in use (for Dynamic K) |
+| **OthersRollup** | `otelcol_nrdot_othersrollup_aggregated_series_count_total` | Counter | Number of new "_other_" series generated |
+| **OthersRollup** | `otelcol_nrdot_othersrollup_input_series_rolled_up_total` | Counter | Number of input series aggregated |
+| **ReservoirSampler** | `otelcol_nrdot_reservoirsampler_reservoir_fill_ratio` | Gauge | Current reservoir fill ratio (0.0 to 1.0) |
+| **ReservoirSampler** | `otelcol_nrdot_reservoirsampler_selected_identities_count` | Gauge | Current count of unique process identities in reservoir |
+| **ReservoirSampler** | `otelcol_nrdot_reservoirsampler_eligible_identities_seen_total` | Counter | Total unique eligible process identities encountered |
 
 ## Observability Surfaces
 
@@ -40,8 +48,17 @@ All NRDOT custom processors must implement comprehensive self-observability to m
 ### 1. Local Testing Setup
 
 ```bash
-# Build and start the local development stack
-make docker-build && make compose-up
+# Build the Docker image
+make docker-build
+
+# Option 1: Start with base configuration (HelloWorld + PriorityTagger)
+make compose-up
+
+# Option 2: Start with full optimization pipeline (all processors)
+make opt-plus-up
+
+# Option 3: Run the automated pipeline test
+./test/test_opt_plus_pipeline.sh
 
 # View logs from all services
 make logs

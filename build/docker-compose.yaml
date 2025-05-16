@@ -6,7 +6,7 @@ services:
       dockerfile: build/Dockerfile
     image: nrdot-process-optimization:latest
     container_name: otel-collector
-    command: ["--config=/etc/otel/config/base.yaml"]
+    command: ["--config=/etc/otel/config/opt-plus.yaml"]
     volumes:
       - ../config:/etc/otel/config
     ports:
@@ -16,16 +16,12 @@ services:
       - "18889:8889"   # Prometheus exporter
       - "15679:55679"  # zPages
     environment:
-      - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
-      - NEW_RELIC_OTLP_ENDPOINT=${NEW_RELIC_OTLP_ENDPOINT:-https://otlp.nr-data.net/v1/metrics}
+      - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY:-dummy-key}
+      - NEW_RELIC_OTLP_ENDPOINT=http://mock-nr:8080/v1/metrics
       - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-otel-collector-host}
       - OTEL_DEPLOYMENT_ENVIRONMENT=${OTEL_DEPLOYMENT_ENVIRONMENT:-development}
       - OTEL_LOG_LEVEL=${OTEL_LOG_LEVEL:-info}
       - COLLECTION_INTERVAL=${COLLECTION_INTERVAL:-30s}
-      - BATCH_SEND_SIZE=${BATCH_SEND_SIZE:-1000}
-      - BATCH_TIMEOUT=${BATCH_TIMEOUT:-10s}
-      - NEW_RELIC_MEMORY_LIMIT_MIB=${NEW_RELIC_MEMORY_LIMIT_MIB:-250}
-      - NEW_RELIC_MEMORY_SPIKE_LIMIT_MIB=${NEW_RELIC_MEMORY_SPIKE_LIMIT_MIB:-150}
     depends_on:
       - mock-nr
       - prometheus

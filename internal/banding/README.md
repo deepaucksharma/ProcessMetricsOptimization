@@ -4,7 +4,9 @@
 
 ## Overview
 
-This package will be implemented during Phase 2 as part of the AdaptiveTopK processor development. It provides utilities for mapping continuous metric values to discrete operational parameters.
+This package is part of the AdaptiveTopK processor's Dynamic K functionality (Sub-Phase 2b). The AdaptiveTopK processor has been implemented with Fixed K functionality (Sub-Phase 2a) and this package will be completed during the implementation of Dynamic K functionality.
+
+The package will provide utilities for mapping continuous metric values (like system load) to discrete operational parameters (like the K value for TopK selection).
 
 ## Key Components
 

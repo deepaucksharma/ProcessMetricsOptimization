@@ -107,7 +107,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "rate(otelcol_otelcol_processor_helloworld_processed_metric_points[1m])",
+          "expr": "rate(otelcol_otelcol_otelcol_processor_helloworld_processed_metric_points{job=\"otel-collector-metrics\", service=\"otel-collector-internal\"}[1m])",
           "legendFormat": "Mutations per second",
           "range": true,
           "refId": "A"
@@ -199,7 +199,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "rate(otelcol_otelcol_processor_helloworld_processed_metric_points[1m])",
+          "expr": "rate(otelcol_otelcol_otelcol_processor_helloworld_processed_metric_points{job=\"otel-collector-metrics\", service=\"otel-collector-internal\"}[1m])",
           "legendFormat": "Processed Points",
           "range": true,
           "refId": "A"
@@ -264,7 +264,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "otelcol_otelcol_processor_helloworld_processed_metric_points",
+          "expr": "otelcol_otelcol_otelcol_processor_helloworld_processed_metric_points{job=\"otel-collector-metrics\", service=\"otel-collector-internal\"}",
           "legendFormat": "Total Mutations",
           "range": true,
           "refId": "A"
@@ -356,7 +356,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(otelcol_http_server_duration_bucket[1m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(otelcol_http_server_duration_bucket{job=\"otel-collector-metrics\", service=\"otel-collector-internal\"}[1m])) by (le))",
           "legendFormat": "P95 Latency",
           "range": true,
           "refId": "A"
@@ -367,7 +367,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum(rate(otelcol_http_server_duration_bucket[1m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(otelcol_http_server_duration_bucket{job=\"otel-collector-metrics\", service=\"otel-collector-internal\"}[1m])) by (le))",
           "hide": false,
           "legendFormat": "P50 Latency",
           "range": true,
@@ -436,7 +436,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "process_resident_memory_bytes{job=\"otel-collector-metrics\"} / 1024 / 1024",
+          "expr": "otelcol_process_memory_rss{job=\"otel-collector-metrics\",service=\"otel-collector-internal\"} / 1024 / 1024",
           "legendFormat": "Memory Usage",
           "range": true,
           "refId": "A"
@@ -528,7 +528,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "rate(otelcol_otelcol_processor_prioritytagger_processed_metric_points[1m])",
+          "expr": "rate(otelcol_otelcol_otelcol_processor_prioritytagger_processed_metric_points{job=\"otel-collector-metrics\", service=\"otel-collector-internal\"}[1m])",
           "legendFormat": "Points Per Second",
           "range": true,
           "refId": "A"
@@ -593,7 +593,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "otelcol_otelcol_processor_prioritytagger_processed_metric_points",
+          "expr": "otelcol_otelcol_otelcol_processor_prioritytagger_processed_metric_points{job=\"otel-collector-metrics\", service=\"otel-collector-internal\"}",
           "legendFormat": "Total Points",
           "range": true,
           "refId": "A"

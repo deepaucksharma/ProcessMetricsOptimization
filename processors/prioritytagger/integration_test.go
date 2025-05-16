@@ -343,6 +343,9 @@ func TestPrioritizationRules(t *testing.T) {
 			dp.SetDoubleValue(tc.cpuUtil)
 			dp.Attributes().PutStr(processExecutableNameKey, tc.process)
 			
+			// Add CPU utilization as an attribute for CPU threshold tests
+			dp.Attributes().PutDouble(processCPUUtilizationKey, tc.cpuUtil)
+			
 			// Add memory attribute for memory tests
 			if tc.config.MemoryRSSThresholdMiB > 0 {
 				dp.Attributes().PutInt(processMemoryRSSKey, tc.memoryMB*1024*1024)

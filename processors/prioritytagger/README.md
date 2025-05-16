@@ -46,13 +46,25 @@ processors:
 | **CPU Utilization** | `cpu_steady_state_threshold` | Process CPU usage exceeds threshold |
 | **Memory Usage** | `memory_rss_threshold_mib` | Process memory RSS exceeds threshold in MiB |
 
+## Usage in the Optimization Pipeline
+
+In the full optimization pipeline (configured in opt-plus.yaml), the PriorityTagger processor is the first processor in the sequence (L0). It plays a critical role by identifying and tagging processes that should always be preserved throughout the pipeline, regardless of resource usage or sampling decisions.
+
+```
+┌───────────────┐    ┌─────────────────┐    ┌────────────────┐    ┌──────────────────┐    ┌────────────────┐
+│ HOSTMETRICS   │    │ PRIORITYTAGGER  │    │ ADAPTIVETOPK   │    │ RESERVOIRSAMPLER │    │ OTHERSROLLUP   │
+│ RECEIVER      │───>│ PROCESSOR (L0)  │───>│ PROCESSOR (L1) │───>│ PROCESSOR (L3)   │───>│ PROCESSOR (L2) │──> EXPORTERS
+│ Process Data  │    │ Tag Critical    │    │ Keep Top K     │    │ Sample Long-Tail │    │ Aggregate Rest │
+└───────────────┘    └─────────────────┘    └────────────────┘    └──────────────────┘    └────────────────┘
+```
+
 ## Self-Observability
 
 | Metric Name | Type | Description |
 |-------------|------|-------------|
-| `otelcol_processor_prioritytagger_processed_metric_points` | Counter | Total metric points processed |
-| `otelcol_processor_prioritytagger_dropped_metric_points` | Counter | Metric points dropped due to errors |
-| `nrdot_prioritytagger_critical_processes_tagged_total` | Counter | Unique processes tagged as critical |
+| `otelcol_otelcol_otelcol_processor_prioritytagger_processed_metric_points` | Counter | Total metric points processed |
+| `otelcol_processor_dropped_metric_points` | Counter | Metric points dropped due to errors |
+| `otelcol_nrdot_prioritytagger_critical_processes_tagged_total` | Counter | Unique processes tagged as critical |
 
 ## Pipeline Example
 

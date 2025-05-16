@@ -23,7 +23,7 @@ help:
 	@echo ""
 	@echo ""
 	@echo "Docker Operations:"
-	@echo "  compose-up         Start services with Docker Compose"
+	@echo "  compose-up         Start services with the full optimization pipeline"
 	@echo "  compose-down       Stop Docker Compose services"
 	@echo "  logs               View logs from Docker services"
 	@echo ""
@@ -82,8 +82,12 @@ lint:
 docker-build:
 	docker build -t $(COLLECTOR_IMAGE) -f build/Dockerfile .
 
-# Run local development stack with Docker Compose
+# Run local development stack with the full optimization pipeline
 compose-up:
+	@if [ -f ".env" ]; then \
+		echo "Loading environment variables from .env file"; \
+		export $$(grep -v '^#' ".env" | xargs); \
+	fi; \
 	docker-compose -f build/docker-compose.yaml up -d
 
 # Stop local development stack

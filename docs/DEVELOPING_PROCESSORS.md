@@ -4,12 +4,26 @@ This guide explains how to develop custom OpenTelemetry processors for the NRDOT
 
 ## Quick Start
 
-1. Copy the basic structure from `processors/helloworld`
+1. Copy the basic structure from an existing processor (see "Processor Examples" below)
 2. Implement your specific processor logic
 3. Add self-observability instrumentation
 4. Write comprehensive unit tests
 5. Test locally with the Docker Compose setup
 6. Create a PR with documentation
+
+## Processor Examples
+
+The project includes several processors that can serve as examples:
+
+| Processor | Purpose | Key Features | Location |
+|-----------|---------|--------------|----------|
+| **HelloWorld** | Demonstration | Attribute modification, basic instrumentation | `processors/helloworld/` |
+| **PriorityTagger** | Tag critical processes | Pattern matching, resource thresholds | `processors/prioritytagger/` |
+| **AdaptiveTopK** | Select top processes | Min-heap selection algorithm | `processors/adaptivetopk/` |
+| **OthersRollup** | Aggregate metrics | Multiple aggregation strategies | `processors/othersrollup/` |
+| **ReservoirSampler** | Statistical sampling | Reservoir algorithm, sampling metadata | `processors/reservoirsampler/` |
+
+Choose the example that most closely matches your needs as a starting point.
 
 ## Processor Structure
 
@@ -58,6 +72,8 @@ p.mutationsCounter.Add(ctx, int64(metricCount))
 
 ## Local Development Loop
 
+### Basic Processor Development
+
 1. Implement/modify your processor
 2. Run `make docker-build && make compose-up`
 3. Access observability tools:
@@ -66,6 +82,19 @@ p.mutationsCounter.Add(ctx, int64(metricCount))
    - **Grafana**: http://localhost:13000 (Use the "NRDOT Processors - HelloWorld & PriorityTagger KPIs" dashboard)
 4. View logs with `make logs`
 5. Refine implementation and repeat
+
+### Full Pipeline Integration
+
+To test your processor as part of the complete optimization pipeline:
+
+1. Make sure your processor is registered in `cmd/collector/main.go`
+2. Add your processor configuration to `config/opt-plus.yaml`
+3. Run the full pipeline: `make docker-build && make opt-plus-up`
+4. Verify processor interactions: `make logs`
+5. Check metrics in Prometheus/Grafana
+6. Run the automated pipeline test: `./test/test_opt_plus_pipeline.sh`
+
+See [docs/COMPLETING_PHASE_5.md](COMPLETING_PHASE_5.md) for additional integration testing guidance.
 
 ## Best Practices
 

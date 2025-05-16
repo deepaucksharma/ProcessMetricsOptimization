@@ -27,7 +27,7 @@ func newObsreportHelper(settings component.TelemetrySettings) (*obsreportHelper,
 		
 		var err error
 		processedPoints, err = meter.Int64Counter(
-			"otelcol_processor_prioritytagger_processed_metric_points",
+			"otelcol_otelcol_processor_prioritytagger_processed_metric_points",
 			metric.WithDescription("Number of metric points processed by the prioritytagger processor"),
 		)
 		if err != nil {
@@ -35,7 +35,7 @@ func newObsreportHelper(settings component.TelemetrySettings) (*obsreportHelper,
 		}
 		
 		droppedPoints, err = meter.Int64Counter(
-			"otelcol_processor_prioritytagger_dropped_metric_points",
+			"otelcol_otelcol_processor_prioritytagger_dropped_metric_points",
 			metric.WithDescription("Number of metric points dropped by the prioritytagger processor"),
 		)
 		if err != nil {
@@ -43,7 +43,7 @@ func newObsreportHelper(settings component.TelemetrySettings) (*obsreportHelper,
 		}
 		
 		criticalProcessesTagged, err = meter.Int64Counter(
-			"nrdot_prioritytagger_critical_processes_tagged_total",
+			"otelcol_otelcol_prioritytagger_critical_processes_tagged_total",
 			metric.WithDescription("Total number of processes tagged as critical by the prioritytagger processor"),
 		)
 		if err != nil {

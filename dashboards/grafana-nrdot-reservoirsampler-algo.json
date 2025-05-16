@@ -1,0 +1,117 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 0 }, "id": 1,
+      "options": { "content": "# L3: ReservoirSampler - Algorithm Deep Dive\n\nVisualizes reservoir state, sampling rates, and the characteristics of the sampled data.", "mode": "markdown" },
+      "type": "text"
+    },
+    {
+      "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 2 }, "id": 2, "panels": [],
+      "title": "Reservoir State & Dynamics", "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 1, "fillOpacity": 10 }, "unit": "percentunit" } },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 3 }, "id": 3,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom"}, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "nrdot_reservoirsampler_reservoir_fill_ratio{job=\"otel-collector-metrics\"}", "legendFormat": "Reservoir Fill Ratio", "refId": "A"}
+      ],
+      "title": "Reservoir Fill Ratio", "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 1, "fillOpacity": 10 }, "unit": "none" } },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 3 }, "id": 4,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom"}, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "nrdot_reservoirsampler_selected_identities_count{job=\"otel-collector-metrics\"}", "legendFormat": "Identities in Reservoir", "refId": "A"},
+        { "expr": "rate(nrdot_reservoirsampler_new_identities_added_to_reservoir_total{job=\"otel-collector-metrics\"}[1m])", "legendFormat": "New IDs Added Rate", "refId": "B"}
+      ],
+      "title": "Reservoir Population & Churn", "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": {}, "unit": "none" } },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 3 }, "id": 5,
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "expr": "avg_over_time(otelcol_processor_reservoirsampler_sample_rate[1m])", "legendFormat": "Avg. Sample Rate", "refId": "A" }
+      ],
+      "title": "Average Effective Sample Rate",
+      "description": "Assumes processor exposes 'otelcol_processor_reservoirsampler_sample_rate' or similar based on the 'nr.sample_rate' attribute it adds.",
+      "type": "stat"
+    },
+    {
+      "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 11 }, "id": 6, "panels": [],
+      "title": "Sampling Impact & Data Flow", "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 1, "fillOpacity": 10 }, "unit": "mps" } },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 12 }, "id": 7,
+      "options": { "legend": { "displayMode": "table", "placement": "bottom"}, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "rate(otelcol_processor_reservoirsampler_processed_metric_points{job=\"otel-collector-metrics\"}[1m])", "legendFormat": "Input to Sampler", "refId": "A"},
+        { "expr": "rate(otelcol_processor_reservoirsampler_dropped_metric_points{job=\"otel-collector-metrics\"}[1m])", "legendFormat": "Dropped (Not Sampled)", "refId": "B"},
+        { "expr": "rate(otelcol_processor_reservoirsampler_processed_metric_points{job=\"otel-collector-metrics\", nr_process_sampled_by_reservoir=\"true\"}[1m])", "legendFormat": "Passed (Sampled)", "refId": "C", "description": "Needs attribute added by sampler"}
+      ],
+      "title": "ReservoirSampler: Input vs. Sampled vs. Dropped Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 1, "fillOpacity": 10 }, "unit": "none" } },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 12 }, "id": 8,
+      "options": { "legend": { "displayMode": "table", "placement": "bottom"}, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "sum(increase(nrdot_reservoirsampler_eligible_identities_seen_total{job=\"otel-collector-metrics\"}[$__rate_interval]))", "legendFormat": "Total Eligible Identities", "refId": "A"},
+        { "expr": "nrdot_reservoirsampler_selected_identities_count{job=\"otel-collector-metrics\"}", "legendFormat": "Currently Sampled Identities", "refId": "B"}
+      ],
+      "title": "Eligible vs. Sampled Identity Count",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": {"color": {"mode": "palette-classic"}, "custom": {}, "mappings": []} },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 21 },
+      "id": 9,
+      "options": { "sortBy": [{"displayName": "Value #A", "desc": true}], "showHeader": true},
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "expr": "topk(10, sum by (process_executable_name) (rate(otelcol_processor_reservoirsampler_processed_metric_points{job=\"otel-collector-metrics\", nr_process_sampled_by_reservoir=\"true\"}[1m])))",
+          "format": "table", "instant": true, "legendFormat": "", "refId": "A"
+        }
+      ],
+      "title": "Top 10 Sampled Executables (by metric point rate)",
+      "description": "Shows executables that are frequently part of the sampled set. Requires sampler to add 'nr_process_sampled_by_reservoir' attribute.",
+      "type": "table"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 38,
+  "tags": ["nrdot", "reservoirsampler", "algorithm"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "NRDOT L3: ReservoirSampler Algorithm Insights",
+  "uid": "nrdot-reservoirsampler-algo",
+  "version": 1
+}
