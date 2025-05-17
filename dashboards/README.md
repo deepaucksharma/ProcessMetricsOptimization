@@ -69,22 +69,22 @@ These specialized dashboards provide deep visibility into the internal workings 
 For all algorithm insight dashboards to function properly, the processors need to expose specific metrics:
 
 #### PriorityTagger
-- `nrdot_prioritytagger_critical_processes_tagged_total`
+- `otelcol_otelcol_prioritytagger_critical_processes_tagged_total`
 - Ideally with a `reason` label indicating tagging mechanism
 
 #### AdaptiveTopK
-- `nrdot_adaptivetopk_current_k_value`
-- `nrdot_adaptivetopk_topk_processes_selected_total`
+- `otelcol_otelcol_adaptivetopk_current_k_value`
+- `otelcol_otelcol_adaptivetopk_topk_processes_selected_total`
 
 #### OthersRollup
-- `nrdot_othersrollup_input_series_rolled_up_total`
-- `nrdot_othersrollup_aggregated_series_count_total`
+- `otelcol_otelcol_othersrollup_input_series_rolled_up_total`
+- `otelcol_otelcol_othersrollup_aggregated_series_count_total`
 
 #### ReservoirSampler
-- `nrdot_reservoirsampler_reservoir_fill_ratio`
-- `nrdot_reservoirsampler_selected_identities_count`
-- `nrdot_reservoirsampler_eligible_identities_seen_total`
-- `nrdot_reservoirsampler_new_identities_added_to_reservoir_total`
+- `otelcol_otelcol_reservoirsampler_reservoir_fill_ratio`
+- `otelcol_otelcol_reservoirsampler_selected_identities_count`
+- `otelcol_otelcol_reservoirsampler_eligible_identities_seen_total`
+- `otelcol_otelcol_reservoirsampler_new_identities_added_to_reservoir_total`
 
 ## Dashboard Customization
 

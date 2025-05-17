@@ -69,7 +69,7 @@ This dashboard focuses on the collection of process metrics and their initial pr
    - Top Process Metrics by Volume
 
 3. **PriorityTagger Effectiveness**
-   - Critical Process Detection Rate: `rate(nrdot_prioritytagger_critical_processes_tagged_total[1m])`
+   - Critical Process Detection Rate: `rate(otelcol_otelcol_prioritytagger_critical_processes_tagged_total[1m])`
    - Critical Process Percentage: Custom ratio calculation
    - Process Tagging Performance: `histogram_quantile(0.95, sum(rate(otelcol_processor_prioritytagger_latency_bucket[5m])) by (le))`
 
@@ -87,19 +87,19 @@ This dashboard visualizes the progressive optimization of metrics through the L0
    - Tag Distribution by Criteria (name, regex, CPU, memory)
 
 2. **L1: AdaptiveTopK Metrics**
-   - Current K Value: `nrdot_adaptivetopk_current_k_value`
+   - Current K Value: `otelcol_otelcol_adaptivetopk_current_k_value`
    - TopK Selection Changes Over Time
    - Dropped Points: `rate(otelcol_processor_adaptivetopk_dropped_metric_points[1m])`
    - CPU Threshold Adjustments
 
 3. **L2: OthersRollup Impact**
-   - Aggregation Rate: `rate(nrdot_othersrollup_aggregated_series_count_total[1m])`
+   - Aggregation Rate: `rate(otelcol_otelcol_othersrollup_aggregated_series_count_total[1m])`
    - Cardinality Reduction: Before/After Series Count
    - "Others" Category Statistics
 
 4. **L3: ReservoirSampler Statistics**
    - Sampling Rate: Dynamic calculation
-   - Reservoir Fill Status: `nrdot_reservoirsampler_reservoir_fill_ratio`
+   - Reservoir Fill Status: `otelcol_otelcol_reservoirsampler_reservoir_fill_ratio`
    - Statistical Representation Accuracy
    - Long-tail Coverage
 
@@ -254,19 +254,19 @@ For algorithm-specific dashboards:
 1. **Decision Process Visualization**
    ```
    // Example: PriorityTagger tagging by reason
-   sum(increase(nrdot_prioritytagger_critical_processes_tagged_total{reason="exact_match"}[5m]))
+   sum(increase(otelcol_otelcol_prioritytagger_critical_processes_tagged_total{reason="exact_match"}[5m]))
    ```
 
 2. **Dynamic K Adjustment**
    ```
    // AdaptiveTopK K value changes with system load
-   nrdot_adaptivetopk_current_k_value vs system_cpu_utilization
+   otelcol_otelcol_adaptivetopk_current_k_value vs system_cpu_utilization
    ```
 
 3. **Reservoir Sampling Visualization**
    ```
    // ReservoirSampler fill ratio
-   nrdot_reservoirsampler_reservoir_fill_ratio
+   otelcol_otelcol_reservoirsampler_reservoir_fill_ratio
    ```
 
 ---

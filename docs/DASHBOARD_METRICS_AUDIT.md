@@ -6,8 +6,8 @@ This document identifies uncertain or problematic metric references in our Grafa
 
 1. **Metric Naming Inconsistencies**:
    - Some dashboards use `otelcol_otelcol_processor_*` pattern (double prefix)
-   - Others use `otelcol_otelcol_otelcol_processor_*` pattern (triple prefix)
-   - **CONFIRMED**: Actual metrics use the triple prefix pattern for processor metrics
+   - Others use `otelcol_otelcol_processor_*` pattern (legacy triple prefix)
+   - **CONFIRMED**: Actual metrics use the double prefix pattern for processor metrics
    - **CONFIRMED**: Some generic metrics use just `otelcol_processor_*` without additional prefixes
 
 2. **Missing Metrics**:
@@ -25,11 +25,11 @@ After checking the Prometheus API, we found these metrics are actually available
    - `otelcol_processor_refused_metric_points` (with processor label)
 
 2. **Processor-Specific Metrics**:
-   - `otelcol_otelcol_otelcol_processor_adaptivetopk_processed_metric_points`
-   - `otelcol_otelcol_otelcol_processor_adaptivetopk_dropped_metric_points`
-   - `otelcol_otelcol_otelcol_processor_prioritytagger_processed_metric_points`
-   - `otelcol_otelcol_otelcol_processor_reservoirsampler_processed_metric_points`
-   - `otelcol_otelcol_otelcol_adaptivetopk_topk_processes_selected_total`
+   - `otelcol_otelcol_processor_adaptivetopk_processed_metric_points`
+   - `otelcol_otelcol_processor_adaptivetopk_dropped_metric_points`
+   - `otelcol_otelcol_processor_prioritytagger_processed_metric_points`
+   - `otelcol_otelcol_processor_reservoirsampler_processed_metric_points`
+   - `otelcol_otelcol_adaptivetopk_topk_processes_selected_total`
 
 3. **System Metrics**:
    - `otelcol_process_cpu_seconds`
@@ -42,9 +42,9 @@ After checking the Prometheus API, we found these metrics are actually available
 
 | Panel | Problematic Metric | Issue | Suggested Replacement |
 |-------|-------------------|-------|----------------------|
-| All Processors: Processed Metric Points Rate | `otelcol_otelcol_processor_othersrollup_processed_metric_points` | Incorrect prefix (uses double instead of triple) | `otelcol_otelcol_otelcol_processor_othersrollup_processed_metric_points` |
-| OthersRollup: Original DP Throughput | `otelcol_otelcol_processor_othersrollup_processed_metric_points` | Incorrect prefix | `otelcol_otelcol_otelcol_processor_othersrollup_processed_metric_points` |
-| OthersRollup: Original DP Throughput | `otelcol_otelcol_processor_othersrollup_dropped_metric_points` | Incorrect prefix | `otelcol_otelcol_otelcol_processor_othersrollup_dropped_metric_points` |
+| All Processors: Processed Metric Points Rate | `otelcol_otelcol_processor_othersrollup_processed_metric_points` | Metric name uses the standard double prefix | `otelcol_otelcol_processor_othersrollup_processed_metric_points` |
+| OthersRollup: Original DP Throughput | `otelcol_otelcol_processor_othersrollup_processed_metric_points` | Metric name uses the standard double prefix | `otelcol_otelcol_processor_othersrollup_processed_metric_points` |
+| OthersRollup: Original DP Throughput | `otelcol_otelcol_processor_othersrollup_dropped_metric_points` | Metric name uses the standard double prefix | `otelcol_otelcol_processor_othersrollup_dropped_metric_points` |
 | OthersRollup: Rollup Counts | `otelcol_otelcol_othersrollup_aggregated_series_count_total` | Missing metric | Use `otelcol_processor_accepted_metric_points{processor="othersrollup"}` instead |
 | OthersRollup: Rollup Counts | `otelcol_otelcol_othersrollup_input_series_rolled_up_total` | Missing metric | Use `otelcol_processor_dropped_metric_points{processor="othersrollup"}` instead |
 
@@ -56,8 +56,8 @@ After checking the Prometheus API, we found these metrics are actually available
 | Reservoir Population & Churn | `nrdot_reservoirsampler_selected_identities_count` | **CONFIRMED MISSING** | No direct replacement available; use generic metrics |
 | Reservoir Population & Churn | `nrdot_reservoirsampler_new_identities_added_to_reservoir_total` | **CONFIRMED MISSING** | No direct replacement available; use generic metrics |
 | Average Effective Sample Rate | `otelcol_processor_reservoirsampler_sample_rate` | **CONFIRMED MISSING** | Calculate from accepted vs dropped metrics |
-| ReservoirSampler: Input vs. Sampled vs. Dropped Rate | `otelcol_processor_reservoirsampler_processed_metric_points` | Incorrect prefix | `otelcol_otelcol_otelcol_processor_reservoirsampler_processed_metric_points` |
-| ReservoirSampler: Input vs. Sampled vs. Dropped Rate | `otelcol_processor_reservoirsampler_dropped_metric_points` | Incorrect prefix | Use `otelcol_processor_dropped_metric_points{processor="reservoirsampler"}` |
+| ReservoirSampler: Input vs. Sampled vs. Dropped Rate | `otelcol_processor_reservoirsampler_processed_metric_points` | Uses generic prefix | `otelcol_otelcol_processor_reservoirsampler_processed_metric_points` |
+| ReservoirSampler: Input vs. Sampled vs. Dropped Rate | `otelcol_processor_reservoirsampler_dropped_metric_points` | Uses generic prefix | Use `otelcol_processor_dropped_metric_points{processor="reservoirsampler"}` |
 
 ### grafana-nrdot-othersrollup-algo.json
 
@@ -70,20 +70,20 @@ After checking the Prometheus API, we found these metrics are actually available
 
 | Panel | Problematic Metric | Issue | Suggested Replacement |
 |-------|-------------------|-------|----------------------|
-| PriorityTagger Processed Points Rate | `otelcol_otelcol_otelcol_processor_prioritytagger_processed_metric_points` | **CONFIRMED EXISTING** | Keep existing metric name, it's correct |
+| PriorityTagger Processed Points Rate | `otelcol_otelcol_processor_prioritytagger_processed_metric_points` | **CONFIRMED EXISTING** | Keep existing metric name, it's correct |
 
 ### grafana-nrdot-adaptivetopk-algo.json
 
 | Panel | Problematic Metric | Issue | Suggested Replacement |
 |-------|-------------------|-------|----------------------|
-| Current K Value | `nrdot_adaptivetopk_current_k_value` | **CONFIRMED MISSING** | Use `otelcol_otelcol_otelcol_adaptivetopk_topk_processes_selected_total` (closest available metric) |
-| K Value vs. System Load | `nrdot_adaptivetopk_current_k_value` | **CONFIRMED MISSING** | Use `otelcol_otelcol_otelcol_adaptivetopk_topk_processes_selected_total` (closest available metric) |
+| Current K Value | `nrdot_adaptivetopk_current_k_value` | **CONFIRMED MISSING** | Use `otelcol_otelcol_adaptivetopk_topk_processes_selected_total` (closest available metric) |
+| K Value vs. System Load | `nrdot_adaptivetopk_current_k_value` | **CONFIRMED MISSING** | Use `otelcol_otelcol_adaptivetopk_topk_processes_selected_total` (closest available metric) |
 | K Value vs. System Load | `system_cpu_utilization` | **CONFIRMED MISSING** | Use `otelcol_process_cpu_seconds` |
 
 ## Implemented Fixes
 
 1. **Fixed Prefixes**:
-   - Updated all dashboards to use `otelcol_otelcol_otelcol_processor_*` for processor metrics
+   - Updated all dashboards to use `otelcol_otelcol_processor_*` for processor metrics
    - Used `otelcol_processor_*{processor="<name>"}` for generic metrics
 
 2. **Missing Metrics Workarounds**:

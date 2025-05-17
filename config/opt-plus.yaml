@@ -138,8 +138,6 @@ exporters:
   # OTLP exporter to New Relic
   otlphttp:
     endpoint: ${env:NEW_RELIC_OTLP_ENDPOINT}
-    headers:
-      api-key: ${env:NEW_RELIC_LICENSE_KEY}
     retry_on_failure:
       enabled: true
       initial_interval: 5s

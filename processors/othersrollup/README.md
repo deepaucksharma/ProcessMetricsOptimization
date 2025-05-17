@@ -56,5 +56,5 @@ processors:
 |-------------|------|-------------|
 | otelcol_processor_othersrollup_processed_metric_points | Counter | Total number of original metric data points processed. |
 | otelcol_processor_othersrollup_dropped_metric_points | Counter | Total number of original metric data points dropped (after rollup). |
-| nrdot_othersrollup_aggregated_series_count_total | Counter | Number of new "other" series generated per batch. |
-| nrdot_othersrollup_input_series_rolled_up_total | Counter | Number of input series that were aggregated into an "other" series. |
+| otelcol_otelcol_othersrollup_aggregated_series_count_total | Counter | Number of new "other" series generated per batch. |
+| otelcol_otelcol_othersrollup_input_series_rolled_up_total | Counter | Number of input series that were aggregated into an "other" series. |

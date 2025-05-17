@@ -17,22 +17,22 @@
 
 ### Custom Processor KPIs
 
-- All custom metrics **MUST** use the prefix `otelcol_nrdot_<processor_name>_`
+ - All custom metrics **MUST** use the prefix `otelcol_otelcol_<processor_name>_`
 - Implement using `go.opentelemetry.io/otel/metric` via `component.TelemetrySettings`
 
 **Implemented Examples:**
 
 | Processor | Metric | Type | Description |
 |-----------|--------|------|-------------|
-| **HelloWorld** | `otelcol_nrdot_helloworld_mutations_total` | Counter | Number of metric points modified |
-| **PriorityTagger** | `otelcol_nrdot_prioritytagger_critical_processes_tagged_total` | Counter | Number of unique processes tagged as critical |
-| **AdaptiveTopK** | `otelcol_nrdot_adaptivetopk_topk_processes_selected_total` | Counter | Number of non-critical processes selected for TopK |
-| **AdaptiveTopK** | `otelcol_nrdot_adaptivetopk_current_k_value` | Gauge | Current K value in use (for Dynamic K) |
-| **OthersRollup** | `otelcol_nrdot_othersrollup_aggregated_series_count_total` | Counter | Number of new "_other_" series generated |
-| **OthersRollup** | `otelcol_nrdot_othersrollup_input_series_rolled_up_total` | Counter | Number of input series aggregated |
-| **ReservoirSampler** | `otelcol_nrdot_reservoirsampler_reservoir_fill_ratio` | Gauge | Current reservoir fill ratio (0.0 to 1.0) |
-| **ReservoirSampler** | `otelcol_nrdot_reservoirsampler_selected_identities_count` | Gauge | Current count of unique process identities in reservoir |
-| **ReservoirSampler** | `otelcol_nrdot_reservoirsampler_eligible_identities_seen_total` | Counter | Total unique eligible process identities encountered |
+| **HelloWorld** | `otelcol_otelcol_helloworld_mutations_total` | Counter | Number of metric points modified |
+| **PriorityTagger** | `otelcol_otelcol_prioritytagger_critical_processes_tagged_total` | Counter | Number of unique processes tagged as critical |
+| **AdaptiveTopK** | `otelcol_otelcol_adaptivetopk_topk_processes_selected_total` | Counter | Number of non-critical processes selected for TopK |
+| **AdaptiveTopK** | `otelcol_otelcol_adaptivetopk_current_k_value` | Gauge | Current K value in use (for Dynamic K) |
+| **OthersRollup** | `otelcol_otelcol_othersrollup_aggregated_series_count_total` | Counter | Number of new "_other_" series generated |
+| **OthersRollup** | `otelcol_otelcol_othersrollup_input_series_rolled_up_total` | Counter | Number of input series aggregated |
+| **ReservoirSampler** | `otelcol_otelcol_reservoirsampler_reservoir_fill_ratio` | Gauge | Current reservoir fill ratio (0.0 to 1.0) |
+| **ReservoirSampler** | `otelcol_otelcol_reservoirsampler_selected_identities_count` | Gauge | Current count of unique process identities in reservoir |
+| **ReservoirSampler** | `otelcol_otelcol_reservoirsampler_eligible_identities_seen_total` | Counter | Total unique eligible process identities encountered |
 
 ## Observability Surfaces
 

@@ -53,13 +53,6 @@ load_env() {
   fi
 }
 
-# Check if NEW_RELIC_LICENSE_KEY is set
-check_license_key() {
-  if [ -z "$NEW_RELIC_LICENSE_KEY" ]; then
-    echo -e "${YELLOW}Warning: NEW_RELIC_LICENSE_KEY environment variable is not set.${NC}"
-    echo -e "Data will not be sent to New Relic. For production use, set this key in .env file."
-  fi
-}
 
 # Function to open a URL in the default browser
 open_url() {
@@ -192,7 +185,6 @@ echo -e "${YELLOW}Starting NRDOT Process-Metrics Optimization...${NC}"
 # Load environment variables and check Docker is running
 load_env
 check_docker
-check_license_key
 
 # Process commands
 case "$CMD" in
