@@ -38,7 +38,7 @@ git clone https://github.com/newrelic/nrdot-process-optimization.git
 cd nrdot-process-optimization
 
 # 2. Run the simple demo
-go run examples/simple_demo/main.go
+go run main.go
 
 # 3. Access in your browser:
 #    → http://localhost:8080
@@ -174,9 +174,7 @@ The Makefile is the primary entry point for most development tasks.
 ├── docs/                               # Project documentation
 │   ├── DEVELOPING_PROCESSORS.md        # Guide for creating new custom processors
 │   └── NRDOT_PROCESSOR_SELF_OBSERVABILITY.md # Standards for processor metrics
-├── examples/                           # Standalone example code
-│   └── simple_demo/                    # Minimal Go HTTP demo application
-│       └── main.go
+├── main.go                             # Standalone "Hello World" demo application
 ├── processors/                         # Custom OpenTelemetry processors
 │   └── helloworld/                     # Phase 0: Example "Hello World" processor
 │   └── (prioritytagger/)               # (Future) L0: Critical process tagging

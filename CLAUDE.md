@@ -38,9 +38,7 @@ Familiarize yourself with this structure to locate relevant code and configurati
 ├── docs/                               # Developer documentation and guides
 │   ├── DEVELOPING_PROCESSORS.md        # How to build new custom processors
 │   └── NRDOT_PROCESSOR_SELF_OBSERVABILITY.md # Standards for processor metrics
-├── examples/                           # Standalone example code
-│   └── simple_demo/                    # Minimal Go HTTP demo application
-│       └── main.go
+├── main.go                             # Standalone "Hello World" demo application
 ├── processors/                         # Location for all custom OTel processors
 │   └── helloworld/                     # Phase 0: Example "Hello World" processor
 │       ├── config.go                   # Configuration struct and validation
@@ -79,7 +77,7 @@ The Makefile is your primary interface for common tasks. Refer to it (`make help
 | `make test` | Runs all available tests (unit, URL checks; future: integration, E2E). |
 | `make test-unit` | Runs Go unit tests (`go test ./...`). |
 | `make lint` | Runs Go static analysis tools (`go vet`, `go fmt`, `golangci-lint` if available). |
-| `make run-demo` | Executes the simple Go demo in `examples/simple_demo/main.go`. |
+| `make run-demo` | Executes the simple Go demo in `main.go`. |
 
 ### Typical Local Development Loop for a Processor:
 
