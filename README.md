@@ -59,19 +59,23 @@ Steps:
 git clone https://github.com/newrelic/nrdot-process-optimization.git
 cd nrdot-process-optimization
 
-# 2. Build the custom OpenTelemetry Collector Docker image
+# 2. Create your personal .env file and add your New Relic license key
+cp .env.example .env
+#    Edit .env to set NEW_RELIC_LICENSE_KEY
+
+# 3. Build the custom OpenTelemetry Collector Docker image
 #    (This uses build/Dockerfile and targets cmd/collector/main.go)
 make docker-build
 
-# 3. Start the local development stack using Docker Compose
+# 4. Start the local development stack using Docker Compose
 #    (This uses build/docker-compose.yaml and config/base.yaml)
 make compose-up
 
-# 4. To view logs from all services (Collector, Mock Sink, etc.):
+# 5. To view logs from all services (Collector, Mock Sink, etc.):
 #    (Run in a new terminal or after detaching from compose-up if it wasn't run with -d)
 make logs
 
-# 5. When finished, stop the local development stack:
+# 6. When finished, stop the local development stack:
 make compose-down
 ```
 
@@ -219,7 +223,7 @@ This file configures the collector for the "Hello World" demonstration and local
 
 - **Service Pipelines**: Defines how data flows from receivers through processors to exporters.
 
-- **Environment Variable Overrides**: Many key parameters (e.g., COLLECTION_INTERVAL, NEW_RELIC_LICENSE_KEY, OTLP endpoint) can be set via environment variables, with defaults specified in base.yaml.
+- **Environment Variable Overrides**: Many key parameters (e.g., COLLECTION_INTERVAL, NEW_RELIC_LICENSE_KEY, OTLP endpoint) can be set via environment variables, with defaults specified in base.yaml. A `.env.example` file provides common variables; copy it to `.env` and fill in your credentials for local use.
 
 ### config/opt-plus.yaml (Future)
 
