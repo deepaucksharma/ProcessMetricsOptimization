@@ -51,12 +51,12 @@ func TestProcessor(t *testing.T) {
 	// Verify hello.processor attribute was added to the resource
 	hello, found := rm.Resource().Attributes().Get("hello.processor")
 	assert.True(t, found)
-	assert.Equal(t, "Hello from OpenTelemetry!", hello.Str())
+	assert.Equal(t, cfg.Message, hello.Str())
 
 	// Verify hello.processor attribute was added to the datapoint
 	hello, found = dp.Attributes().Get("hello.processor")
 	assert.True(t, found)
-	assert.Equal(t, "Hello from OpenTelemetry!", hello.Str())
+	assert.Equal(t, cfg.Message, hello.Str())
 }
 
 func TestProcessorNoResourceAttributes(t *testing.T) {
@@ -98,5 +98,5 @@ func TestProcessorNoResourceAttributes(t *testing.T) {
 	// Verify hello.processor attribute was added to the datapoint
 	hello, found = dp.Attributes().Get("hello.processor")
 	assert.True(t, found)
-	assert.Equal(t, "Hello from OpenTelemetry!", hello.Str())
+	assert.Equal(t, cfg.Message, hello.Str())
 }

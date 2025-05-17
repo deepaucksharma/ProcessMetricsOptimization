@@ -66,7 +66,7 @@ func (p *helloWorldProcessor) ConsumeMetrics(ctx context.Context, md pmetric.Met
 
 	// Record the observation and the number of processed items
 	p.obsrecv.EndMetricsOp(ctx, p.config.ProcessorType(), metricCount, nil)
-	
+
 	// Increment our custom mutation counter metric
 	p.mutationsCounter.Add(ctx, int64(metricCount))
 
@@ -81,64 +81,64 @@ func (p *helloWorldProcessor) processMetrics(ctx context.Context, md pmetric.Met
 	// Iterate through the resource metrics
 	for i := 0; i < md.ResourceMetrics().Len(); i++ {
 		rm := md.ResourceMetrics().At(i)
-		
+
 		// Add attributes to the resource level if configured
 		if p.config.AddToResource {
-			addHelloAttribute(rm.Resource().Attributes())
+			addHelloAttribute(rm.Resource().Attributes(), p.config.Message)
 		}
-		
-		// Iterate through the scope metrics  
+
+		// Iterate through the scope metrics
 		for j := 0; j < rm.ScopeMetrics().Len(); j++ {
 			sm := rm.ScopeMetrics().At(j)
-			
+
 			// Iterate through each metric
 			for k := 0; k < sm.Metrics().Len(); k++ {
 				metric := sm.Metrics().At(k)
-				
+
 				// Process the datapoints based on metric type
 				switch metric.Type() {
 				case pmetric.MetricTypeGauge:
 					pts := metric.Gauge().DataPoints()
 					for l := 0; l < pts.Len(); l++ {
-						addHelloAttribute(pts.At(l).Attributes())
+						addHelloAttribute(pts.At(l).Attributes(), p.config.Message)
 						metricCount++
 					}
 				case pmetric.MetricTypeSum:
 					pts := metric.Sum().DataPoints()
 					for l := 0; l < pts.Len(); l++ {
-						addHelloAttribute(pts.At(l).Attributes())
+						addHelloAttribute(pts.At(l).Attributes(), p.config.Message)
 						metricCount++
 					}
 				case pmetric.MetricTypeHistogram:
 					pts := metric.Histogram().DataPoints()
 					for l := 0; l < pts.Len(); l++ {
-						addHelloAttribute(pts.At(l).Attributes())
+						addHelloAttribute(pts.At(l).Attributes(), p.config.Message)
 						metricCount++
 					}
 				case pmetric.MetricTypeSummary:
 					pts := metric.Summary().DataPoints()
 					for l := 0; l < pts.Len(); l++ {
-						addHelloAttribute(pts.At(l).Attributes())
+						addHelloAttribute(pts.At(l).Attributes(), p.config.Message)
 						metricCount++
 					}
 				case pmetric.MetricTypeExponentialHistogram:
 					pts := metric.ExponentialHistogram().DataPoints()
 					for l := 0; l < pts.Len(); l++ {
-						addHelloAttribute(pts.At(l).Attributes())
+						addHelloAttribute(pts.At(l).Attributes(), p.config.Message)
 						metricCount++
 					}
 				}
 			}
 		}
 	}
-	
-	p.logger.Debug("Hello World processor modified metrics", 
+
+	p.logger.Debug("Hello World processor modified metrics",
 		zap.Int("count", metricCount),
 		zap.String("message", p.config.Message))
-	
+
 	return metricCount
 }
 
-func addHelloAttribute(attrs pcommon.Map) {
-	attrs.PutStr("hello.processor", "Hello from OpenTelemetry!")
+func addHelloAttribute(attrs pcommon.Map, message string) {
+	attrs.PutStr("hello.processor", message)
 }
