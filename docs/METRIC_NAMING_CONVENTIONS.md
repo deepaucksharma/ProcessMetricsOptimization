@@ -31,30 +31,30 @@ Every processor implements these standard metrics:
 
 | Metric Name | Type | Description |
 |-------------|------|-------------|
-| `otelcol_nrdot_prioritytagger_critical_processes_tagged_total` | Counter | Total number of processes tagged as critical |
+| `otelcol_otelcol_prioritytagger_critical_processes_tagged_total` | Counter | Total number of processes tagged as critical |
 
 ### AdaptiveTopK Processor
 
 | Metric Name | Type | Description |
 |-------------|------|-------------|
-| `otelcol_nrdot_adaptivetopk_topk_processes_selected_total` | Counter | Total number of non-critical processes selected for Top K |
-| `otelcol_nrdot_adaptivetopk_current_k_value` | Gauge | Current value of K being used for process selection |
+| `otelcol_otelcol_adaptivetopk_topk_processes_selected_total` | Counter | Total number of non-critical processes selected for Top K |
+| `otelcol_otelcol_adaptivetopk_current_k_value` | Gauge | Current value of K being used for process selection |
 
 ### OthersRollup Processor
 
 | Metric Name | Type | Description |
 |-------------|------|-------------|
-| `otelcol_nrdot_othersrollup_aggregated_series_count_total` | Counter | Number of new "_other_" series generated |
-| `otelcol_nrdot_othersrollup_input_series_rolled_up_total` | Counter | Number of input series aggregated into "_other_" series |
+| `otelcol_otelcol_othersrollup_aggregated_series_count_total` | Counter | Number of new "_other_" series generated |
+| `otelcol_otelcol_othersrollup_input_series_rolled_up_total` | Counter | Number of input series aggregated into "_other_" series |
 
 ### ReservoirSampler Processor
 
 | Metric Name | Type | Description |
 |-------------|------|-------------|
-| `otelcol_nrdot_reservoirsampler_reservoir_fill_ratio` | Gauge | Current fill ratio of the reservoir (0.0 to 1.0) |
-| `otelcol_nrdot_reservoirsampler_selected_identities_count` | Gauge | Current number of unique process identities in the reservoir |
-| `otelcol_nrdot_reservoirsampler_eligible_identities_seen_total` | Counter | Total number of unique eligible process identities encountered |
-| `otelcol_nrdot_reservoirsampler_new_identities_added_to_reservoir_total` | Counter | Total count of new identities added/replaced in the reservoir |
+| `otelcol_otelcol_reservoirsampler_reservoir_fill_ratio` | Gauge | Current fill ratio of the reservoir (0.0 to 1.0) |
+| `otelcol_otelcol_reservoirsampler_selected_identities_count` | Gauge | Current number of unique process identities in the reservoir |
+| `otelcol_otelcol_reservoirsampler_eligible_identities_seen_total` | Counter | Total number of unique eligible process identities encountered |
+| `otelcol_otelcol_reservoirsampler_new_identities_added_to_reservoir_total` | Counter | Total count of new identities added/replaced in the reservoir |
 
 ## Metric Types
 
@@ -65,7 +65,7 @@ Every processor implements these standard metrics:
 ## Best Practices
 
 1. Always use the full prefix `otelcol_otelcol_otelcol_` for standard processor metrics
-2. Always use the full prefix `otelcol_nrdot_` for custom processor metrics
+2. Always use the full prefix `otelcol_otelcol_` for custom processor metrics
 3. Use `_total` suffix for counter metrics that track cumulative values
 4. Use descriptive metric names that clearly indicate what is being measured
 5. Include the processor name in the metric for clear identification

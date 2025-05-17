@@ -138,7 +138,7 @@ Key Self-Metrics (visible in Prometheus/Grafana via the local dev stack):
 | Metric Name | Type | Description |
 |-------------|------|-------------|
 | otelcol_processor_helloworld_processed_metric_points | Counter | Standard obsreport: Count of metric points processed. |
-| nrdot_helloworld_mutations_total | Counter | Custom metric: Total number of metric points modified. |
+| otelcol_otelcol_helloworld_mutations_total | Counter | Custom metric: Total number of metric points modified. |
 | otelcol_processor_helloworld_latency_bucket | Histogram | Standard obsreport: Latency of processing. |
 
 ## "PriorityTagger" Processor (Phase 1 Deliverable)
@@ -186,7 +186,7 @@ Key Self-Metrics:
 |-------------|------|-------------|
 | otelcol_processor_prioritytagger_processed_metric_points | Counter | Standard obsreport: Count of metric points processed. |
 | otelcol_processor_dropped_metric_points | Counter | Standard obsreport: Count of metric points dropped due to errors. |
-| nrdot_prioritytagger_critical_processes_tagged_total | Counter | Custom: Count of processes tagged as critical. |
+| otelcol_otelcol_prioritytagger_critical_processes_tagged_total | Counter | Custom: Count of processes tagged as critical. |
 
 For detailed documentation, see [processors/prioritytagger/README.md](processors/prioritytagger/README.md).
 
@@ -239,8 +239,8 @@ Key Self-Metrics:
 |-------------|------|-------------|
 | otelcol_processor_adaptivetopk_processed_metric_points | Counter | Count of metric points processed. |
 | otelcol_processor_adaptivetopk_dropped_metric_points | Counter | Count of metric points dropped. |
-| nrdot_adaptivetopk_topk_processes_selected_total | Counter | Number of non-critical processes selected for Top K. |
-| nrdot_adaptivetopk_current_k_value | Gauge | Current K value when using dynamic K. |
+| otelcol_otelcol_adaptivetopk_topk_processes_selected_total | Counter | Number of non-critical processes selected for Top K. |
+| otelcol_otelcol_adaptivetopk_current_k_value | Gauge | Current K value when using dynamic K. |
 
 For detailed documentation, see [processors/adaptivetopk/README.md](processors/adaptivetopk/README.md).
 
@@ -284,8 +284,8 @@ Key Self-Metrics:
 |-------------|------|-------------|
 | otelcol_processor_othersrollup_processed_metric_points | Counter | Count of metric points processed. |
 | otelcol_processor_othersrollup_dropped_metric_points | Counter | Count of original points dropped after rollup. |
-| nrdot_othersrollup_aggregated_series_count_total | Counter | Number of new "_other_" series generated. |
-| nrdot_othersrollup_input_series_rolled_up_total | Counter | Count of input series aggregated into "_other_". |
+| otelcol_otelcol_othersrollup_aggregated_series_count_total | Counter | Number of new "_other_" series generated. |
+| otelcol_otelcol_othersrollup_input_series_rolled_up_total | Counter | Count of input series aggregated into "_other_". |
 
 For detailed documentation, see [processors/othersrollup/README.md](processors/othersrollup/README.md).
 
@@ -329,10 +329,10 @@ Key Self-Metrics:
 |-------------|------|-------------|
 | otelcol_processor_reservoirsampler_processed_metric_points | Counter | Count of metric points processed. |
 | otelcol_processor_reservoirsampler_dropped_metric_points | Counter | Count of points dropped (eligible but not sampled). |
-| nrdot_reservoirsampler_reservoir_fill_ratio | Gauge | Current fill ratio of the reservoir (0.0 to 1.0). |
-| nrdot_reservoirsampler_selected_identities_count | Gauge | Current count of unique identities in the reservoir. |
-| nrdot_reservoirsampler_eligible_identities_seen_total | Counter | Total unique eligible identities encountered. |
-| nrdot_reservoirsampler_new_identities_added_to_reservoir_total | Counter | Count of new identities added to the reservoir. |
+| otelcol_otelcol_reservoirsampler_reservoir_fill_ratio | Gauge | Current fill ratio of the reservoir (0.0 to 1.0). |
+| otelcol_otelcol_reservoirsampler_selected_identities_count | Gauge | Current count of unique identities in the reservoir. |
+| otelcol_otelcol_reservoirsampler_eligible_identities_seen_total | Counter | Total unique eligible identities encountered. |
+| otelcol_otelcol_reservoirsampler_new_identities_added_to_reservoir_total | Counter | Count of new identities added to the reservoir. |
 
 For detailed documentation, see [processors/reservoirsampler/README.md](processors/reservoirsampler/README.md).
 

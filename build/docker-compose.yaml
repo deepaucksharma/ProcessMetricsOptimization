@@ -16,7 +16,6 @@ services:
       - "18889:8889"   # Prometheus exporter
       - "15679:55679"  # zPages
     environment:
-      - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY:-dummy-key}
       - NEW_RELIC_OTLP_ENDPOINT=http://mock-nr:8080/v1/metrics
       - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-otel-collector-host}
       - OTEL_DEPLOYMENT_ENVIRONMENT=${OTEL_DEPLOYMENT_ENVIRONMENT:-development}
