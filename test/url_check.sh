@@ -45,9 +45,9 @@ main() {
   local failures=0
   
   # Test services individually to avoid word splitting issues
-  test_url "http://localhost:15679/debug/servicez" "zPages" "200" "5" || ((failures++))
-  test_url "http://localhost:19090" "Prometheus" "302" "5" || ((failures++))
-  test_url "http://localhost:19090/graph" "Prometheus Graph" "302" "5" || ((failures++))
+  test_url "http://localhost:55679/debug/servicez" "zPages" "200" "5" || ((failures++))
+  test_url "http://localhost:9090" "Prometheus" "302" "5" || ((failures++))
+  test_url "http://localhost:9090/graph" "Prometheus Graph" "302" "5" || ((failures++))
   test_url "http://localhost:13000" "Grafana" "302" "5" || ((failures++))
   test_url "http://localhost:13000/login" "Grafana Login" "200" "5" || ((failures++))
   test_url "http://localhost:18080" "Mock New Relic" "200" "5" || ((failures++))

@@ -36,8 +36,8 @@ display_usage() {
   echo -e "  ./run.sh demo --no-browser        Run demo without opening browser"
   echo
   echo -e "Access Points (Docker mode):"
-  echo -e "  zPages: http://localhost:15679"
-  echo -e "  Prometheus: http://localhost:19090"
+  echo -e "  zPages: http://localhost:55679"
+  echo -e "  Prometheus: http://localhost:9090"
   echo -e "  Grafana: http://localhost:13000 (admin/admin)"
   echo -e "  Mock New Relic: http://localhost:18080"
   echo
@@ -159,8 +159,8 @@ docker_up() {
   docker-compose -f build/docker-compose.yaml up -d
   echo -e "${GREEN}Services started successfully${NC}"
   echo -e "${BLUE}Access points:${NC}"
-  echo -e "  zPages: http://localhost:15679"
-  echo -e "  Prometheus: http://localhost:19090"
+  echo -e "  zPages: http://localhost:55679"
+  echo -e "  Prometheus: http://localhost:9090"
   echo -e "  Grafana: http://localhost:13000 (admin/admin)"
   echo -e "  Mock New Relic: http://localhost:18080"
   
@@ -174,9 +174,9 @@ docker_up() {
     # Open Grafana dashboard
     open_url "http://localhost:13000" || true
     # Open Prometheus
-    open_url "http://localhost:19090" || true
+    open_url "http://localhost:9090" || true
     # Open zPages
-    open_url "http://localhost:15679" || true
+    open_url "http://localhost:55679" || true
   else
     echo -e "${YELLOW}URL auto-opening is disabled. Set OPEN_URLS=true to enable.${NC}"
   fi
