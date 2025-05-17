@@ -249,3 +249,6 @@ Contributions are highly welcome!
 - If using AI for assistance, CLAUDE.md provides project-specific context.
 
 Please feel free to open issues for bugs, feature requests, or ideas. Pull requests are encouraged.
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
