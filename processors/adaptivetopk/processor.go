@@ -12,6 +12,8 @@ import (
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/processor"
 	"go.uber.org/zap"
+
+	"github.com/newrelic/nrdot-process-optimization/internal/metricutil"
 )
 
 const (
@@ -92,7 +94,7 @@ func newAdaptiveTopKProcessor(settings processor.CreateSettings, next consumer.M
 	// Initialize hysteresis map and set initial cleanup time
 	p.processHysteresis = make(map[string]time.Time)
 	p.lastHysteresisCleanup = time.Now()
-	
+
 	// Set initial dynamic K value
 	if cfg.IsDynamicK() {
 		p.currentDynamicK = cfg.MinKValue // Initial K
@@ -103,12 +105,14 @@ func newAdaptiveTopKProcessor(settings processor.CreateSettings, next consumer.M
 }
 
 func (p *adaptiveTopKProcessor) Start(_ context.Context, _ component.Host) error { return nil }
-func (p *adaptiveTopKProcessor) Shutdown(_ context.Context) error               { return nil }
-func (p *adaptiveTopKProcessor) Capabilities() consumer.Capabilities            { return consumer.Capabilities{MutatesData: true} }
+func (p *adaptiveTopKProcessor) Shutdown(_ context.Context) error                { return nil }
+func (p *adaptiveTopKProcessor) Capabilities() consumer.Capabilities {
+	return consumer.Capabilities{MutatesData: true}
+}
 
 func (p *adaptiveTopKProcessor) ConsumeMetrics(ctx context.Context, md pmetric.Metrics) error {
 	ctx = p.obsrep.StartMetricsOp(ctx)
-	numOriginalMetricPoints := getMetricPointCount(md)
+	numOriginalMetricPoints := metricutil.MetricPointCount(md)
 
 	// Determine current K value (fixed or dynamic)
 	currentK := p.config.KValue
@@ -125,7 +129,7 @@ func (p *adaptiveTopKProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 	// Estimate process count for pre-allocation
 	// This helps reduce map resizing and improve performance
 	estimatedProcessCount := estimateProcessCount(md)
-	
+
 	// Collect all processInfos from the batch with pre-allocated capacity
 	allProcesses := make(map[string]*processInfo, estimatedProcessCount) // PID -> processInfo
 
@@ -135,15 +139,15 @@ func (p *adaptiveTopKProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 			sm := rm.ScopeMetrics().At(j)
 			// Process metrics in two passes - first find critical processes and metric values
 			// This reduces attribute lookups by checking only relevant metrics
-			
+
 			// First pass - extract the key metrics we need for ranking
 			keyMetricName := p.config.KeyMetricName
 			secondaryKeyMetricName := p.config.SecondaryKeyMetricName
-			
+
 			for k := 0; k < sm.Metrics().Len(); k++ {
 				metric := sm.Metrics().At(k)
 				metricName := metric.Name()
-				
+
 				// Skip metrics that aren't used for ranking or priority
 				if metricName != keyMetricName && metricName != secondaryKeyMetricName {
 					continue
@@ -189,10 +193,10 @@ func (p *adaptiveTopKProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 
 					// Update metricValue if this is the key ranking metric
 					if metricName == keyMetricName {
-						proc.metricValue = getNumericValue(dp)
+						proc.metricValue = metricutil.GetNumericValue(dp)
 					} else if metricName == secondaryKeyMetricName {
 						// Update secondaryValue if this is the secondary ranking metric
-						proc.secondaryValue = getNumericValue(dp)
+						proc.secondaryValue = metricutil.GetNumericValue(dp)
 					}
 				}
 			}
@@ -242,7 +246,7 @@ func (p *adaptiveTopKProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 				heap.Push(&topKHeap, proc)
 			}
 		}
-		
+
 		// Extract the top K processes from the heap
 		count := 0
 		for topKHeap.Len() > 0 {
@@ -252,7 +256,7 @@ func (p *adaptiveTopKProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 		}
 		topKCount = int64(count)
 	}
-	
+
 	// Record metrics
 	p.obsrep.recordTopKProcessesSelected(ctx, topKCount)
 
@@ -264,7 +268,7 @@ func (p *adaptiveTopKProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 	// Filter the original metrics
 	filteredMd := pmetric.NewMetrics()
 	md.ResourceMetrics().CopyTo(filteredMd.ResourceMetrics())
-	
+
 	// Remove metrics that don't belong to critical processes or topK processes
 	filteredMd.ResourceMetrics().RemoveIf(func(rm pmetric.ResourceMetrics) bool {
 		rm.ScopeMetrics().RemoveIf(func(sm pmetric.ScopeMetrics) bool {
@@ -292,21 +296,11 @@ func (p *adaptiveTopKProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 		return rm.ScopeMetrics().Len() == 0
 	})
 
-	numProcessedMetricPoints := getMetricPointCount(filteredMd)
+	numProcessedMetricPoints := metricutil.MetricPointCount(filteredMd)
 	numDroppedMetricPoints := numOriginalMetricPoints - numProcessedMetricPoints
 	p.obsrep.EndMetricsOp(ctx, numProcessedMetricPoints, numDroppedMetricPoints, nil)
 
 	return p.nextConsumer.ConsumeMetrics(ctx, filteredMd)
-}
-
-func getNumericValue(dp pmetric.NumberDataPoint) float64 {
-	switch dp.ValueType() {
-	case pmetric.NumberDataPointValueTypeInt:
-		return float64(dp.IntValue())
-	case pmetric.NumberDataPointValueTypeDouble:
-		return dp.DoubleValue()
-	}
-	return 0
 }
 
 // findHostLoadMetric searches for the configured host load metric in the metrics batch
@@ -323,7 +317,7 @@ func (p *adaptiveTopKProcessor) findHostLoadMetric(md pmetric.Metrics) float64 {
 		rm := md.ResourceMetrics().At(i)
 		for j := 0; j < rm.ScopeMetrics().Len(); j++ {
 			sm := rm.ScopeMetrics().At(j)
-			
+
 			// Use binary search if scope metrics are sufficiently large
 			if sm.Metrics().Len() > 20 {
 				// Create a quick index for faster lookups in large batches
@@ -334,7 +328,7 @@ func (p *adaptiveTopKProcessor) findHostLoadMetric(md pmetric.Metrics) float64 {
 						break
 					}
 				}
-				
+
 				if idx >= 0 {
 					metric := sm.Metrics().At(idx)
 					var dps pmetric.NumberDataPointSlice
@@ -348,7 +342,7 @@ func (p *adaptiveTopKProcessor) findHostLoadMetric(md pmetric.Metrics) float64 {
 					}
 
 					if dps.Len() > 0 {
-						return getNumericValue(dps.At(0))
+						return metricutil.GetNumericValue(dps.At(0))
 					}
 				}
 			} else {
@@ -369,7 +363,7 @@ func (p *adaptiveTopKProcessor) findHostLoadMetric(md pmetric.Metrics) float64 {
 						// For simplicity, we use the first datapoint found
 						// In a real system, you might want to aggregate multiple datapoints
 						if dps.Len() > 0 {
-							return getNumericValue(dps.At(0))
+							return metricutil.GetNumericValue(dps.At(0))
 						}
 					}
 				}
@@ -418,14 +412,14 @@ func (p *adaptiveTopKProcessor) updateDynamicK(hostLoad float64) {
 // until their hysteresis period expires
 func (p *adaptiveTopKProcessor) applyProcessHysteresis(selectedPIDs map[string]bool, allProcesses map[string]*processInfo) {
 	now := time.Now()
-	
+
 	// Basic cleanup - remove only expired entries
 	for pid, expiryTime := range p.processHysteresis {
 		if now.After(expiryTime) {
 			delete(p.processHysteresis, pid)
 		}
 	}
-	
+
 	// Perform a more thorough cleanup every 5 minutes
 	// This removes processes that no longer exist in the metrics, preventing memory leaks
 	const fullCleanupInterval = 5 * time.Minute
@@ -436,20 +430,20 @@ func (p *adaptiveTopKProcessor) applyProcessHysteresis(selectedPIDs map[string]b
 				delete(p.processHysteresis, pid)
 			}
 		}
-		
+
 		p.lastHysteresisCleanup = now
-		
+
 		if p.logger != nil {
 			p.logger.Debug("Performed full hysteresis map cleanup",
 				zap.Int("remainingEntriesCount", len(p.processHysteresis)))
 		}
 	}
-	
+
 	// For processes currently selected, update or add their expiry time
 	for pid := range selectedPIDs {
 		p.processHysteresis[pid] = now.Add(p.config.HysteresisDuration)
 	}
-	
+
 	// Add processes still in their hysteresis period to the selected PIDs
 	hysteresisCount := 0
 	for pid, expiryTime := range p.processHysteresis {
@@ -460,7 +454,7 @@ func (p *adaptiveTopKProcessor) applyProcessHysteresis(selectedPIDs map[string]b
 			hysteresisCount++
 		}
 	}
-	
+
 	if hysteresisCount > 0 && p.logger != nil {
 		p.logger.Debug("Applied process hysteresis",
 			zap.Int("hysteresisProcessCount", hysteresisCount),
@@ -468,67 +462,39 @@ func (p *adaptiveTopKProcessor) applyProcessHysteresis(selectedPIDs map[string]b
 	}
 }
 
-// getMetricPointCount counts the total number of data points in a metrics collection
-func getMetricPointCount(md pmetric.Metrics) int {
-	count := 0
-	for i := 0; i < md.ResourceMetrics().Len(); i++ {
-		rm := md.ResourceMetrics().At(i)
-		for j := 0; j < rm.ScopeMetrics().Len(); j++ {
-			sm := rm.ScopeMetrics().At(j)
-			for k := 0; k < sm.Metrics().Len(); k++ {
-				metric := sm.Metrics().At(k)
-				
-				switch metric.Type() {
-				case pmetric.MetricTypeGauge:
-					count += metric.Gauge().DataPoints().Len()
-				case pmetric.MetricTypeSum:
-					count += metric.Sum().DataPoints().Len()
-				case pmetric.MetricTypeHistogram:
-					count += metric.Histogram().DataPoints().Len()
-				case pmetric.MetricTypeSummary:
-					count += metric.Summary().DataPoints().Len()
-				case pmetric.MetricTypeExponentialHistogram:
-					count += metric.ExponentialHistogram().DataPoints().Len()
-				}
-			}
-		}
-	}
-	return count
-}
-
 // estimateProcessCount estimates the number of unique processes in a metrics batch
 // by counting unique PIDs in the key metric's data points
 func estimateProcessCount(md pmetric.Metrics) int {
 	// Default estimate if we can't determine better
 	defaultEstimate := 100
-	
+
 	// Quick scan for unique PIDs in the first resource metrics
 	if md.ResourceMetrics().Len() == 0 {
 		return defaultEstimate
 	}
-	
+
 	// Keep track of unique PIDs
 	uniquePIDs := make(map[string]struct{})
-	
+
 	// Scan first few resource metrics to get a reasonable estimate
 	maxResourcesToScan := 2
 	if md.ResourceMetrics().Len() < maxResourcesToScan {
 		maxResourcesToScan = md.ResourceMetrics().Len()
 	}
-	
+
 	for i := 0; i < maxResourcesToScan; i++ {
 		rm := md.ResourceMetrics().At(i)
 		for j := 0; j < rm.ScopeMetrics().Len(); j++ {
 			sm := rm.ScopeMetrics().At(j)
 			// Only scan a subset of metrics to save time
 			metricsToScan := 10
-				if sm.Metrics().Len() < metricsToScan {
-					metricsToScan = sm.Metrics().Len()
-				}
-			
+			if sm.Metrics().Len() < metricsToScan {
+				metricsToScan = sm.Metrics().Len()
+			}
+
 			for k := 0; k < metricsToScan; k++ {
 				metric := sm.Metrics().At(k)
-				
+
 				var dps pmetric.NumberDataPointSlice
 				switch metric.Type() {
 				case pmetric.MetricTypeGauge:
@@ -538,7 +504,7 @@ func estimateProcessCount(md pmetric.Metrics) int {
 				default:
 					continue
 				}
-				
+
 				for l := 0; l < dps.Len(); l++ {
 					pidVal, exists := dps.At(l).Attributes().Get(processPIDKey)
 					if exists {
@@ -548,12 +514,12 @@ func estimateProcessCount(md pmetric.Metrics) int {
 			}
 		}
 	}
-	
+
 	// If we found unique PIDs, use that count with small buffer for additional processes
 	if len(uniquePIDs) > 0 {
 		// Add 20% buffer to account for new processes
 		return int(float64(len(uniquePIDs)) * 1.2)
 	}
-	
+
 	return defaultEstimate
 }

@@ -10,6 +10,8 @@ import (
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/processor"
+
+	"github.com/newrelic/nrdot-process-optimization/internal/metricutil"
 )
 
 // generateTestMetrics creates a metrics batch with the specified number of processes
@@ -68,13 +70,13 @@ func generateTestMetrics(numProcesses int, numMetricsPerProcess int, hasCritical
 // BenchmarkAdaptiveTopKProcessor benchmarks the full processor with different process counts
 func BenchmarkAdaptiveTopKProcessor(b *testing.B) {
 	tests := []struct {
-		name             string
-		numProcesses     int
-		metricsPerProc   int
-		kValue           int
-		isDynamicK       bool
-		hasHysteresis    bool
-		hasCritical      bool
+		name           string
+		numProcesses   int
+		metricsPerProc int
+		kValue         int
+		isDynamicK     bool
+		hasHysteresis  bool
+		hasCritical    bool
 	}{
 		{
 			name:           "Small-Static-NoCritical",
@@ -218,7 +220,7 @@ func BenchmarkFindHostLoadMetric(b *testing.B) {
 	})
 }
 
-// BenchmarkMetricPointCount benchmarks the getMetricPointCount function
+// BenchmarkMetricPointCount benchmarks the MetricPointCount utility
 func BenchmarkMetricPointCount(b *testing.B) {
 	// Generate metrics with different scales
 	smallMetrics := generateTestMetrics(50, 3, false)
@@ -227,19 +229,19 @@ func BenchmarkMetricPointCount(b *testing.B) {
 
 	b.Run("SmallMetrics", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			getMetricPointCount(smallMetrics)
+			metricutil.MetricPointCount(smallMetrics)
 		}
 	})
 
 	b.Run("MediumMetrics", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			getMetricPointCount(mediumMetrics)
+			metricutil.MetricPointCount(mediumMetrics)
 		}
 	})
 
 	b.Run("LargeMetrics", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			getMetricPointCount(largeMetrics)
+			metricutil.MetricPointCount(largeMetrics)
 		}
 	})
 }
