@@ -30,8 +30,9 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 3 }, "id": 3,
       "options": { "legend": { "displayMode": "list", "placement": "bottom"}, "tooltip": { "mode": "multi" } },
       "targets": [
-        { "expr": "nrdot_adaptivetopk_current_k_value{job=\"otel-collector-metrics\"}", "legendFormat": "Current K Value", "refId": "A" },
-        { "expr": "rate(nrdot_adaptivetopk_topk_processes_selected_total{job=\"otel-collector-metrics\"}[1m])", "legendFormat": "TopK Procs Selected Rate", "refId": "B"}
+        { "expr": "otelcol_otelcol_adaptivetopk_topk_processes_selected_total{job=\"otel-collector-metrics\"}", "legendFormat": "TopK Processes Total", "refId": "A" },
+        { "expr": "otelcol_otelcol_adaptivetopk_current_k_value{job=\"otel-collector-metrics\"}", "legendFormat": "Current K Value", "refId": "C" },
+        { "expr": "rate(otelcol_otelcol_processor_adaptivetopk_dropped_metric_points{job=\"otel-collector-metrics\"}[1m])", "legendFormat": "Dropped Rate", "refId": "B"}
       ],
       "title": "Current K Value & Selection Rate (Dynamic K)",
       "description": "Shows the dynamically adjusted K and rate of processes selected for TopK.",
@@ -43,56 +44,57 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 3 }, "id": 4,
       "options": { "legend": { "displayMode": "list", "placement": "bottom"}, "tooltip": { "mode": "multi" } },
       "targets": [
-        { "expr": "sum(rate(otelcol_processor_adaptivetopk_processed_metric_points{job=\"otel-collector-metrics\"}[1m]))", "legendFormat": "Input to AdaptiveTopK (rate)", "refId": "A"},
-        { "expr": "sum(rate(otelcol_processor_adaptivetopk_dropped_metric_points{job=\"otel-collector-metrics\"}[1m]))", "legendFormat": "Dropped by AdaptiveTopK (rate)", "refId": "B"}
+        { "expr": "sum(rate(otelcol_otelcol_processor_adaptivetopk_processed_metric_points{job=\"otel-collector-metrics\"}[1m]))", "legendFormat": "Input to AdaptiveTopK (rate)", "refId": "A"},
+        { "expr": "sum(rate(otelcol_otelcol_processor_adaptivetopk_dropped_metric_points{job=\"otel-collector-metrics\"}[1m]))", "legendFormat": "Dropped by AdaptiveTopK (rate)", "refId": "B"}
       ],
       "title": "AdaptiveTopK: Input vs. Dropped Rate",
       "type": "timeseries"
     },
     {
       "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 11 }, "id": 5, "panels": [],
-      "title": "Key Metric Distribution & Cutoff (Conceptual)", "type": "row"
+      "title": "TopK Metrics Flow", "type": "row"
     },
     {
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 50, "lineWidth": 0, "barWidth": 0.9 }, "unit": "short" } },
-      "gridPos": { "h": 9, "w": 18, "x": 0, "y": 12 }, "id": 6,
-      "options": { "legend": { "displayMode": "list", "placement": "bottom"}, "tooltip": { "mode": "multi" }, "xDistribution": { "type": "linear"} },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 12 }, "id": 6,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom"}, "tooltip": { "mode": "multi" } },
       "targets": [
-        { "expr": "histogram_quantile(0.99, sum(rate(otelcol_processor_adaptivetopk_key_metric_value_bucket[1m])) by (le))", "legendFormat": "{{le}} - Key Metric Value (e.g. CPU, Mem)", "refId": "A", "format": "heatmap"}
+        { "expr": "rate(otelcol_processor_accepted_metric_points{processor=\"adaptivetopk\", job=\"otel-collector-metrics\"}[1m])", "legendFormat": "Accepted", "refId": "A"},
+        { "expr": "rate(otelcol_processor_dropped_metric_points{processor=\"adaptivetopk\", job=\"otel-collector-metrics\"}[1m])", "legendFormat": "Dropped", "refId": "B"},
+        { "expr": "rate(otelcol_otelcol_processor_adaptivetopk_processed_metric_points{job=\"otel-collector-metrics\"}[1m])", "legendFormat": "Processed", "refId": "C"}
       ],
-      "title": "Distribution of Key Metric for TopK Ranking (All Non-Critical)",
-      "description": "CONCEPTUAL: Requires adaptivetopk to emit a histogram ('otelcol_processor_adaptivetopk_key_metric_value_bucket') of the KeyMetricName values for all processes it considers (before selection/dropping). This shows the pool from which TopK is selected.",
-      "type": "histogram"
+      "title": "AdaptiveTopK Metric Flow",
+      "type": "timeseries"
     },
     {
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": {}, "unit": "none" } },
-      "gridPos": { "h": 9, "w": 6, "x": 18, "y": 12 }, "id": 7,
-      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": {}, "unit": "percent", "min": 0, "max": 100 } },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 21 },
+      "id": 7,
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
-        { "expr": "min_over_time( (topk(1, nrdot_adaptivetopk_current_k_value{job=\"otel-collector-metrics\"} * process_cpu_utilization{nr_priority!=\"critical\"} ) ) [5m:1m] )", "legendFormat": "Approx. Cutoff Value", "refId": "A" }
+        { "expr": "100 * (rate(otelcol_processor_dropped_metric_points{processor=\"adaptivetopk\", job=\"otel-collector-metrics\"}[5m]) / rate(otelcol_processor_accepted_metric_points{processor=\"adaptivetopk\", job=\"otel-collector-metrics\"}[5m]))", "legendFormat": "Drop Percentage", "refId": "A" }
       ],
-      "title": "Approx. Key Metric Cutoff for TopK",
-      "description": "CONCEPTUAL: Attempts to estimate the metric value of the Kth process. This is very approximate and depends on `process_cpu_utilization` being the key metric.",
+      "title": "AdaptiveTopK Drop Percentage",
+      "description": "Percentage of metrics dropped by the AdaptiveTopK processor",
       "type": "stat"
     },
     {
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": { "defaults": {"color": {"mode": "palette-classic"}, "custom": {}, "mappings": []} },
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 21 },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 30 },
       "id": 8,
-      "options": { "sortBy": [{"displayName": "Value #A", "desc": true}], "showHeader": true},
-      "pluginVersion": "10.2.0",
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "expr": "topk(10, sum by (process_executable_name) (rate(otelcol_processor_adaptivetopk_processed_metric_points{job=\"otel-collector-metrics\", adaptivetopk_selected=\"true\"}[1m])))",
-          "format": "table", "instant": true, "legendFormat": "", "refId": "A"
+          "expr": "otelcol_otelcol_adaptivetopk_current_k_value{job=\"otel-collector-metrics\"}",
+          "legendFormat": "Current K Value", "refId": "A"
         }
       ],
-      "title": "Top 10 Executables Selected by AdaptiveTopK (Rate)",
-      "description": "CONCEPTUAL: Requires adaptivetopk to temporarily tag selected metrics with 'adaptivetopk_selected=\"true\"' that is scraped by Prometheus.",
-      "type": "table"
+      "title": "Current K Value",
+      "description": "The current K value being used by AdaptiveTopK processor",
+      "type": "stat"
     }
   ],
   "refresh": "15s",

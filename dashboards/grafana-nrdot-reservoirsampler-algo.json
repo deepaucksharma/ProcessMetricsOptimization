@@ -30,7 +30,7 @@
       "gridPos": { "h": 8, "w": 8, "x": 0, "y": 3 }, "id": 3,
       "options": { "legend": { "displayMode": "list", "placement": "bottom"}, "tooltip": { "mode": "multi" } },
       "targets": [
-        { "expr": "nrdot_reservoirsampler_reservoir_fill_ratio{job=\"otel-collector-metrics\"}", "legendFormat": "Reservoir Fill Ratio", "refId": "A"}
+        { "expr": "otelcol_otelcol_reservoirsampler_reservoir_fill_ratio{job=\"otel-collector-metrics\"}", "legendFormat": "Reservoir Fill Ratio", "refId": "A"}
       ],
       "title": "Reservoir Fill Ratio", "type": "timeseries"
     },
@@ -40,8 +40,8 @@
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 3 }, "id": 4,
       "options": { "legend": { "displayMode": "list", "placement": "bottom"}, "tooltip": { "mode": "multi" } },
       "targets": [
-        { "expr": "nrdot_reservoirsampler_selected_identities_count{job=\"otel-collector-metrics\"}", "legendFormat": "Identities in Reservoir", "refId": "A"},
-        { "expr": "rate(nrdot_reservoirsampler_new_identities_added_to_reservoir_total{job=\"otel-collector-metrics\"}[1m])", "legendFormat": "New IDs Added Rate", "refId": "B"}
+        { "expr": "otelcol_otelcol_reservoirsampler_selected_identities_count{job=\"otel-collector-metrics\"}", "legendFormat": "Identities in Reservoir", "refId": "A"},
+        { "expr": "rate(otelcol_otelcol_processor_reservoirsampler_processed_metric_points{job=\"otel-collector-metrics\"}[1m])", "legendFormat": "Metric Processing Rate", "refId": "B"}
       ],
       "title": "Reservoir Population & Churn", "type": "timeseries"
     },
@@ -51,10 +51,10 @@
       "gridPos": { "h": 8, "w": 8, "x": 16, "y": 3 }, "id": 5,
       "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
-        { "expr": "avg_over_time(otelcol_processor_reservoirsampler_sample_rate[1m])", "legendFormat": "Avg. Sample Rate", "refId": "A" }
+        { "expr": "otelcol_otelcol_reservoirsampler_eligible_identities_seen_total{job=\"otel-collector-metrics\"} / otelcol_otelcol_reservoirsampler_selected_identities_count{job=\"otel-collector-metrics\"}", "legendFormat": "Approx. Sample Rate", "refId": "A" }
       ],
       "title": "Average Effective Sample Rate",
-      "description": "Assumes processor exposes 'otelcol_processor_reservoirsampler_sample_rate' or similar based on the 'nr.sample_rate' attribute it adds.",
+      "description": "Ratio of total eligible identities seen to current identities in reservoir",
       "type": "stat"
     },
     {
@@ -67,9 +67,9 @@
       "gridPos": { "h": 9, "w": 12, "x": 0, "y": 12 }, "id": 7,
       "options": { "legend": { "displayMode": "table", "placement": "bottom"}, "tooltip": { "mode": "multi" } },
       "targets": [
-        { "expr": "rate(otelcol_processor_reservoirsampler_processed_metric_points{job=\"otel-collector-metrics\"}[1m])", "legendFormat": "Input to Sampler", "refId": "A"},
-        { "expr": "rate(otelcol_processor_reservoirsampler_dropped_metric_points{job=\"otel-collector-metrics\"}[1m])", "legendFormat": "Dropped (Not Sampled)", "refId": "B"},
-        { "expr": "rate(otelcol_processor_reservoirsampler_processed_metric_points{job=\"otel-collector-metrics\", nr_process_sampled_by_reservoir=\"true\"}[1m])", "legendFormat": "Passed (Sampled)", "refId": "C", "description": "Needs attribute added by sampler"}
+        { "expr": "rate(otelcol_otelcol_processor_reservoirsampler_processed_metric_points{job=\"otel-collector-metrics\"}[1m])", "legendFormat": "Input to Sampler", "refId": "A"},
+        { "expr": "rate(otelcol_otelcol_processor_reservoirsampler_dropped_metric_points{job=\"otel-collector-metrics\"}[1m])", "legendFormat": "Dropped (Not Sampled)", "refId": "B"},
+        { "expr": "rate(otelcol_processor_accepted_metric_points{processor=\"reservoirsampler\", job=\"otel-collector-metrics\"}[1m])", "legendFormat": "Passed (Sampled)", "refId": "C"}
       ],
       "title": "ReservoirSampler: Input vs. Sampled vs. Dropped Rate",
       "type": "timeseries"
@@ -80,28 +80,24 @@
       "gridPos": { "h": 9, "w": 12, "x": 12, "y": 12 }, "id": 8,
       "options": { "legend": { "displayMode": "table", "placement": "bottom"}, "tooltip": { "mode": "multi" } },
       "targets": [
-        { "expr": "sum(increase(nrdot_reservoirsampler_eligible_identities_seen_total{job=\"otel-collector-metrics\"}[$__rate_interval]))", "legendFormat": "Total Eligible Identities", "refId": "A"},
-        { "expr": "nrdot_reservoirsampler_selected_identities_count{job=\"otel-collector-metrics\"}", "legendFormat": "Currently Sampled Identities", "refId": "B"}
+        { "expr": "otelcol_otelcol_reservoirsampler_eligible_identities_seen_total{job=\"otel-collector-metrics\"}", "legendFormat": "Total Eligible Identities", "refId": "A"},
+        { "expr": "otelcol_otelcol_reservoirsampler_selected_identities_count{job=\"otel-collector-metrics\"}", "legendFormat": "Currently Sampled Identities", "refId": "B"},
+        { "expr": "otelcol_otelcol_reservoirsampler_new_identities_added_to_reservoir_total{job=\"otel-collector-metrics\"}", "legendFormat": "New Identities Added", "refId": "C"}
       ],
       "title": "Eligible vs. Sampled Identity Count",
       "type": "timeseries"
     },
     {
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": { "defaults": {"color": {"mode": "palette-classic"}, "custom": {}, "mappings": []} },
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 21 },
-      "id": 9,
-      "options": { "sortBy": [{"displayName": "Value #A", "desc": true}], "showHeader": true},
-      "pluginVersion": "10.2.0",
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 1, "fillOpacity": 10 }, "unit": "percentunit" } },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 21 }, "id": 9,
+      "options": { "legend": { "displayMode": "table", "placement": "bottom"}, "tooltip": { "mode": "multi" } },
       "targets": [
-        {
-          "expr": "topk(10, sum by (process_executable_name) (rate(otelcol_processor_reservoirsampler_processed_metric_points{job=\"otel-collector-metrics\", nr_process_sampled_by_reservoir=\"true\"}[1m])))",
-          "format": "table", "instant": true, "legendFormat": "", "refId": "A"
-        }
+        { "expr": "rate(otelcol_otelcol_reservoirsampler_new_identities_added_to_reservoir_total{job=\"otel-collector-metrics\"}[5m]) / rate(otelcol_otelcol_reservoirsampler_eligible_identities_seen_total{job=\"otel-collector-metrics\"}[5m])", "legendFormat": "New Identity Acceptance Rate", "refId": "A"}
       ],
-      "title": "Top 10 Sampled Executables (by metric point rate)",
-      "description": "Shows executables that are frequently part of the sampled set. Requires sampler to add 'nr_process_sampled_by_reservoir' attribute.",
-      "type": "table"
+      "title": "Reservoir Sampling: New Identity Acceptance Rate",
+      "description": "Shows the percentage of eligible new identities being selected for the reservoir over time",
+      "type": "timeseries"
     }
   ],
   "refresh": "15s",
