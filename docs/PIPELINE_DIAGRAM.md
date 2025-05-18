@@ -14,7 +14,7 @@ flowchart LR
     D --> E[OthersRollup\nL2]
     E --> F[Batch\nProcessor]
     F --> G[OTLP\nExporter]
-    
+
     style A fill:#f9f9f9,stroke:#333,stroke-width:2px
     style B fill:#d4f0ff,stroke:#0078d4,stroke-width:2px
     style C fill:#ddf4dd,stroke:#107c10,stroke-width:2px
@@ -33,48 +33,48 @@ flowchart TD
     subgraph Input
         A[Raw Process\nMetrics\n100% Cardinality]
     end
-    
+
     subgraph "L0: PriorityTagger"
         B1[Tag Critical\nProcesses]
     end
-    
+
     subgraph "L1: AdaptiveTopK"
         C1[Keep Top K +\nCritical Processes]
         C2[Drop Other\nProcesses]
     end
-    
+
     subgraph "L3: ReservoirSampler"
         D1[Sample Statistically\nRepresentative\nProcesses]
         D2[Drop Remaining\nProcesses]
     end
-    
+
     subgraph "L2: OthersRollup"
         E1[Aggregate Non-Priority\nNon-TopK\nNon-Sampled]
         E2[Create '_other_'\nRollup Series]
     end
-    
+
     subgraph Output
         F1[Critical\nProcesses\n~5-15%]
         F2[Top K\nProcesses\n~5-10%]
         F3[Sampled\nProcesses\n~1-5%]
         F4["_other_"\nRollup\n1 series]
     end
-    
+
     A --> B1
     B1 --> C1
     C1 --> D1
     D1 --> E1
-    
+
     C1 --> C2
     D1 --> D2
-    
+
     E1 --> E2
-    
+
     B1 --> F1
     C1 --> F2
     D1 --> F3
     E2 --> F4
-    
+
     style A fill:#f9f9f9,stroke:#333,stroke-width:2px
     style B1 fill:#d4f0ff,stroke:#0078d4,stroke-width:2px
     style C1 fill:#ddf4dd,stroke:#107c10,stroke-width:2px

@@ -73,7 +73,7 @@ func createBenchmarkMetrics(numProcesses int) pmetric.Metrics {
 	cpuMetric.SetName("process.cpu.utilization")
 	cpuMetric.SetUnit("1")
 
-	// Create memory RSS metric  
+	// Create memory RSS metric
 	memMetric := sm.Metrics().AppendEmpty()
 	memMetric.SetName("process.memory.rss")
 	memMetric.SetUnit("bytes")

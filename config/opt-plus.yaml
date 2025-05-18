@@ -69,7 +69,7 @@ processors:
     hysteresis_duration: "30s"  # Reduced from 1m for faster adaptation
     min_k_value: 5
     max_k_value: 50
-    
+
     # Metric used to rank processes - using CPU as primary, memory as secondary
     key_metric_name: "process.cpu.utilization"
     # Optional secondary metric for tie-breaking
@@ -77,7 +77,7 @@ processors:
     # Must match prioritytagger configuration
     priority_attribute_name: "nr.priority"
     critical_attribute_value: "critical"
-    
+
     # Fixed K (not used when Dynamic K is enabled)
     # k_value: 10
 
@@ -114,7 +114,7 @@ processors:
       "process.memory.virtual": "sum"
       "process.disk.io_read_bytes": "sum"
       "process.disk.io_write_bytes": "sum"
-      "process.handles": "sum"  
+      "process.handles": "sum"
       "process.threads": "sum"
       "process.open_file_descriptors": "sum"
     # Optional: specific metrics to roll up (empty = all compatible metrics)

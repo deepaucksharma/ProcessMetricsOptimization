@@ -287,7 +287,7 @@ func TestProcessorNoMatch(t *testing.T) {
 
 	_, found := dp.Attributes().Get(cfg.PriorityAttributeName)
 	assert.False(t, found)
-	
+
 	// We only care that the attribute wasn't found, not the actual value of an empty pcommon.Value
 	// as implementations may differ
 }
@@ -345,10 +345,10 @@ func createTestMetrics(executableName string, cpuUtil float64, memRSSBytes int64
 	md := pmetric.NewMetrics()
 	rm := md.ResourceMetrics().AppendEmpty()
 	rm.Resource().Attributes().PutStr("host.name", "test-host")
-	
+
 	sm := rm.ScopeMetrics().AppendEmpty()
 	sm.Scope().SetName("test.scope")
-	
+
 	// Create a CPU metric with both CPU and memory attributes on the same datapoint
 	// This is important for testing CPU and memory thresholds as the checker looks at individual datapoints
 	cpuMetric := sm.Metrics().AppendEmpty()
@@ -359,6 +359,6 @@ func createTestMetrics(executableName string, cpuUtil float64, memRSSBytes int64
 	cpuDP.Attributes().PutStr("process.pid", "12345")
 	cpuDP.Attributes().PutDouble(processCPUUtilizationKey, cpuUtil)
 	cpuDP.Attributes().PutInt(processMemoryRSSKey, memRSSBytes)
-	
+
 	return md
 }

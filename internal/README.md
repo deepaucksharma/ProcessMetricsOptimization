@@ -34,7 +34,7 @@ type LoadMapper interface {
 }
 
 // Add comprehensive documentation
-// LoadBandMapper maps host load metrics to discrete K values 
+// LoadBandMapper maps host load metrics to discrete K values
 // with configurable thresholds and hysteresis
 type LoadBandMapper struct {
     // ...

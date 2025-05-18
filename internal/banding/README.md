@@ -55,10 +55,10 @@ The `LoadBandMapper` will:
 type LoadBandMapper interface {
     // GetKValueForLoad returns the appropriate K value based on the current load
     GetKValueForLoad(load float64) int
-    
+
     // GetBandBoundaries returns the configured thresholds
     GetBandBoundaries() []float64
-    
+
     // GetCurrentBand returns the band the mapper is currently in
     GetCurrentBand() int
 }

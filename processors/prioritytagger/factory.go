@@ -45,12 +45,12 @@ func createMetricsProcessor(
 	nextConsumer consumer.Metrics,
 ) (processor.Metrics, error) {
 	pCfg := cfg.(*Config)
-	
+
 	// Validate the configuration - important to catch regex compilation errors
 	if err := pCfg.Validate(); err != nil {
 		return nil, err
 	}
-	
+
 	proc, err := newProcessor(pCfg, set.Logger, nextConsumer, set.TelemetrySettings)
 	if err != nil {
 		return nil, err

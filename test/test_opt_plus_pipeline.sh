@@ -30,7 +30,7 @@ sleep 5 # Give services time to initialize
 
 # Verify collector is up
 echo -e "${YELLOW}Checking collector accessibility...${NC}"
-curl -s --head --fail http://localhost:15679 &>/dev/null || { 
+curl -s --head --fail http://localhost:15679 &>/dev/null || {
   echo -e "${RED}Collector zPages not accessible (http://localhost:15679)${NC}"
   make logs
   exit 1
@@ -39,7 +39,7 @@ echo -e "${GREEN}✅ Collector zPages accessible${NC}"
 
 # Verify Prometheus
 echo -e "${YELLOW}Checking Prometheus accessibility...${NC}"
-curl -s --head --fail http://localhost:19090 &>/dev/null || { 
+curl -s --head --fail http://localhost:19090 &>/dev/null || {
   echo -e "${RED}Prometheus not accessible (http://localhost:19090)${NC}"
   exit 1
 }
@@ -47,7 +47,7 @@ echo -e "${GREEN}✅ Prometheus accessible${NC}"
 
 # Verify Grafana
 echo -e "${YELLOW}Checking Grafana accessibility...${NC}"
-curl -s --head --fail http://localhost:13000 &>/dev/null || { 
+curl -s --head --fail http://localhost:13000 &>/dev/null || {
   echo -e "${RED}Grafana not accessible (http://localhost:13000)${NC}"
   exit 1
 }
@@ -71,7 +71,7 @@ check_metric() {
   metric=$1
   description=$2
   result=$(curl -s "http://localhost:19090/api/v1/query?query=${metric}" | grep -o '"resultType":"matrix"')
-  
+
   if [[ ! -z $result ]]; then
     echo -e "${GREEN}✅ ${description} (${metric})${NC}"
     return 0
@@ -118,7 +118,7 @@ if [[ $raw_metric_count =~ ^[0-9]+$ ]] && [[ $opt_metric_count =~ ^[0-9]+$ ]] &&
   echo -e "${GREEN}✅ Cardinality reduction achieved: ${reduction}%${NC}"
   echo -e "${GREEN}   - Raw metric count: ${raw_metric_count}${NC}"
   echo -e "${GREEN}   - Optimized metric count: ${opt_metric_count}${NC}"
-  
+
   # Check if we met the 90% reduction goal
   if (( $(echo "$reduction >= 90" | bc -l) )); then
     echo -e "${GREEN}✅ Success! Met or exceeded the 90% cardinality reduction goal${NC}"

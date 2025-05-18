@@ -9,7 +9,7 @@ The NRDOT optimization pipeline is a multi-layered approach to reducing process 
 The pipeline consists of four custom processors that work together in sequence:
 
 1. **L0: PriorityTagger** - Identifies and tags critical processes that must be preserved regardless of optimization
-2. **L1: AdaptiveTopK** - Selects metrics from the K most resource-intensive processes, with dynamic K adjustment 
+2. **L1: AdaptiveTopK** - Selects metrics from the K most resource-intensive processes, with dynamic K adjustment
 3. **L3: ReservoirSampler** - Statistically samples a representative subset of non-critical, non-top processes
 4. **L2: OthersRollup** - Aggregates all remaining processes into a single "_other_" process series
 
@@ -67,7 +67,7 @@ adaptivetopk:
   hysteresis_duration: "30s"
   min_k_value: 5
   max_k_value: 50
-  
+
   # Process selection configuration
   key_metric_name: "process.cpu.utilization"
   secondary_key_metric_name: "process.memory.rss"
