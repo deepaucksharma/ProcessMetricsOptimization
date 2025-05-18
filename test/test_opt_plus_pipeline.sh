@@ -18,8 +18,9 @@ make docker-build || { echo -e "${RED}Failed to build Docker image${NC}"; exit 1
 echo -e "${GREEN}✅ Custom collector built successfully${NC}\n"
 
 # Step 2: Start the optimization pipeline with the opt-plus config
-echo -e "${BLUE}Step 2: Starting the optimization pipeline with opt-plus.yaml...${NC}"
-export COLLECTOR_CONFIG="opt-plus.yaml"
+CONFIG_FILE="${COLLECTOR_CONFIG:-opt-plus.yaml}"
+echo -e "${BLUE}Step 2: Starting the optimization pipeline with ${CONFIG_FILE}...${NC}"
+export COLLECTOR_CONFIG="${CONFIG_FILE}"
 make compose-up || { echo -e "${RED}Failed to start Docker Compose stack${NC}"; exit 1; }
 echo -e "${GREEN}✅ Optimization pipeline started${NC}\n"
 

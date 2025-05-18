@@ -24,6 +24,9 @@ display_usage() {
   echo -e "  --no-browser   Don't automatically open URLs in the browser"
   echo -e "  --open-urls    Open URLs in the browser (default)"
   echo
+  echo -e "Environment Variables:"
+  echo -e "  COLLECTOR_CONFIG  Collector config file (default: opt-plus.yaml)"
+  echo
   echo -e "Examples:"
   echo -e "  ./run.sh up                     Start services with Docker"
   echo -e "  ./run.sh up --no-browser        Start services without opening URLs"

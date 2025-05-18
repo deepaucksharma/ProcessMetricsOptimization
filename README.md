@@ -46,8 +46,10 @@ cd nrdot-process-optimization
 make docker-build
 
 # 3. Start the local development stack using Docker Compose
-#    (This uses build/docker-compose.yaml and config/opt-plus.yaml)
+#    (Uses build/docker-compose.yaml and config/opt-plus.yaml by default)
 make compose-up
+# To use a custom collector config:
+# COLLECTOR_CONFIG=my-config.yaml make compose-up
 
 # 4. To view logs from all services (Collector, Mock Sink, etc.):
 #    (Run in a new terminal or after detaching from compose-up if it wasn't run with -d)
@@ -65,6 +67,8 @@ To test the complete optimization pipeline with all processors (PriorityTagger, 
 ```bash
 # Builds the collector, starts the stack with opt-plus.yaml, and verifies all processors
 ./test/test_opt_plus_pipeline.sh
+# Use a custom config file
+COLLECTOR_CONFIG=my-config.yaml ./test/test_opt_plus_pipeline.sh
 ```
 
 **Option 2:** Use the Makefile target:
@@ -74,6 +78,8 @@ make docker-build
 
 # Start the full optimization pipeline with opt-plus.yaml
 make opt-plus-up
+# With a custom config file
+COLLECTOR_CONFIG=my-config.yaml make opt-plus-up
 
 # View the logs to see the pipeline in action
 make logs
@@ -112,6 +118,7 @@ Key customization options include:
 - TopK value and dynamic K parameters
 - Reservoir size
 - Output attributes for rollup
+- Collector configuration file (COLLECTOR_CONFIG)
 
 Local Development Stack Service URLs (when make compose-up is running):
 | Service | URL | Purpose |
