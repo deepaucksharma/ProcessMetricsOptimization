@@ -59,19 +59,23 @@ Steps:
 git clone https://github.com/newrelic/nrdot-process-optimization.git
 cd nrdot-process-optimization
 
-# 2. Build the custom OpenTelemetry Collector Docker image
+# 2. Copy the example environment file and add your credentials
+cp .env.example .env
+#    Edit `.env` and set `NEW_RELIC_LICENSE_KEY` and any other overrides
+
+# 3. Build the custom OpenTelemetry Collector Docker image
 #    (This uses build/Dockerfile and targets cmd/collector/main.go)
 make docker-build
 
-# 3. Start the local development stack using Docker Compose
+# 4. Start the local development stack using Docker Compose
 #    (This uses build/docker-compose.yaml and config/base.yaml)
 make compose-up
 
-# 4. To view logs from all services (Collector, Mock Sink, etc.):
+# 5. To view logs from all services (Collector, Mock Sink, etc.):
 #    (Run in a new terminal or after detaching from compose-up if it wasn't run with -d)
 make logs
 
-# 5. When finished, stop the local development stack:
+# 6. When finished, stop the local development stack:
 make compose-down
 ```
 
