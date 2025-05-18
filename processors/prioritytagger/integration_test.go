@@ -94,12 +94,12 @@ func TestEndToEndPipeline(t *testing.T) {
 		sm := rm.ScopeMetrics().At(i)
 		for j := 0; j < sm.Metrics().Len(); j++ {
 			metric := sm.Metrics().At(j)
-			
+
 			// Skip non-process metrics
 			if !(metric.Name() == "process.cpu.utilization" || metric.Name() == "process.memory.rss") {
 				continue
 			}
-			
+
 			// Check different metric types
 			switch metric.Type() {
 			case pmetric.MetricTypeGauge:
@@ -182,7 +182,7 @@ func createMultiProcessMetrics() pmetric.Metrics {
 	md := pmetric.NewMetrics()
 	rm := md.ResourceMetrics().AppendEmpty()
 	rm.Resource().Attributes().PutStr("host.name", "test-host")
-	
+
 	sm := rm.ScopeMetrics().AppendEmpty()
 	sm.Scope().SetName("host.process.metrics")
 
@@ -239,7 +239,7 @@ func createMultiProcessMetrics() pmetric.Metrics {
 // TestPrioritizationRules tests all the different ways processes can be tagged
 func TestPrioritizationRules(t *testing.T) {
 	// End-to-end pipeline test for prioritytagger processor
-	
+
 	testCases := []struct {
 		name           string
 		config         Config
@@ -342,10 +342,10 @@ func TestPrioritizationRules(t *testing.T) {
 			dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
 			dp.SetDoubleValue(tc.cpuUtil)
 			dp.Attributes().PutStr(processExecutableNameKey, tc.process)
-			
+
 			// Add CPU utilization as an attribute for CPU threshold tests
 			dp.Attributes().PutDouble(processCPUUtilizationKey, tc.cpuUtil)
-			
+
 			// Add memory attribute for memory tests
 			if tc.config.MemoryRSSThresholdMiB > 0 {
 				dp.Attributes().PutInt(processMemoryRSSKey, tc.memoryMB*1024*1024)

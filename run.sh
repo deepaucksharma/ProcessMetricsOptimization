@@ -60,15 +60,15 @@ load_env() {
 # Function to open a URL in the default browser
 open_url() {
   local url=$1
-  
+
   # Check if URL is provided
   if [ -z "$url" ]; then
     echo -e "${RED}Error: No URL provided to open_url function${NC}"
     return 1
   fi
-  
+
   echo -e "${GREEN}Opening URL: ${BLUE}${url}${NC}"
-  
+
   # Open URL based on operating system
   if [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS
@@ -92,7 +92,7 @@ open_url() {
     echo -e "Please open ${BLUE}${url}${NC} manually in your browser"
     return 1
   fi
-  
+
   return 0
 }
 
@@ -106,11 +106,11 @@ docker_up() {
   echo -e "  Prometheus: http://localhost:19090"
   echo -e "  Grafana: http://localhost:13000 (admin/admin)"
   echo -e "  Mock New Relic: http://localhost:18080"
-  
+
   # Give services a moment to initialize
   echo -e "${YELLOW}Waiting for services to initialize...${NC}"
   sleep 2
-  
+
   # Open main URLs in browser
   if [ "${OPEN_URLS:-true}" = "true" ]; then
     echo -e "${GREEN}Opening service interfaces in your browser...${NC}"

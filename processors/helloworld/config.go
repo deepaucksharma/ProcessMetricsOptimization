@@ -11,7 +11,7 @@ import (
 type Config struct {
 	// Message is the message to include in logs.
 	Message string `mapstructure:"message"`
-	
+
 	// AddToResource determines whether to add the hello attribute to resources
 	// in addition to metric data points.
 	AddToResource bool `mapstructure:"add_to_resource"`
@@ -33,11 +33,11 @@ func (cfg *Config) Unmarshal(componentParser *confmap.Conf) error {
 	if componentParser == nil {
 		return nil
 	}
-	
+
 	// Set defaults
 	cfg.Message = "Hello from OpenTelemetry!"
 	cfg.AddToResource = false
-	
+
 	// Unmarshal configuration
 	return componentParser.Unmarshal(cfg)
 }

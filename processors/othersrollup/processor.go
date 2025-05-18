@@ -280,7 +280,7 @@ func getMetricPointCount(md pmetric.Metrics) int {
 			sm := rm.ScopeMetrics().At(j)
 			for k := 0; k < sm.Metrics().Len(); k++ {
 				metric := sm.Metrics().At(k)
-				
+
 				switch metric.Type() {
 				case pmetric.MetricTypeGauge:
 					count += metric.Gauge().DataPoints().Len()
@@ -304,13 +304,13 @@ func resourceAttributesToString(attrs pcommon.Map) string {
 	if attrs.Len() == 0 {
 		return "empty_resource"
 	}
-	
+
 	// Simple implementation - concatenate key/value pairs
 	result := ""
 	attrs.Range(func(k string, v pcommon.Value) bool {
 		result += k + ":" + v.AsString() + ";"
 		return true
 	})
-	
+
 	return result
 }

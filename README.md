@@ -94,7 +94,7 @@ This script will:
 6. Calculate the cardinality reduction percentage (aiming for ≥90%)
 7. Verify that critical processes are preserved
 
-After the test completes successfully, you can explore the results in Grafana, Prometheus, and the mock OTLP sink logs. 
+After the test completes successfully, you can explore the results in Grafana, Prometheus, and the mock OTLP sink logs.
 
 ### Customizing the Pipeline
 
@@ -228,10 +228,10 @@ processors:
     hysteresis_duration: "30s"
     min_k_value: 5
     max_k_value: 50
-    
+
     # Fixed K (not used when Dynamic K is enabled)
     # k_value: 10
-    
+
     # The metric used to rank processes
     key_metric_name: "process.cpu.utilization"
     # Optional: Secondary metric for tie-breaking

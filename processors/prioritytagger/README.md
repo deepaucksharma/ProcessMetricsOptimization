@@ -18,14 +18,14 @@ processors:
     # Critical process identification
     critical_executables: [kubelet, systemd, docker, containerd]
     critical_executable_patterns: [kube.*, docker.*, containerd.*]
-    
+
     # Resource thresholds (set to negative to disable)
     cpu_steady_state_threshold: 0.8        # CPU utilization (0.0-1.0)
     memory_rss_threshold_mib: 1024         # Memory RSS in MiB
-    
+
     # Tagging configuration
     priority_attribute_name: nr.priority   # Default: "nr.priority"
-    critical_attribute_value: critical     # Default: "critical" 
+    critical_attribute_value: critical     # Default: "critical"
 ```
 
 ## Operation

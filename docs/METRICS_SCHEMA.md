@@ -93,8 +93,8 @@ rate(otelcol_otelcol_otelcol_processor_prioritytagger_processed_metric_points{jo
 To compare different processors, use a query like:
 
 ```promql
-sum(rate(otelcol_otelcol_otelcol_processor_prioritytagger_processed_metric_points{job="otel-collector-metrics", service="otel-collector-internal"}[1m]) or 
-    rate(otelcol_otelcol_otelcol_processor_adaptivetopk_processed_metric_points{job="otel-collector-metrics", service="otel-collector-internal"}[1m]) or 
+sum(rate(otelcol_otelcol_otelcol_processor_prioritytagger_processed_metric_points{job="otel-collector-metrics", service="otel-collector-internal"}[1m]) or
+    rate(otelcol_otelcol_otelcol_processor_adaptivetopk_processed_metric_points{job="otel-collector-metrics", service="otel-collector-internal"}[1m]) or
     rate(otelcol_otelcol_otelcol_processor_reservoirsampler_processed_metric_points{job="otel-collector-metrics", service="otel-collector-internal"}[1m])
 ) by (processor)
 ```
@@ -104,7 +104,7 @@ To measure pipeline efficiency:
 
 ```promql
 (1 - (
-  rate(otelcol_exporter_sent_metric_points{exporter="otlphttp", job="otel-collector-metrics"}[1m]) / 
+  rate(otelcol_exporter_sent_metric_points{exporter="otlphttp", job="otel-collector-metrics"}[1m]) /
   rate(otelcol_receiver_accepted_metric_points{receiver="hostmetrics", job="otel-collector-metrics"}[1m])
 )) * 100
 ```
@@ -113,7 +113,7 @@ To measure pipeline efficiency:
 
 ### Common Issues
 
-1. **Missing Metrics**: 
+1. **Missing Metrics**:
    - Verify the processor is correctly registered in the collector
    - Check the metric naming pattern (triple prefix vs. double prefix)
    - Confirm that the pipeline is properly configured in `opt-plus.yaml`

@@ -171,7 +171,7 @@
               },
               {
                 "color": "red",
-                "value": 350 
+                "value": 350
               }
             ]
           },
@@ -508,9 +508,9 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 58 
+        "y": 58
       },
-      "id": 104, 
+      "id": 104,
       "panels": [],
       "title": "Cost Impact & Optimization Analytics",
       "type": "row"

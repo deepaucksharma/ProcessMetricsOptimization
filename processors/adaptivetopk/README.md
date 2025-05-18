@@ -11,7 +11,7 @@ This processor includes several optimizations to improve performance and reduce 
 1. **Efficient Host Load Metric Detection**:
    - Uses early exit algorithms to find system load metrics quickly
    - Employs different search strategies based on metrics collection size
-   
+
 2. **Memory-Efficient Data Structures**:
    - Pre-allocates maps and slices based on estimated process counts
    - Implements efficient min-heap operations for top-K selection
