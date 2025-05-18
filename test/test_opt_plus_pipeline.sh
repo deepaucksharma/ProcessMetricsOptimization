@@ -135,8 +135,9 @@ fi
 echo -e "\n${BLUE}Step 6: Verifying critical processes are preserved...${NC}"
 
 # Get critical processes defined in the configuration
-echo -e "${YELLOW}Checking for critical processes defined in opt-plus.yaml...${NC}"
-critical_procs=$(grep -A4 "critical_executables:" /Users/deepaksharma/Desktop/src_main/ProcessMetricsOptimization/config/opt-plus.yaml | grep -v "critical_executables:" | grep -v "#" | grep -o '".*"' | sed 's/"//g' | tr '\n' ' ')
+config_path="$(dirname "$0")/../config/opt-plus.yaml"
+echo -e "${YELLOW}Checking for critical processes defined in ${config_path}...${NC}"
+critical_procs=$(grep -A4 "critical_executables:" "$config_path" | grep -v "critical_executables:" | grep -v "#" | grep -o '".*"' | sed 's/"//g' | tr '\n' ' ')
 echo -e "${GREEN}✅ Configured critical processes: ${critical_procs}${NC}"
 
 # Check if process metrics for these critical processes exist in Prometheus
