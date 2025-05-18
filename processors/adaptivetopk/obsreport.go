@@ -16,6 +16,7 @@ type adaptiveTopKObsreport struct {
 	droppedPoints         metric.Int64Counter
 	topKProcessesSelected metric.Int64Counter
 	currentKValue         metric.Int64Observable // For Dynamic K
+	currentVal            int64
 }
 
 func newAdaptiveTopKObsreport(settings component.TelemetrySettings) (*adaptiveTopKObsreport, error) {
@@ -63,13 +64,25 @@ func newAdaptiveTopKObsreport(settings component.TelemetrySettings) (*adaptiveTo
 		}
 	}
 
-	return &adaptiveTopKObsreport{
+	o := &adaptiveTopKObsreport{
 		settings:              settings,
 		processedPoints:       processedPoints,
 		droppedPoints:         droppedPoints,
 		topKProcessesSelected: topKProcessesSelected,
 		currentKValue:         currentKValue,
-	}, nil
+	}
+
+	if settings.MeterProvider != nil {
+		_, err := settings.MeterProvider.Meter(processorName).RegisterCallback(func(ctx context.Context, obs metric.Observer) error {
+			obs.ObserveInt64(o.currentKValue, o.currentVal)
+			return nil
+		}, o.currentKValue)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return o, nil
 }
 
 // StartMetricsOp starts the metrics operation and returns the context
@@ -100,6 +113,5 @@ func (o *adaptiveTopKObsreport) recordTopKProcessesSelected(ctx context.Context,
 
 // recordCurrentKValue records the current K value being used (for Dynamic K)
 func (o *adaptiveTopKObsreport) recordCurrentKValue(ctx context.Context, kValue int64) {
-	// This would be handled by registration callback in a complete implementation
-	// For this implementation, we'll simply log the value when it's changed
+	o.currentVal = kValue
 }
