@@ -77,3 +77,4 @@ services:
 networks:
   otel-network:
     driver: bridge
+

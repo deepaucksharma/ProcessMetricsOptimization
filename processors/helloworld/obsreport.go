@@ -17,7 +17,7 @@ type obsreportHelper struct {
 // newObsreportHelper creates a new observability helper for the Hello World processor.
 func newObsreportHelper(settings component.TelemetrySettings) (*obsreportHelper, error) {
 	meter := settings.MeterProvider.Meter("helloworld")
-	
+
 	processedPoints, err := meter.Int64Counter(
 		"otelcol_otelcol_processor_helloworld_processed_metric_points",
 		metric.WithDescription("Number of metric points processed by the hello world processor"),
@@ -25,7 +25,7 @@ func newObsreportHelper(settings component.TelemetrySettings) (*obsreportHelper,
 	if err != nil {
 		return nil, err
 	}
-	
+
 	droppedPoints, err := meter.Int64Counter(
 		"otelcol_otelcol_processor_helloworld_dropped_metric_points",
 		metric.WithDescription("Number of metric points dropped by the hello world processor"),
@@ -51,7 +51,7 @@ func (orh *obsreportHelper) StartMetricsOp(ctx context.Context) context.Context 
 func (orh *obsreportHelper) EndMetricsOp(ctx context.Context, processorName string, numReceivedItems int, err error) {
 	// Record the number of processed points
 	orh.processedPoints.Add(ctx, int64(numReceivedItems))
-	
+
 	// If there was an error, record dropped points
 	if err != nil {
 		orh.droppedPoints.Add(ctx, int64(numReceivedItems))

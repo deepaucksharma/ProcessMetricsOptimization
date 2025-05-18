@@ -11,6 +11,8 @@ import (
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/processor"
 	"go.uber.org/zap"
+
+	"github.com/newrelic/nrdot-process-optimization/internal/metricutil"
 )
 
 const (
@@ -46,12 +48,14 @@ func newOthersRollupProcessor(settings processor.CreateSettings, next consumer.M
 }
 
 func (p *othersRollupProcessor) Start(_ context.Context, _ component.Host) error { return nil }
-func (p *othersRollupProcessor) Shutdown(_ context.Context) error               { return nil }
-func (p *othersRollupProcessor) Capabilities() consumer.Capabilities            { return consumer.Capabilities{MutatesData: true} }
+func (p *othersRollupProcessor) Shutdown(_ context.Context) error                { return nil }
+func (p *othersRollupProcessor) Capabilities() consumer.Capabilities {
+	return consumer.Capabilities{MutatesData: true}
+}
 
 func (p *othersRollupProcessor) ConsumeMetrics(ctx context.Context, md pmetric.Metrics) error {
 	ctx = p.obsrep.StartMetricsOp(ctx)
-	originalMetricPointCount := getMetricPointCount(md)
+	originalMetricPointCount := metricutil.MetricPointCount(md)
 
 	// This map will store aggregated values: resourceKey -> metric_name -> AggregationState
 	rollupData := make(map[string]map[string]*AggregationState)
@@ -127,7 +131,7 @@ func (p *othersRollupProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 								rollupData[resourceKey][metricName] = aggState
 							}
 
-							val := getNumericValue(dp)
+							val := metricutil.GetNumericValue(dp)
 							aggState.Sum += val
 							aggState.Count++
 
@@ -149,7 +153,7 @@ func (p *othersRollupProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 					processDataPoints(metric.Gauge().DataPoints())
 					if passThroughDps.Len() > 0 {
 						m := newSm.Metrics().AppendEmpty()
-						metric.CopyTo(m) // Copy metric metadata
+						metric.CopyTo(m)                                                                              // Copy metric metadata
 						m.SetEmptyGauge().DataPoints().RemoveIf(func(_ pmetric.NumberDataPoint) bool { return true }) // Clear existing
 						passThroughDps.CopyTo(m.Gauge().DataPoints())
 					}
@@ -157,7 +161,7 @@ func (p *othersRollupProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 					processDataPoints(metric.Sum().DataPoints())
 					if passThroughDps.Len() > 0 {
 						m := newSm.Metrics().AppendEmpty()
-						metric.CopyTo(m) // Copy metric metadata
+						metric.CopyTo(m)                                                                            // Copy metric metadata
 						m.SetEmptySum().DataPoints().RemoveIf(func(_ pmetric.NumberDataPoint) bool { return true }) // Clear existing
 						passThroughDps.CopyTo(m.Sum().DataPoints())
 					}
@@ -249,7 +253,7 @@ func (p *othersRollupProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 		}
 	} // End iterating resource metrics (i loop)
 
-	finalMetricPointCount := getMetricPointCount(newMetrics)
+	finalMetricPointCount := metricutil.MetricPointCount(newMetrics)
 	droppedCount := originalMetricPointCount - finalMetricPointCount
 	p.obsrep.EndMetricsOp(ctx, finalMetricPointCount, droppedCount, nil)
 
@@ -261,56 +265,18 @@ func (p *othersRollupProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 	return p.nextConsumer.ConsumeMetrics(ctx, newMetrics)
 }
 
-func getNumericValue(dp pmetric.NumberDataPoint) float64 {
-	switch dp.ValueType() {
-	case pmetric.NumberDataPointValueTypeInt:
-		return float64(dp.IntValue())
-	case pmetric.NumberDataPointValueTypeDouble:
-		return dp.DoubleValue()
-	}
-	return 0
-}
-
-// getMetricPointCount counts the total number of data points in a metrics collection
-func getMetricPointCount(md pmetric.Metrics) int {
-	count := 0
-	for i := 0; i < md.ResourceMetrics().Len(); i++ {
-		rm := md.ResourceMetrics().At(i)
-		for j := 0; j < rm.ScopeMetrics().Len(); j++ {
-			sm := rm.ScopeMetrics().At(j)
-			for k := 0; k < sm.Metrics().Len(); k++ {
-				metric := sm.Metrics().At(k)
-				
-				switch metric.Type() {
-				case pmetric.MetricTypeGauge:
-					count += metric.Gauge().DataPoints().Len()
-				case pmetric.MetricTypeSum:
-					count += metric.Sum().DataPoints().Len()
-				case pmetric.MetricTypeHistogram:
-					count += metric.Histogram().DataPoints().Len()
-				case pmetric.MetricTypeSummary:
-					count += metric.Summary().DataPoints().Len()
-				case pmetric.MetricTypeExponentialHistogram:
-					count += metric.ExponentialHistogram().DataPoints().Len()
-				}
-			}
-		}
-	}
-	return count
-}
-
 // resourceAttributesToString converts resource attributes to a string for use as a map key
 func resourceAttributesToString(attrs pcommon.Map) string {
 	if attrs.Len() == 0 {
 		return "empty_resource"
 	}
-	
+
 	// Simple implementation - concatenate key/value pairs
 	result := ""
 	attrs.Range(func(k string, v pcommon.Value) bool {
 		result += k + ":" + v.AsString() + ";"
 		return true
 	})
-	
+
 	return result
 }
