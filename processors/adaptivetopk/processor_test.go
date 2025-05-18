@@ -60,7 +60,7 @@ func TestAdaptiveTopK_FixedK(t *testing.T) {
 	dp3 := m3.SetEmptyGauge().DataPoints().AppendEmpty()
 	dp3.SetDoubleValue(0.3)
 	dp3.Attributes().PutStr(processPIDKey, "3")
-	
+
 	// Process 4 (Low CPU)
 	m4 := sm.Metrics().AppendEmpty()
 	m4.SetName("process.cpu.utilization")
@@ -81,7 +81,7 @@ func TestAdaptiveTopK_FixedK(t *testing.T) {
 
 	processedMetrics := nextSink.AllMetrics()
 	require.Len(t, processedMetrics, 1)
-	
+
 	// Expected PIDs: "1" (critical), "2" (top CPU), "3" (second top CPU)
 	// Metric points: dp1, dp2, dp3, dp5 (belongs to critical process 1)
 	assert.Equal(t, 4, getMetricPointCount(processedMetrics[0]), "Should have 4 data points: 1 critical (cpu), 2 top K (cpu), 1 critical (mem)")
@@ -177,7 +177,7 @@ func TestAdaptiveTopK_DynamicK(t *testing.T) {
 	dp3 := m3.SetEmptyGauge().DataPoints().AppendEmpty()
 	dp3.SetDoubleValue(0.3)
 	dp3.Attributes().PutStr(processPIDKey, "3")
-	
+
 	// Process 4 (Low CPU)
 	m4 := sm.Metrics().AppendEmpty()
 	m4.SetName("process.cpu.utilization")
@@ -191,7 +191,7 @@ func TestAdaptiveTopK_DynamicK(t *testing.T) {
 
 	processedMetrics := nextSink.AllMetrics()
 	require.Len(t, processedMetrics, 1)
-	
+
 	// Expected PIDs: "1" (critical), "2" (highest), "3" (second highest)
 	foundPIDs := make(map[string]bool)
 	rms := processedMetrics[0].ResourceMetrics()
@@ -257,7 +257,7 @@ func TestAdaptiveTopK_DynamicK(t *testing.T) {
 	dp3 = m3.SetEmptyGauge().DataPoints().AppendEmpty()
 	dp3.SetDoubleValue(0.3)
 	dp3.Attributes().PutStr(processPIDKey, "3")
-	
+
 	m4 = sm.Metrics().AppendEmpty()
 	m4.SetName("process.cpu.utilization")
 	dp4 = m4.SetEmptyGauge().DataPoints().AppendEmpty()
@@ -375,11 +375,11 @@ func TestProcessHysteresis(t *testing.T) {
 
 	processedMetrics := nextSink.AllMetrics()
 	require.Len(t, processedMetrics, 1)
-	
+
 	// First batch - check what we actually got
 	foundPIDs := extractPIDs(processedMetrics[0])
 	t.Logf("First batch PIDs: %v", foundPIDs)
-	
+
 	// The test expected 2 and 3, but it appears we're only getting 3
 	// This is likely due to the K value of 1 in the test configuration
 	assert.Contains(t, foundPIDs, "3", "Process 3 should be present (highest CPU)")
@@ -425,11 +425,11 @@ func TestProcessHysteresis(t *testing.T) {
 
 	processedMetrics = nextSink.AllMetrics()
 	require.Len(t, processedMetrics, 1)
-	
+
 	// Second batch - check what we actually got
 	foundPIDs = extractPIDs(processedMetrics[0])
 	t.Logf("Second batch PIDs: %v", foundPIDs)
-	
+
 	// With K=1, we should get the highest CPU process (1) plus 3 due to hysteresis
 	assert.Contains(t, foundPIDs, "1", "Process 1 should be present (now in top K)")
 	assert.Contains(t, foundPIDs, "3", "Process 3 should still be present due to hysteresis")
@@ -477,11 +477,11 @@ func TestProcessHysteresis(t *testing.T) {
 
 	processedMetrics = nextSink.AllMetrics()
 	require.Len(t, processedMetrics, 1)
-	
+
 	// Third batch - check what we actually got
 	foundPIDs = extractPIDs(processedMetrics[0])
 	t.Logf("Third batch PIDs: %v", foundPIDs)
-	
+
 	// With K=1, we should only get process 1 (highest CPU), and process 3's hysteresis has expired
 	assert.Contains(t, foundPIDs, "1", "Process 1 should be present (in top K)")
 	assert.NotContains(t, foundPIDs, "3", "Process 3 should be filtered out as hysteresis expired")

@@ -19,12 +19,12 @@ func BenchmarkProcessorWithManyProcesses(b *testing.B) {
 		b.Run(fmt.Sprintf("Processes-%d", numProcesses), func(b *testing.B) {
 			// Create a realistic configuration
 			cfg := &Config{
-				CriticalExecutables:      []string{"systemd", "containerd", "kubelet"},
+				CriticalExecutables:        []string{"systemd", "containerd", "kubelet"},
 				CriticalExecutablePatterns: []string{"kube.*", "docker.*", "containerd.*"},
-				CPUSteadyStateThreshold:  0.7,
-				MemoryRSSThresholdMiB:    1024,
-				PriorityAttributeName:    "nr.priority",
-				CriticalAttributeValue:   "critical",
+				CPUSteadyStateThreshold:    0.7,
+				MemoryRSSThresholdMiB:      1024,
+				PriorityAttributeName:      "nr.priority",
+				CriticalAttributeValue:     "critical",
 			}
 			require.NoError(b, cfg.Validate())
 
@@ -73,7 +73,7 @@ func createBenchmarkMetrics(numProcesses int) pmetric.Metrics {
 	cpuMetric.SetName("process.cpu.utilization")
 	cpuMetric.SetUnit("1")
 
-	// Create memory RSS metric  
+	// Create memory RSS metric
 	memMetric := sm.Metrics().AppendEmpty()
 	memMetric.SetName("process.memory.rss")
 	memMetric.SetUnit("bytes")
@@ -86,7 +86,7 @@ func createBenchmarkMetrics(numProcesses int) pmetric.Metrics {
 		var memoryBytes int64
 
 		// Make about 10% of processes match our critical criteria
-		if i % 10 == 0 {
+		if i%10 == 0 {
 			// Critical process - either by name, high CPU, or high memory
 			switch i % 3 {
 			case 0:

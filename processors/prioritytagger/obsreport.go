@@ -9,9 +9,9 @@ import (
 
 // obsreportHelper encapsulates observability functionality for the PriorityTagger processor.
 type obsreportHelper struct {
-	settings               component.TelemetrySettings
-	processedPoints        metric.Int64Counter
-	droppedPoints          metric.Int64Counter
+	settings                component.TelemetrySettings
+	processedPoints         metric.Int64Counter
+	droppedPoints           metric.Int64Counter
 	criticalProcessesTagged metric.Int64Counter
 }
 
@@ -20,11 +20,11 @@ func newObsreportHelper(settings component.TelemetrySettings) (*obsreportHelper,
 	var processedPoints metric.Int64Counter
 	var droppedPoints metric.Int64Counter
 	var criticalProcessesTagged metric.Int64Counter
-	
+
 	// Create metrics if MeterProvider is available
 	if settings.MeterProvider != nil {
 		meter := settings.MeterProvider.Meter("prioritytagger")
-		
+
 		var err error
 		processedPoints, err = meter.Int64Counter(
 			"otelcol_otelcol_processor_prioritytagger_processed_metric_points",
@@ -33,7 +33,7 @@ func newObsreportHelper(settings component.TelemetrySettings) (*obsreportHelper,
 		if err != nil {
 			return nil, err
 		}
-		
+
 		droppedPoints, err = meter.Int64Counter(
 			"otelcol_otelcol_processor_prioritytagger_dropped_metric_points",
 			metric.WithDescription("Number of metric points dropped by the prioritytagger processor"),
@@ -41,7 +41,7 @@ func newObsreportHelper(settings component.TelemetrySettings) (*obsreportHelper,
 		if err != nil {
 			return nil, err
 		}
-		
+
 		criticalProcessesTagged, err = meter.Int64Counter(
 			"otelcol_otelcol_prioritytagger_critical_processes_tagged_total",
 			metric.WithDescription("Total number of processes tagged as critical by the prioritytagger processor"),
@@ -52,9 +52,9 @@ func newObsreportHelper(settings component.TelemetrySettings) (*obsreportHelper,
 	}
 
 	return &obsreportHelper{
-		settings:               settings,
-		processedPoints:        processedPoints,
-		droppedPoints:          droppedPoints,
+		settings:                settings,
+		processedPoints:         processedPoints,
+		droppedPoints:           droppedPoints,
 		criticalProcessesTagged: criticalProcessesTagged,
 	}, nil
 }
@@ -71,7 +71,7 @@ func (orh *obsreportHelper) EndMetricsOp(ctx context.Context, processorName stri
 	if orh.processedPoints != nil {
 		orh.processedPoints.Add(ctx, int64(numReceivedItems))
 	}
-	
+
 	// If there was an error, record dropped points
 	if err != nil && orh.droppedPoints != nil {
 		orh.droppedPoints.Add(ctx, int64(numReceivedItems))

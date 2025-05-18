@@ -14,7 +14,7 @@ const (
 	// Process metric attribute names
 	processExecutableNameKey = "process.executable.name"
 	processCPUUtilizationKey = "process.cpu.utilization"
-	processMemoryRSSKey     = "process.memory.rss"
+	processMemoryRSSKey      = "process.memory.rss"
 )
 
 type priorityTaggerProcessor struct {
@@ -67,7 +67,7 @@ func (p *priorityTaggerProcessor) ConsumeMetrics(ctx context.Context, md pmetric
 func (p *priorityTaggerProcessor) processMetrics(ctx context.Context, md pmetric.Metrics) int {
 	// This count tracks the total number of data points we've processed
 	processedCount := 0
-	
+
 	// Track which process IDs have been tagged as critical
 	// to avoid counting the same process multiple times in our custom metric
 	taggedProcesses := make(map[string]bool)
@@ -75,15 +75,15 @@ func (p *priorityTaggerProcessor) processMetrics(ctx context.Context, md pmetric
 	// Iterate through the resource metrics
 	for i := 0; i < md.ResourceMetrics().Len(); i++ {
 		rm := md.ResourceMetrics().At(i)
-		
+
 		// Iterate through the scope metrics
 		for j := 0; j < rm.ScopeMetrics().Len(); j++ {
 			sm := rm.ScopeMetrics().At(j)
-			
+
 			// Iterate through each metric
 			for k := 0; k < sm.Metrics().Len(); k++ {
 				metric := sm.Metrics().At(k)
-				
+
 				// Process the datapoints based on metric type
 				switch metric.Type() {
 				case pmetric.MetricTypeGauge:
@@ -91,7 +91,7 @@ func (p *priorityTaggerProcessor) processMetrics(ctx context.Context, md pmetric
 					for l := 0; l < pts.Len(); l++ {
 						if isCriticalProcess(pts.At(l).Attributes(), p.config) {
 							markAsCritical(pts.At(l).Attributes(), p.config)
-							
+
 							// Record the process as tagged for the custom metric
 							processID := getProcessID(pts.At(l).Attributes())
 							if processID != "" && !taggedProcesses[processID] {
@@ -106,7 +106,7 @@ func (p *priorityTaggerProcessor) processMetrics(ctx context.Context, md pmetric
 					for l := 0; l < pts.Len(); l++ {
 						if isCriticalProcess(pts.At(l).Attributes(), p.config) {
 							markAsCritical(pts.At(l).Attributes(), p.config)
-							
+
 							// Record the process as tagged for the custom metric
 							processID := getProcessID(pts.At(l).Attributes())
 							if processID != "" && !taggedProcesses[processID] {
@@ -121,7 +121,7 @@ func (p *priorityTaggerProcessor) processMetrics(ctx context.Context, md pmetric
 					for l := 0; l < pts.Len(); l++ {
 						if isCriticalProcess(pts.At(l).Attributes(), p.config) {
 							markAsCritical(pts.At(l).Attributes(), p.config)
-							
+
 							// Record the process as tagged for the custom metric
 							processID := getProcessID(pts.At(l).Attributes())
 							if processID != "" && !taggedProcesses[processID] {
@@ -136,7 +136,7 @@ func (p *priorityTaggerProcessor) processMetrics(ctx context.Context, md pmetric
 					for l := 0; l < pts.Len(); l++ {
 						if isCriticalProcess(pts.At(l).Attributes(), p.config) {
 							markAsCritical(pts.At(l).Attributes(), p.config)
-							
+
 							// Record the process as tagged for the custom metric
 							processID := getProcessID(pts.At(l).Attributes())
 							if processID != "" && !taggedProcesses[processID] {
@@ -151,7 +151,7 @@ func (p *priorityTaggerProcessor) processMetrics(ctx context.Context, md pmetric
 					for l := 0; l < pts.Len(); l++ {
 						if isCriticalProcess(pts.At(l).Attributes(), p.config) {
 							markAsCritical(pts.At(l).Attributes(), p.config)
-							
+
 							// Record the process as tagged for the custom metric
 							processID := getProcessID(pts.At(l).Attributes())
 							if processID != "" && !taggedProcesses[processID] {
@@ -165,11 +165,11 @@ func (p *priorityTaggerProcessor) processMetrics(ctx context.Context, md pmetric
 			}
 		}
 	}
-	
+
 	p.logger.Debug("PriorityTagger processor processed metrics",
 		zap.Int("processed_count", processedCount),
 		zap.Int("tagged_processes", len(taggedProcesses)))
-	
+
 	return processedCount
 }
 
@@ -226,7 +226,7 @@ func isCriticalProcess(attrs pcommon.Map, cfg *Config) bool {
 				// Skip if not a numeric type
 				validType = false
 			}
-			
+
 			if validType && memRSSMiB > cfg.MemoryRSSThresholdMiB {
 				return true
 			}
@@ -248,11 +248,11 @@ func getProcessID(attrs pcommon.Map) string {
 	if pid, exists := attrs.Get("process.pid"); exists {
 		return pid.Str()
 	}
-	
+
 	// Fall back to executable name if pid doesn't exist
 	if exeName, exists := attrs.Get(processExecutableNameKey); exists {
 		return exeName.Str()
 	}
-	
+
 	return ""
 }

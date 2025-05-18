@@ -20,14 +20,14 @@ func createSamplerTestMetrics(numProcs int, criticalIdx int, cfg *Config) pmetri
 	md := pmetric.NewMetrics()
 	rm := md.ResourceMetrics().AppendEmpty()
 	sm := rm.ScopeMetrics().AppendEmpty()
-	
+
 	for i := 0; i < numProcs; i++ {
 		m := sm.Metrics().AppendEmpty()
 		m.SetName(fmt.Sprintf("test.metric.%d", i))
 		dp := m.SetEmptyGauge().DataPoints().AppendEmpty()
 		dp.SetIntValue(int64(i))
 		// Use PID as the identity attribute for simplicity in test
-		dp.Attributes().PutStr("process.pid", strconv.Itoa(i)) 
+		dp.Attributes().PutStr("process.pid", strconv.Itoa(i))
 		dp.Attributes().PutStr("process.executable.name", fmt.Sprintf("proc-%d", i))
 		if i == criticalIdx {
 			dp.Attributes().PutStr(cfg.PriorityAttributeName, cfg.CriticalAttributeValue)
@@ -38,13 +38,13 @@ func createSamplerTestMetrics(numProcs int, criticalIdx int, cfg *Config) pmetri
 
 func TestReservoirSampler_BasicSampling(t *testing.T) {
 	cfg := &Config{
-		ReservoirSize:          2, // Small reservoir size for testing
-		IdentityAttributes:     []string{"process.pid"},
-		SampledAttributeName:   "sampled",
-		SampledAttributeValue:  "yes",
-		SampleRateAttributeName:"rate",
-		PriorityAttributeName:  "prio",
-		CriticalAttributeValue: "crit",
+		ReservoirSize:           2, // Small reservoir size for testing
+		IdentityAttributes:      []string{"process.pid"},
+		SampledAttributeName:    "sampled",
+		SampledAttributeValue:   "yes",
+		SampleRateAttributeName: "rate",
+		PriorityAttributeName:   "prio",
+		CriticalAttributeValue:  "crit",
 	}
 	require.NoError(t, cfg.Validate())
 
@@ -102,7 +102,7 @@ func TestReservoirSampler_BasicSampling(t *testing.T) {
 			}
 		}
 	}
-	
+
 	assert.True(t, criticalFound, "Critical process should be passed through")
 	assert.Equal(t, cfg.ReservoirSize, sampledCount, "Number of sampled processes should match reservoir size")
 	assert.Equal(t, 1+cfg.ReservoirSize, outputMetricCount, "Total output metrics should be 1 critical + 2 sampled")
@@ -112,10 +112,10 @@ func TestReservoirSampler_BasicSampling(t *testing.T) {
 	mdMore := createSamplerTestMetrics(10, -1, cfg) // No criticals this time
 	err = proc.ConsumeMetrics(context.Background(), mdMore)
 	require.NoError(t, err)
-	
+
 	processedMetricsMore := nextSink.AllMetrics()
 	require.Len(t, processedMetricsMore, 1, "Should have received one batch of metrics")
-	
+
 	sampledCountMore := 0
 	rmsMore := processedMetricsMore[0].ResourceMetrics()
 	for i := 0; i < rmsMore.Len(); i++ {
@@ -130,7 +130,7 @@ func TestReservoirSampler_BasicSampling(t *testing.T) {
 				} else {
 					continue
 				}
-				
+
 				for l := 0; l < dps.Len(); l++ {
 					if IsSampled(dps.At(l).Attributes(), cfg) {
 						sampledCountMore++
@@ -139,7 +139,7 @@ func TestReservoirSampler_BasicSampling(t *testing.T) {
 			}
 		}
 	}
-	
+
 	assert.Equal(t, cfg.ReservoirSize, sampledCountMore, "Sampled count after more data should still be reservoir size")
 }
 

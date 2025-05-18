@@ -8,13 +8,13 @@ import (
 )
 
 type Config struct {
-	ReservoirSize            int      `mapstructure:"reservoir_size"`
-	IdentityAttributes       []string `mapstructure:"identity_attributes"`
-	SampledAttributeName     string   `mapstructure:"sampled_attribute_name"`
-	SampledAttributeValue    string   `mapstructure:"sampled_attribute_value"`
-	SampleRateAttributeName  string   `mapstructure:"sample_rate_attribute_name"`
-	PriorityAttributeName    string   `mapstructure:"priority_attribute_name"`
-	CriticalAttributeValue   string   `mapstructure:"critical_attribute_value"`
+	ReservoirSize           int      `mapstructure:"reservoir_size"`
+	IdentityAttributes      []string `mapstructure:"identity_attributes"`
+	SampledAttributeName    string   `mapstructure:"sampled_attribute_name"`
+	SampledAttributeValue   string   `mapstructure:"sampled_attribute_value"`
+	SampleRateAttributeName string   `mapstructure:"sample_rate_attribute_name"`
+	PriorityAttributeName   string   `mapstructure:"priority_attribute_name"`
+	CriticalAttributeValue  string   `mapstructure:"critical_attribute_value"`
 	// TopKAttributeName      string   `mapstructure:"topk_attribute_name"`
 }
 

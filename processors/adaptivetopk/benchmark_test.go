@@ -68,13 +68,13 @@ func generateTestMetrics(numProcesses int, numMetricsPerProcess int, hasCritical
 // BenchmarkAdaptiveTopKProcessor benchmarks the full processor with different process counts
 func BenchmarkAdaptiveTopKProcessor(b *testing.B) {
 	tests := []struct {
-		name             string
-		numProcesses     int
-		metricsPerProc   int
-		kValue           int
-		isDynamicK       bool
-		hasHysteresis    bool
-		hasCritical      bool
+		name           string
+		numProcesses   int
+		metricsPerProc int
+		kValue         int
+		isDynamicK     bool
+		hasHysteresis  bool
+		hasCritical    bool
 	}{
 		{
 			name:           "Small-Static-NoCritical",

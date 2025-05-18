@@ -71,10 +71,10 @@ func TestOthersRollup_SimpleSum(t *testing.T) {
 
 	processedMetrics := nextSink.AllMetrics()
 	require.Len(t, processedMetrics, 1, "Should have received one batch of metrics")
-	
+
 	outputRm := processedMetrics[0].ResourceMetrics().At(0)
 	outputSm := outputRm.ScopeMetrics().At(0)
-	
+
 	assert.Equal(t, 2, outputSm.Metrics().Len(), "Should have 2 metrics: one rolled-up, one critical pass-through")
 
 	foundRolledUp := false
@@ -145,7 +145,7 @@ func TestOthersRollup_Average(t *testing.T) {
 	dp2 := cpuMetric.Gauge().DataPoints().AppendEmpty()
 	dp2.SetDoubleValue(0.4)
 	dp2.Attributes().PutStr(processPIDKey, "21")
-	
+
 	dp3 := cpuMetric.Gauge().DataPoints().AppendEmpty()
 	dp3.SetDoubleValue(0.6) // This one is critical, should pass through
 	dp3.Attributes().PutStr(processPIDKey, "22")
@@ -168,7 +168,7 @@ func TestOthersRollup_Average(t *testing.T) {
 		dps := m.Gauge().DataPoints()
 		require.Equal(t, 1, dps.Len(), "Should have 1 datapoint")
 		dp := dps.At(0)
-		
+
 		pidVal, _ := dp.Attributes().Get(processPIDKey)
 
 		if pidVal.Str() == cfg.OutputPIDAttributeValue {

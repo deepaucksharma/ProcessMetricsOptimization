@@ -26,10 +26,10 @@ type reservoirSamplerProcessor struct {
 	obsrep       *reservoirSamplerObsreport
 
 	// Reservoir state
-	mu              sync.Mutex
-	reservoir       map[string]bool // Stores unique process identities that are sampled
-	streamCount     int64           // Count of eligible items seen so far in the stream
-	randSource      *rand.Rand      // For sampling algorithm
+	mu          sync.Mutex
+	reservoir   map[string]bool // Stores unique process identities that are sampled
+	streamCount int64           // Count of eligible items seen so far in the stream
+	randSource  *rand.Rand      // For sampling algorithm
 }
 
 func newReservoirSamplerProcessor(settings processor.CreateSettings, next consumer.Metrics, cfg *Config) (*reservoirSamplerProcessor, error) {
@@ -37,7 +37,7 @@ func newReservoirSamplerProcessor(settings processor.CreateSettings, next consum
 	if err != nil {
 		return nil, fmt.Errorf("failed to create obsreport for reservoirsampler: %w", err)
 	}
-	
+
 	// Seed random source with current time for proper randomness in production
 	rs := rand.NewSource(time.Now().UnixNano())
 
@@ -53,8 +53,10 @@ func newReservoirSamplerProcessor(settings processor.CreateSettings, next consum
 }
 
 func (p *reservoirSamplerProcessor) Start(_ context.Context, _ component.Host) error { return nil }
-func (p *reservoirSamplerProcessor) Shutdown(_ context.Context) error               { return nil }
-func (p *reservoirSamplerProcessor) Capabilities() consumer.Capabilities            { return consumer.Capabilities{MutatesData: true} }
+func (p *reservoirSamplerProcessor) Shutdown(_ context.Context) error                { return nil }
+func (p *reservoirSamplerProcessor) Capabilities() consumer.Capabilities {
+	return consumer.Capabilities{MutatesData: true}
+}
 
 // generateIdentity creates a unique string for a process based on configured attributes.
 func (p *reservoirSamplerProcessor) generateIdentity(attrs pcommon.Map) (string, bool) {
@@ -67,7 +69,7 @@ func (p *reservoirSamplerProcessor) generateIdentity(attrs pcommon.Map) (string,
 		identityParts = append(identityParts, key+"="+val.AsString())
 	}
 	sort.Strings(identityParts) // Ensure consistent order for the hash
-	
+
 	// Hash the identity parts for consistency and to handle arbitrary attribute values
 	h := sha256.New()
 	h.Write([]byte(strings.Join(identityParts, ";")))
@@ -113,7 +115,7 @@ func (p *reservoirSamplerProcessor) ConsumeMetrics(ctx context.Context, md pmetr
 					// if topKVal, topKExists := attrs.Get(p.config.TopKAttributeName); topKExists {
 					//     continue // Skip TopK
 					// }
-					
+
 					identity, canIdentify := p.generateIdentity(attrs)
 					if !canIdentify {
 						continue // Cannot sample if identity cannot be formed
@@ -130,7 +132,7 @@ func (p *reservoirSamplerProcessor) ConsumeMetrics(ctx context.Context, md pmetr
 	for identity := range eligibleIdentities {
 		// Is this identity new? (not yet seen in stream)
 		if _, exists := p.reservoir[identity]; !exists {
-			p.streamCount++ // This is a new eligible identity in the logical stream
+			p.streamCount++                            // This is a new eligible identity in the logical stream
 			p.obsrep.recordEligibleIdentitiesSeen(ctx) // Count unique eligible identities
 
 			// Algorithm R variant for reservoir sampling
@@ -142,7 +144,7 @@ func (p *reservoirSamplerProcessor) ConsumeMetrics(ctx context.Context, md pmetr
 				// Reservoir is full, use random replacement
 				// Choose a random number j from 0 to streamCount-1
 				j := p.randSource.Int63n(p.streamCount)
-				
+
 				// If j < reservoirSize, replace an item at random
 				if j < int64(p.config.ReservoirSize) {
 					// Select a random item to replace
@@ -152,7 +154,7 @@ func (p *reservoirSamplerProcessor) ConsumeMetrics(ctx context.Context, md pmetr
 					}
 					idxToReplace := p.randSource.Intn(len(reservoirItems))
 					delete(p.reservoir, reservoirItems[idxToReplace])
-					
+
 					// Add the new identity
 					p.reservoir[identity] = true
 					p.obsrep.recordNewIdentityAdded(ctx)
@@ -164,13 +166,13 @@ func (p *reservoirSamplerProcessor) ConsumeMetrics(ctx context.Context, md pmetr
 	// Update obsreport metrics
 	currentSelectedCount := int64(len(p.reservoir))
 	p.obsrep.recordSelectedIdentitiesCount(ctx, currentSelectedCount)
-	
+
 	fillRatio := 0.0
 	if p.config.ReservoirSize > 0 {
 		fillRatio = float64(currentSelectedCount) / float64(p.config.ReservoirSize)
 	}
 	p.obsrep.recordReservoirFillRatio(ctx, fillRatio)
-	
+
 	// Calculate sample rate
 	sampleRate := 0.0
 	if p.streamCount > 0 && len(p.reservoir) > 0 {
@@ -180,7 +182,7 @@ func (p *reservoirSamplerProcessor) ConsumeMetrics(ctx context.Context, md pmetr
 	// Second pass: filter metrics (pass through critical & sampled, drop non-sampled eligible)
 	newMd := pmetric.NewMetrics()
 	md.ResourceMetrics().CopyTo(newMd.ResourceMetrics()) // Start with a copy
-	
+
 	newMd.ResourceMetrics().RemoveIf(func(rm pmetric.ResourceMetrics) bool {
 		rm.ScopeMetrics().RemoveIf(func(sm pmetric.ScopeMetrics) bool {
 			sm.Metrics().RemoveIf(func(metric pmetric.Metric) bool {
@@ -198,10 +200,10 @@ func (p *reservoirSamplerProcessor) ConsumeMetrics(ctx context.Context, md pmetr
 				if !isModifiableType {
 					return false // Pass through unhandled metric types
 				}
-				
+
 				dps.RemoveIf(func(dp pmetric.NumberDataPoint) bool {
 					attrs := dp.Attributes()
-					
+
 					// Priority pass-through (critical processes)
 					if prioVal, prioExists := attrs.Get(p.config.PriorityAttributeName); prioExists && prioVal.Str() == p.config.CriticalAttributeValue {
 						return false // Keep
@@ -234,10 +236,10 @@ func (p *reservoirSamplerProcessor) ConsumeMetrics(ctx context.Context, md pmetr
 	numProcessedMetricPoints := getMetricPointCount(newMd)
 	numDroppedMetricPoints := numOriginalMetricPoints - numProcessedMetricPoints
 	p.obsrep.EndMetricsOp(ctx, numProcessedMetricPoints, numDroppedMetricPoints, nil)
-	
+
 	if newMd.ResourceMetrics().Len() == 0 {
 		p.logger.Debug("All metrics were dropped by reservoir sampler, resulting in empty batch.")
-		return nil 
+		return nil
 	}
 	return p.nextConsumer.ConsumeMetrics(ctx, newMd)
 }
@@ -251,7 +253,7 @@ func getMetricPointCount(md pmetric.Metrics) int {
 			sm := rm.ScopeMetrics().At(j)
 			for k := 0; k < sm.Metrics().Len(); k++ {
 				metric := sm.Metrics().At(k)
-				
+
 				switch metric.Type() {
 				case pmetric.MetricTypeGauge:
 					count += metric.Gauge().DataPoints().Len()

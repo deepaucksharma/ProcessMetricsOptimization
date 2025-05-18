@@ -39,10 +39,10 @@ func TestConfigValidate(t *testing.T) {
 		{
 			name: "Invalid empty configuration",
 			cfg: Config{
-				PriorityAttributeName:  "nr.priority",
-				CriticalAttributeValue: "critical",
+				PriorityAttributeName:   "nr.priority",
+				CriticalAttributeValue:  "critical",
 				CPUSteadyStateThreshold: -1.0, // Explicitly set to negative to disable
-				MemoryRSSThresholdMiB:  -1,    // Explicitly set to negative to disable
+				MemoryRSSThresholdMiB:   -1,   // Explicitly set to negative to disable
 			},
 			expectError: true,
 		},
@@ -106,8 +106,8 @@ func TestProcessorTaggingByName(t *testing.T) {
 	mockConsumer := consumertest.NewNop()
 	settings := component.TelemetrySettings{
 		Logger:         zap.NewNop(),
-		MeterProvider:  nil,  // Using nil for testing
-		TracerProvider: nil,  // Using nil for testing
+		MeterProvider:  nil, // Using nil for testing
+		TracerProvider: nil, // Using nil for testing
 	}
 	proc, err := newProcessor(cfg, settings.Logger, mockConsumer, settings)
 	require.NoError(t, err)
@@ -146,8 +146,8 @@ func TestProcessorTaggingByPattern(t *testing.T) {
 	mockConsumer := consumertest.NewNop()
 	settings := component.TelemetrySettings{
 		Logger:         zap.NewNop(),
-		MeterProvider:  nil,  // Using nil for testing
-		TracerProvider: nil,  // Using nil for testing
+		MeterProvider:  nil, // Using nil for testing
+		TracerProvider: nil, // Using nil for testing
 	}
 	proc, err := newProcessor(cfg, settings.Logger, mockConsumer, settings)
 	require.NoError(t, err)
@@ -186,8 +186,8 @@ func TestProcessorTaggingByCPUThreshold(t *testing.T) {
 	mockConsumer := consumertest.NewNop()
 	settings := component.TelemetrySettings{
 		Logger:         zap.NewNop(),
-		MeterProvider:  nil,  // Using nil for testing
-		TracerProvider: nil,  // Using nil for testing
+		MeterProvider:  nil, // Using nil for testing
+		TracerProvider: nil, // Using nil for testing
 	}
 	proc, err := newProcessor(cfg, settings.Logger, mockConsumer, settings)
 	require.NoError(t, err)
@@ -213,8 +213,8 @@ func TestProcessorTaggingByMemoryThreshold(t *testing.T) {
 
 	// Create the processor with memory threshold configuration only
 	cfg := &Config{
-		MemoryRSSThresholdMiB: 400, // Tag if memory > 400 MiB
-		PriorityAttributeName: "nr.priority",
+		MemoryRSSThresholdMiB:  400, // Tag if memory > 400 MiB
+		PriorityAttributeName:  "nr.priority",
 		CriticalAttributeValue: "critical",
 	}
 
@@ -226,8 +226,8 @@ func TestProcessorTaggingByMemoryThreshold(t *testing.T) {
 	mockConsumer := consumertest.NewNop()
 	settings := component.TelemetrySettings{
 		Logger:         zap.NewNop(),
-		MeterProvider:  nil,  // Using nil for testing
-		TracerProvider: nil,  // Using nil for testing
+		MeterProvider:  nil, // Using nil for testing
+		TracerProvider: nil, // Using nil for testing
 	}
 	proc, err := newProcessor(cfg, settings.Logger, mockConsumer, settings)
 	require.NoError(t, err)
@@ -253,12 +253,12 @@ func TestProcessorNoMatch(t *testing.T) {
 
 	// Create the processor with a configuration
 	cfg := &Config{
-		CriticalExecutables:     []string{"kubelet", "systemd"},
+		CriticalExecutables:        []string{"kubelet", "systemd"},
 		CriticalExecutablePatterns: []string{"kube.*", "docker.*"},
-		CPUSteadyStateThreshold: 0.3,
-		MemoryRSSThresholdMiB:   400,
-		PriorityAttributeName:   "nr.priority",
-		CriticalAttributeValue:  "critical",
+		CPUSteadyStateThreshold:    0.3,
+		MemoryRSSThresholdMiB:      400,
+		PriorityAttributeName:      "nr.priority",
+		CriticalAttributeValue:     "critical",
 	}
 
 	// Validate configuration and compile patterns
@@ -269,8 +269,8 @@ func TestProcessorNoMatch(t *testing.T) {
 	mockConsumer := consumertest.NewNop()
 	settings := component.TelemetrySettings{
 		Logger:         zap.NewNop(),
-		MeterProvider:  nil,  // Using nil for testing
-		TracerProvider: nil,  // Using nil for testing
+		MeterProvider:  nil, // Using nil for testing
+		TracerProvider: nil, // Using nil for testing
 	}
 	proc, err := newProcessor(cfg, settings.Logger, mockConsumer, settings)
 	require.NoError(t, err)
@@ -287,7 +287,7 @@ func TestProcessorNoMatch(t *testing.T) {
 
 	_, found := dp.Attributes().Get(cfg.PriorityAttributeName)
 	assert.False(t, found)
-	
+
 	// We only care that the attribute wasn't found, not the actual value of an empty pcommon.Value
 	// as implementations may differ
 }
@@ -319,8 +319,8 @@ func TestProcessorIdempotency(t *testing.T) {
 	mockConsumer := consumertest.NewNop()
 	settings := component.TelemetrySettings{
 		Logger:         zap.NewNop(),
-		MeterProvider:  nil,  // Using nil for testing
-		TracerProvider: nil,  // Using nil for testing
+		MeterProvider:  nil, // Using nil for testing
+		TracerProvider: nil, // Using nil for testing
 	}
 	proc, err := newProcessor(cfg, settings.Logger, mockConsumer, settings)
 	require.NoError(t, err)
@@ -345,10 +345,10 @@ func createTestMetrics(executableName string, cpuUtil float64, memRSSBytes int64
 	md := pmetric.NewMetrics()
 	rm := md.ResourceMetrics().AppendEmpty()
 	rm.Resource().Attributes().PutStr("host.name", "test-host")
-	
+
 	sm := rm.ScopeMetrics().AppendEmpty()
 	sm.Scope().SetName("test.scope")
-	
+
 	// Create a CPU metric with both CPU and memory attributes on the same datapoint
 	// This is important for testing CPU and memory thresholds as the checker looks at individual datapoints
 	cpuMetric := sm.Metrics().AppendEmpty()
@@ -359,6 +359,6 @@ func createTestMetrics(executableName string, cpuUtil float64, memRSSBytes int64
 	cpuDP.Attributes().PutStr("process.pid", "12345")
 	cpuDP.Attributes().PutDouble(processCPUUtilizationKey, cpuUtil)
 	cpuDP.Attributes().PutInt(processMemoryRSSKey, memRSSBytes)
-	
+
 	return md
 }

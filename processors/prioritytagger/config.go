@@ -39,7 +39,7 @@ var _ confmap.Unmarshaler = (*Config)(nil)
 
 // Validate checks if the processor configuration is valid
 func (cfg *Config) Validate() error {
-	if len(cfg.CriticalExecutables) == 0 && len(cfg.CriticalExecutablePatterns) == 0 && 
+	if len(cfg.CriticalExecutables) == 0 && len(cfg.CriticalExecutablePatterns) == 0 &&
 		cfg.CPUSteadyStateThreshold < 0 && cfg.MemoryRSSThresholdMiB < 0 {
 		return errors.New("at least one of critical_executables or critical_executable_patterns must be specified")
 	}

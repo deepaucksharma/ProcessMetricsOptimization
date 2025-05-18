@@ -10,10 +10,10 @@ import (
 const processorName = "othersrollup"
 
 type othersRollupObsreport struct {
-	settings                component.TelemetrySettings
-	processedPoints        metric.Int64Counter
-	droppedPoints          metric.Int64Counter
-	aggregatedSeriesCount  metric.Int64Counter
+	settings                 component.TelemetrySettings
+	processedPoints          metric.Int64Counter
+	droppedPoints            metric.Int64Counter
+	aggregatedSeriesCount    metric.Int64Counter
 	inputSeriesRolledUpTotal metric.Int64Counter
 }
 
@@ -62,10 +62,10 @@ func newOthersRollupObsreport(settings component.TelemetrySettings) (*othersRoll
 	}
 
 	return &othersRollupObsreport{
-		settings:               settings,
-		processedPoints:        processedPoints,
-		droppedPoints:          droppedPoints,
-		aggregatedSeriesCount:  aggregatedSeriesCount,
+		settings:                 settings,
+		processedPoints:          processedPoints,
+		droppedPoints:            droppedPoints,
+		aggregatedSeriesCount:    aggregatedSeriesCount,
 		inputSeriesRolledUpTotal: inputSeriesRolledUpTotal,
 	}, nil
 }

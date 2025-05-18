@@ -73,10 +73,10 @@ func TestEndToEndPipeline(t *testing.T) {
 	expectedTaggedProcesses := map[string]bool{
 		"systemd":    true,
 		"containerd": true,
-		"kubelet":    true,      // matches regex pattern kube.*
-		"kube-proxy": true,      // matches regex pattern kube.*
-		"high-cpu":   true,      // high CPU process
-		"high-mem":   true,      // high memory process
+		"kubelet":    true, // matches regex pattern kube.*
+		"kube-proxy": true, // matches regex pattern kube.*
+		"high-cpu":   true, // high CPU process
+		"high-mem":   true, // high memory process
 	}
 
 	// List of processes that should not be tagged
@@ -94,12 +94,12 @@ func TestEndToEndPipeline(t *testing.T) {
 		sm := rm.ScopeMetrics().At(i)
 		for j := 0; j < sm.Metrics().Len(); j++ {
 			metric := sm.Metrics().At(j)
-			
+
 			// Skip non-process metrics
 			if !(metric.Name() == "process.cpu.utilization" || metric.Name() == "process.memory.rss") {
 				continue
 			}
-			
+
 			// Check different metric types
 			switch metric.Type() {
 			case pmetric.MetricTypeGauge:
@@ -155,8 +155,8 @@ func TestProcessorWithEmptyMetrics(t *testing.T) {
 
 	// Create the processor
 	cfg := &Config{
-		CriticalExecutables: []string{"systemd"},
-		PriorityAttributeName: "nr.priority",
+		CriticalExecutables:    []string{"systemd"},
+		PriorityAttributeName:  "nr.priority",
 		CriticalAttributeValue: "critical",
 	}
 	require.NoError(t, cfg.Validate())
@@ -182,7 +182,7 @@ func createMultiProcessMetrics() pmetric.Metrics {
 	md := pmetric.NewMetrics()
 	rm := md.ResourceMetrics().AppendEmpty()
 	rm.Resource().Attributes().PutStr("host.name", "test-host")
-	
+
 	sm := rm.ScopeMetrics().AppendEmpty()
 	sm.Scope().SetName("host.process.metrics")
 
@@ -193,16 +193,16 @@ func createMultiProcessMetrics() pmetric.Metrics {
 		cpuUtil  float64
 		memoryMB int64
 	}{
-		{"systemd", "1", 0.01, 50},             // Critical by name
-		{"containerd", "100", 0.05, 200},       // Critical by name
-		{"kubelet", "200", 0.1, 300},           // Critical by pattern
-		{"kube-proxy", "201", 0.05, 100},       // Critical by pattern
-		{"high-cpu", "300", 0.8, 100},          // Critical by CPU
-		{"high-mem", "301", 0.01, 900},         // Critical by memory
-		{"chrome", "1000", 0.3, 400},           // Regular process
-		{"firefox", "1001", 0.2, 350},          // Regular process
-		{"vscode", "1002", 0.1, 200},           // Regular process
-		{"terminal", "1003", 0.01, 50},         // Regular process
+		{"systemd", "1", 0.01, 50},       // Critical by name
+		{"containerd", "100", 0.05, 200}, // Critical by name
+		{"kubelet", "200", 0.1, 300},     // Critical by pattern
+		{"kube-proxy", "201", 0.05, 100}, // Critical by pattern
+		{"high-cpu", "300", 0.8, 100},    // Critical by CPU
+		{"high-mem", "301", 0.01, 900},   // Critical by memory
+		{"chrome", "1000", 0.3, 400},     // Regular process
+		{"firefox", "1001", 0.2, 350},    // Regular process
+		{"vscode", "1002", 0.1, 200},     // Regular process
+		{"terminal", "1003", 0.01, 50},   // Regular process
 	}
 
 	// Create CPU metrics for all processes
@@ -239,7 +239,7 @@ func createMultiProcessMetrics() pmetric.Metrics {
 // TestPrioritizationRules tests all the different ways processes can be tagged
 func TestPrioritizationRules(t *testing.T) {
 	// End-to-end pipeline test for prioritytagger processor
-	
+
 	testCases := []struct {
 		name           string
 		config         Config
@@ -299,12 +299,12 @@ func TestPrioritizationRules(t *testing.T) {
 		{
 			name: "No match",
 			config: Config{
-				CriticalExecutables:     []string{"nginx", "postgres"},
+				CriticalExecutables:        []string{"nginx", "postgres"},
 				CriticalExecutablePatterns: []string{"java.*", "node.*"},
-				CPUSteadyStateThreshold: 0.5,
-				MemoryRSSThresholdMiB:   500,
-				PriorityAttributeName:   "nr.priority",
-				CriticalAttributeValue:  "critical",
+				CPUSteadyStateThreshold:    0.5,
+				MemoryRSSThresholdMiB:      500,
+				PriorityAttributeName:      "nr.priority",
+				CriticalAttributeValue:     "critical",
 			},
 			process:        "app",
 			cpuUtil:        0.1,
@@ -314,12 +314,12 @@ func TestPrioritizationRules(t *testing.T) {
 		{
 			name: "Combinations of rules",
 			config: Config{
-				CriticalExecutables:     []string{"nginx", "postgres"},
+				CriticalExecutables:        []string{"nginx", "postgres"},
 				CriticalExecutablePatterns: []string{"kube.*"},
-				CPUSteadyStateThreshold: 0.5,
-				MemoryRSSThresholdMiB:   500,
-				PriorityAttributeName:   "nr.priority",
-				CriticalAttributeValue:  "critical",
+				CPUSteadyStateThreshold:    0.5,
+				MemoryRSSThresholdMiB:      500,
+				PriorityAttributeName:      "nr.priority",
+				CriticalAttributeValue:     "critical",
 			},
 			process:        "kube-proxy",
 			cpuUtil:        0.1,
@@ -342,10 +342,10 @@ func TestPrioritizationRules(t *testing.T) {
 			dp := metric.SetEmptyGauge().DataPoints().AppendEmpty()
 			dp.SetDoubleValue(tc.cpuUtil)
 			dp.Attributes().PutStr(processExecutableNameKey, tc.process)
-			
+
 			// Add CPU utilization as an attribute for CPU threshold tests
 			dp.Attributes().PutDouble(processCPUUtilizationKey, tc.cpuUtil)
-			
+
 			// Add memory attribute for memory tests
 			if tc.config.MemoryRSSThresholdMiB > 0 {
 				dp.Attributes().PutInt(processMemoryRSSKey, tc.memoryMB*1024*1024)
