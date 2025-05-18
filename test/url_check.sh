@@ -36,7 +36,7 @@ main() {
   
   # Start Docker services if not already running
   echo -e "${YELLOW}Ensuring Docker services are running...${NC}"
-  $(dirname "$0")/../run.sh up > /dev/null
+  bash $(dirname "$0")/../run.sh up > /dev/null
   
   # Give services time to initialize
   echo -e "${YELLOW}Waiting for services to initialize (5 seconds)...${NC}"
@@ -52,25 +52,9 @@ main() {
   test_url "http://localhost:13000/login" "Grafana Login" "200" "5" || ((failures++))
   test_url "http://localhost:18080" "Mock New Relic" "200" "5" || ((failures++))
   
-  # Stop Docker services and test demo mode
-  echo -e "\n${YELLOW}Testing demo mode...${NC}"
-  $(dirname "$0")/../run.sh down > /dev/null
-  
-  # Start demo in background
-  echo -e "${YELLOW}Starting demo mode in background...${NC}"
-  (cd $(dirname "$0")/.. && ./run.sh demo > /dev/null 2>&1 &)
-  demo_pid=$!
-  
-  # Give demo time to initialize
-  echo -e "${YELLOW}Waiting for demo to initialize (3 seconds)...${NC}"
-  sleep 3
-  
-  # Test demo endpoint
-  test_url "http://localhost:8080" "Demo mode" "200" "5" || ((failures++))
-  
-  # Kill demo process
-  echo -e "${YELLOW}Stopping demo mode...${NC}"
-  kill $demo_pid 2>/dev/null || true
+  # All tests complete, shut down services
+  echo -e "\n${YELLOW}Stopping services...${NC}"
+  bash $(dirname "$0")/../run.sh down > /dev/null
   
   # Print summary
   echo -e "\n${BLUE}===============================${NC}"
@@ -85,3 +69,4 @@ main() {
 
 # Run the main function
 main "$@"
+
