@@ -11,7 +11,7 @@ import (
 const (
 	// The value of "type" key in configuration.
 	typeStr = "helloworld"
-	
+
 	// The stability level of the processor.
 	stability = component.StabilityLevelDevelopment
 )

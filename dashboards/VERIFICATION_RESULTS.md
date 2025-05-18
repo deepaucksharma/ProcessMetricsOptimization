@@ -44,8 +44,8 @@ All dashboards are accessible in Grafana:
 
 ## Recommendations for Future
 
-1. **Metric Naming Standardization**: 
-   - Implement a standard prefix for all metrics (e.g., `otelcol_nrdot_*`) 
+1. **Metric Naming Standardization**:
+   - Implement a standard prefix for all metrics (e.g., `otelcol_nrdot_*`)
    - Document the naming pattern to make dashboard maintenance easier
 
 2. **Processor Enhancements**:

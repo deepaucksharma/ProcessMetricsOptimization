@@ -38,7 +38,7 @@ services:
       - HTTPS_PORT=8443
     networks:
       - otel-network
-  
+
   # Prometheus for self-observability
   prometheus:
     image: prom/prometheus:latest
@@ -54,7 +54,7 @@ services:
       - "19090:9090"
     networks:
       - otel-network
-  
+
   # Grafana for dashboards
   grafana:
     image: grafana/grafana:latest

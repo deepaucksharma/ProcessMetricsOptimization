@@ -194,7 +194,7 @@ For each processor, create a "before/after" visualization:
    ```
    // Before processor
    rate(otelcol_processor_<n>_received_metric_points[1m])
-   
+
    // After processor
    rate(otelcol_processor_<n>_processed_metric_points[1m])
    ```
@@ -202,9 +202,9 @@ For each processor, create a "before/after" visualization:
 2. **Reduction Percentage Gauge**
    ```
    (
-     sum(rate(otelcol_processor_<n>_received_metric_points[5m])) - 
+     sum(rate(otelcol_processor_<n>_received_metric_points[5m])) -
      sum(rate(otelcol_processor_<n>_processed_metric_points[5m]))
-   ) / 
+   ) /
    sum(rate(otelcol_processor_<n>_received_metric_points[5m])) * 100
    ```
 
@@ -220,14 +220,14 @@ Create color-coded health indicators:
 1. **Memory Usage Status**
    ```
    // Green when < 70%, yellow when 70-85%, red when > 85%
-   process_resident_memory_bytes{job="nrdot-collector-self-telemetry"} / 
+   process_resident_memory_bytes{job="nrdot-collector-self-telemetry"} /
    process_resident_memory_bytes{job="nrdot-collector-self-telemetry", quantile="maximum"}
    ```
 
 2. **Processor Error Rate Status**
    ```
    // Warning threshold at 0.1% error rate
-   rate(otelcol_processor_<n>_dropped_metric_points[5m]) / 
+   rate(otelcol_processor_<n>_dropped_metric_points[5m]) /
    rate(otelcol_processor_<n>_received_metric_points[5m])
    ```
 
