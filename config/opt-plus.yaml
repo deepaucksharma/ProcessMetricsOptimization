@@ -1,0 +1,172 @@
+###################################################
+#                                                 #
+#    NRDOT PROCESS-METRICS OPTIMIZATION PIPELINE  #
+#    "OPT-PLUS" FULL OPTIMIZED CONFIGURATION      #
+#                                                 #
+###################################################
+
+# This configuration file demonstrates the complete L0-L3 optimization pipeline
+# using all custom processors in sequence for optimal cardinality reduction.
+
+receivers:
+  hostmetrics:
+    collection_interval: ${env:COLLECTION_INTERVAL}
+    scrapers:
+      process:
+        metrics:
+          process.cpu.time:
+            enabled: false  # Disable to reduce cardinality (retain just utilization)
+          process.disk.io:
+            enabled: false  # Disable to keep only io_read/write_bytes
+          process.memory.usage:
+            enabled: false  # Disable to keep only RSS and virtual
+      cpu: {}
+      memory: {}
+      disk: {}
+      load: {}  # Important for dynamic K evaluation
+      network: {}
+
+processors:
+  # Standard OTel processor for memory management
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 75
+    spike_limit_percentage: 15
+
+  # L0: PRIORITYTAGGER - Tag critical processes based on name, pattern, or resource usage
+  prioritytagger:
+    # Critical processes by exact executable name
+    critical_executables:
+      - systemd
+      - kubelet
+      - dockerd
+      - containerd
+      - chronyd
+      - sshd
+    # Critical processes by regex pattern
+    critical_executable_patterns:
+      - ".*java.*"
+      - ".*node.*"
+      - "kube.*"
+      - ".*otelcol.*"  # Include OTel collector itself as critical
+    # Critical processes by resource usage - optimized thresholds
+    cpu_steady_state_threshold: 0.25    # 25% CPU utilization (slightly lower to catch more)
+    memory_rss_threshold_mib: 400      # 400 MiB RSS (slightly lower to catch more)
+    # Attribute to use for tagging critical processes
+    priority_attribute_name: "nr.priority"
+    critical_attribute_value: "critical"
+
+  # L1: ADAPTIVETOPK - Select metrics from the K most resource-intensive processes
+  adaptivetopk:
+    # Dynamic K configuration - optimized bands
+    host_load_metric_name: "system.cpu.utilization"
+    load_bands_to_k_map:
+      0.15: 5    # Very low system load -> keep fewer processes
+      0.3: 10    # Low system load
+      0.5: 15    # Medium load
+      0.7: 25    # High load
+      0.85: 40   # Very high load
+    hysteresis_duration: "30s"  # Reduced from 1m for faster adaptation
+    min_k_value: 5
+    max_k_value: 50
+    
+    # Metric used to rank processes - using CPU as primary, memory as secondary
+    key_metric_name: "process.cpu.utilization"
+    # Optional secondary metric for tie-breaking
+    secondary_key_metric_name: "process.memory.rss"
+    # Must match prioritytagger configuration
+    priority_attribute_name: "nr.priority"
+    critical_attribute_value: "critical"
+    
+    # Fixed K (not used when Dynamic K is enabled)
+    # k_value: 10
+
+  # L3: RESERVOIRSAMPLER - Sample a representative subset of remaining processes
+  # Note: This is placed before OthersRollup to sample individual processes
+  # before they get aggregated into "_other_"
+  reservoirsampler:
+    # Number of unique process identities to sample - slightly increased
+    reservoir_size: 125
+    # Attributes that define a unique process identity
+    identity_attributes:
+      - "process.pid"
+      - "process.executable.name"
+      - "process.command_line"  # Added to differentiate similar processes
+    # Sampling metadata attributes
+    sampled_attribute_name: "nr.process_sampled_by_reservoir"
+    sampled_attribute_value: "true"
+    sample_rate_attribute_name: "nr.sample_rate"
+    # Must match prioritytagger configuration
+    priority_attribute_name: "nr.priority"
+    critical_attribute_value: "critical"
+
+  # L2: OTHERSROLLUP - Aggregate remaining processes into a single "_other_" series
+  # Note: This is placed last in the optimization pipeline to roll up
+  # non-critical, non-top-K, non-sampled processes
+  othersrollup:
+    # Output attributes for the rolled-up series
+    output_pid_attribute_value: "-1"
+    output_executable_name_attribute_value: "_other_"
+    # Aggregation functions per metric - optimized for metric type
+    aggregations:
+      "process.cpu.utilization": "avg"
+      "process.memory.rss": "sum"
+      "process.memory.virtual": "sum"
+      "process.disk.io_read_bytes": "sum"
+      "process.disk.io_write_bytes": "sum"
+      "process.handles": "sum"  
+      "process.threads": "sum"
+      "process.open_file_descriptors": "sum"
+    # Optional: specific metrics to roll up (empty = all compatible metrics)
+    metrics_to_rollup: []
+    # Must match prioritytagger configuration
+    priority_attribute_name: "nr.priority"
+    critical_attribute_value: "critical"
+    # rollup_source attributes removed as they're not supported in current implementation
+
+  # Standard batch processor for efficient exporting - optimized settings
+  batch:
+    send_batch_size: 10000   # Increased batch size for better throughput
+    timeout: 5s              # Reduced timeout for more frequent sending
+    send_batch_max_size: 15000
+
+exporters:
+  # Prometheus exporter for internal metrics
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+
+  # OTLP exporter to New Relic
+  otlphttp:
+    endpoint: ${env:NEW_RELIC_OTLP_ENDPOINT}
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+
+  # Logging exporter removed (not available in current build)
+  # To add logging, implement the logging exporter in the collector build
+
+extensions:
+  # health_check and pprof removed (not available in current build)
+  # To add these, implement them in the collector build
+  zpages: {}
+
+service:
+  extensions: [zpages]
+  pipelines:
+    metrics:
+      receivers: [hostmetrics]
+      processors: [
+        memory_limiter,
+        prioritytagger,     # L0: Tag critical processes
+        adaptivetopk,       # L1: Keep top K processes
+        reservoirsampler,   # L3: Sample remaining processes
+        othersrollup,       # L2: Aggregate non-critical, non-topK, non-sampled
+        batch
+      ]
+      exporters: [otlphttp, prometheus]
+
+  telemetry:
+    metrics:
+      level: normal  # Changed from detailed to normal for better performance

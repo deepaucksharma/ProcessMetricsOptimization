@@ -1,98 +1,118 @@
-.PHONY: all build test lint clean protobuf generate bench coverage ci
+.PHONY: build test test-unit test-integration test-e2e test-urls bench lint docker-build compose-up compose-down logs sbom vuln-scan clean run help
 
-# Project variables
-BINARY_NAME=pte-collector
-BUILD_DIR=bin
-GO_PKG=github.com/deepaksharma/trace-aware-reservoir-otel
-VERSION=0.2.0
-LDFLAGS=-ldflags "-X main.Version=$(VERSION)"
+# Build variables
+COLLECTOR_IMAGE := nrdot-process-optimization:latest
+BUILD_INFO_IMPORT_PATH := github.com/newrelic/nrdot-process-optimization/cmd/collector
+VERSION := 0.1.0
+GIT_SHA := $(shell git rev-parse --short HEAD)
+BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-# Go commands
-GO=go
-GOBUILD=$(GO) build
-GOTEST=$(GO) test
-GOFMT=$(GO) fmt
-GOLINT=golangci-lint
-PROTOC=protoc
+# Default target
+.DEFAULT_GOAL := help
 
-# Protobuf variables
-PROTO_DIR=internal/processor/reservoirsampler/spanprotos
-PROTO_FILES=$(wildcard $(PROTO_DIR)/*.proto)
+# Help target to show available commands
+help:
+	@echo "NRDOT Process-Metrics Optimization Commands"
+	@echo ""
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Build & Run:"
+	@echo "  build              Build the project"
+	@echo "  docker-build       Build Docker image"
+	@echo "  run                Start services with Docker"
+	@echo ""
+	@echo ""
+	@echo "Docker Operations:"
+	@echo "  compose-up         Start services with the full optimization pipeline"
+	@echo "  compose-down       Stop Docker Compose services"
+	@echo "  logs               View logs from Docker services"
+	@echo ""
+	@echo "Testing:"
+	@echo "  test               Run all tests"
+	@echo "  test-unit          Run unit tests"
+	@echo "  test-integration   Run integration tests"
+	@echo "  test-e2e           Run end-to-end tests"
+	@echo "  test-urls          Test all service URLs"
+	@echo "  bench              Run benchmarks"
+	@echo ""
+	@echo "Quality & Security:"
+	@echo "  lint               Run linting and static analysis"
+	@echo "  sbom               Generate Software Bill of Materials"
+	@echo "  vuln-scan          Run vulnerability scanning"
+	@echo ""
+	@echo "Cleanup:"
+	@echo "  clean              Clean build artifacts"
 
-all: protobuf generate build test
-
+# Build the project
 build:
-	@echo "Building $(BINARY_NAME)..."
-	@mkdir -p $(BUILD_DIR)
-	$(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/pte
+	go build -o ./bin/otelcol ./cmd/collector
 
-test:
-	@echo "Running tests..."
-	$(GOTEST) -race -cover -timeout=5m ./...
+# Run all tests
+test: test-unit test-integration test-e2e test-urls
 
-lint:
-	@echo "Running linter..."
-	$(GOFMT) ./...
-	$(GOLINT) run ./...
+# Run just unit tests
+test-unit:
+	go test -race -v ./...
 
+# Run integration tests
+test-integration:
+	go test -race -v -tags=integration ./test/integration/...
+
+# Run end-to-end tests
+test-e2e:
+	go test -race -v -tags=e2e ./test/e2e/...
+
+# Test service URLs
+test-urls:
+	@echo "Testing all service URLs..."
+	@test/url_check.sh
+
+# Run benchmarks
 bench:
-	@echo "Running benchmarks..."
-	$(GOTEST) -bench=. -benchtime=2s -timeout=5m github.com/deepaksharma/trace-aware-reservoir-otel/internal/processor/reservoirsampler/...
-	@if [ -d "./performance" ]; then \
-		echo "Running performance tests..."; \
-		$(GOTEST) -timeout=5m ./performance/...; \
-	fi
+	go test -run=XXX -bench=. ./...
 
-coverage:
-	@echo "Generating coverage report..."
-	$(GOTEST) -coverprofile=coverage.out -covermode=atomic -timeout=5m github.com/deepaksharma/trace-aware-reservoir-otel/internal/processor/reservoirsampler/...
-	$(GO) tool cover -html=coverage.out -o coverage.html
-	@echo "Coverage report generated at coverage.html"
+# Run linting and static analysis
+lint:
+	go vet ./...
+	go fmt ./...
+	# If golangci-lint is installed, use it
+	which golangci-lint &>/dev/null && golangci-lint run ./... || echo "golangci-lint not installed, skipping"
 
-clean:
-	@echo "Cleaning..."
-	@rm -rf $(BUILD_DIR)
-	@rm -f coverage.out coverage.html
+# Build Docker image
+docker-build:
+	docker build -t $(COLLECTOR_IMAGE) -f build/Dockerfile .
 
-# Generate protobuf files
-# Note: The reservoir sampler now uses custom binary serialization instead of protobuf for performance
-protobuf:
-	@echo "Generating protobuf files..."
-	@mkdir -p $(PROTO_DIR)
-	$(PROTOC) --go_out=. --go_opt=paths=source_relative $(PROTO_FILES)
+# Run local development stack with the full optimization pipeline
+compose-up:
+	@if [ -f ".env" ]; then \
+		echo "Loading environment variables from .env file"; \
+		export $$(grep -v '^#' ".env" | xargs); \
+	fi; \
+	docker-compose -f build/docker-compose.yaml up -d
 
-# Generate mocks and other auto-generated files
-generate:
-	@echo "Running go generate..."
-	$(GO) generate ./...
+# Stop local development stack
+compose-down:
+	docker-compose -f build/docker-compose.yaml down
 
-# Install dependencies
-deps:
-	@echo "Installing dependencies..."
-	$(GO) mod tidy
-	$(GO) mod download
+# Show logs from Docker Compose services
+logs:
+	docker-compose -f build/docker-compose.yaml logs -f
 
-# Run the collector
+# Run the application using the unified script (Docker mode)
 run:
-	@echo "Running $(BINARY_NAME)..."
-	$(BUILD_DIR)/$(BINARY_NAME) --config=config.yaml
+	./run.sh up
 
-# Test targets
-unit-tests:
-	@echo "Running unit tests..."
-	$(GOTEST) -cover -timeout=3m ./internal/...
 
-integration-tests:
-	@echo "Running integration tests..."
-	$(GOTEST) -cover -timeout=10m ./integration/...
+# Generate SBOM
+sbom:
+	@echo "Generating Software Bill of Materials (SBOM)"
+	@which syft &>/dev/null && syft . -o spdx-json > sbom.spdx.json || echo "syft not installed, skipping SBOM generation"
 
-integration-tests-short:
-	@echo "Running integration tests in short mode..."
-	$(GOTEST) -cover -timeout=3m -short ./integration/...
+# Vulnerability scanning
+vuln-scan:
+	go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
-e2e-tests: build
-	@echo "Running e2e tests..."
-	$(GOTEST) -timeout=10m ./e2e/tests/...
-
-# Run full CI locally
-ci: deps build unit-tests integration-tests lint bench
+# Clean build artifacts
+clean:
+	rm -rf ./bin
+	rm -f sbom.spdx.json
