@@ -1,0 +1,140 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "content": "# L0: PriorityTagger - Algorithm Deep Dive\n\nVisualizes the decision-making process of the PriorityTagger, showing why processes are tagged as critical.",
+        "mode": "markdown"
+      },
+      "type": "text"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 2 },
+      "id": 2,
+      "panels": [],
+      "title": "Tagging Overview & Rates",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 1, "fillOpacity": 10 }, "unit": "cps" } },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 3 },
+      "id": 3,
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "sum(rate(nrdot_prioritytagger_critical_processes_tagged_total{job=\"otel-collector-metrics\"}[1m]))", "legendFormat": "Total Tagged Rate", "refId": "A" },
+        { "expr": "sum(rate(nrdot_prioritytagger_critical_processes_tagged_total{job=\"otel-collector-metrics\", reason=\"exact_match\"}[1m]))", "legendFormat": "Tagged by Name Rate", "refId": "B" },
+        { "expr": "sum(rate(nrdot_prioritytagger_critical_processes_tagged_total{job=\"otel-collector-metrics\", reason=\"pattern_match\"}[1m]))", "legendFormat": "Tagged by Pattern Rate", "refId": "C" },
+        { "expr": "sum(rate(nrdot_prioritytagger_critical_processes_tagged_total{job=\"otel-collector-metrics\", reason=\"cpu_threshold\"}[1m]))", "legendFormat": "Tagged by CPU Rate", "refId": "D" },
+        { "expr": "sum(rate(nrdot_prioritytagger_critical_processes_tagged_total{job=\"otel-collector-metrics\", reason=\"memory_threshold\"}[1m]))", "legendFormat": "Tagged by Memory Rate", "refId": "E" }
+      ],
+      "title": "Critical Processes Tagged Rate (by Reason)",
+      "description": "Assumes 'reason' label on nrdot_prioritytagger_critical_processes_tagged_total",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "hideFrom": {"legend": false, "tooltip": false, "viz": false}}, "mappings": [] } },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 3 },
+      "id": 4,
+      "options": { "displayLabels": ["name", "value", "percent"], "legend": { "displayMode": "list", "placement": "right", "showLegend": true }, "pieType": "pie", "reduceOptions": { "calcs": ["sum"], "fields": "/^sum by \\(reason\\)/", "values": false } },
+      "targets": [
+        { "expr": "sum(increase(nrdot_prioritytagger_critical_processes_tagged_total{job=\"otel-collector-metrics\"}[5m])) by (reason)", "legendFormat": "{{reason}}", "refId": "A" }
+      ],
+      "title": "Distribution of Tagging Reasons (5m)",
+      "description": "Assumes 'reason' label. Shows proportion of tags by different criteria.",
+      "type": "piechart"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 11 },
+      "id": 5,
+      "panels": [],
+      "title": "Threshold-Based Tagging Insights",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisPlacement": "right", "fillOpacity": 15, "lineWidth": 1, "showPoints": "auto" }, "unit": "percentunit" } },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 12 },
+      "id": 6,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": false }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "avg_over_time(process_cpu_utilization{job=\"otel-collector-metrics\", nr_priority=\"critical\"}[1m])", "legendFormat": "Avg CPU of Tagged Procs", "refId": "A"},
+        { "expr": "avg_over_time(process_cpu_utilization{job=\"otel-collector-metrics\", nr_priority!=\"critical\"}[1m])", "legendFormat": "Avg CPU of Non-Tagged Procs", "refId": "B", "hide": true},
+        { "expr": "max_over_time(process_cpu_utilization{job=\"otel-collector-metrics\", nr_priority=\"critical\", reason=\"cpu_threshold\"}[1m])", "legendFormat": "Max CPU of CPU-Tagged Procs", "refId": "C"}
+      ],
+      "title": "CPU Utilization of Tagged Processes",
+      "description": "Shows CPU metrics for processes tagged as critical (especially by CPU threshold). Requires `nr.priority` and `reason` attributes on original metrics or a way to join.",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisPlacement": "right", "fillOpacity": 15, "lineWidth": 1, "showPoints": "auto" }, "unit": "bytes" } },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 12 },
+      "id": 7,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": false }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "avg_over_time(process_memory_rss{job=\"otel-collector-metrics\", nr_priority=\"critical\"}[1m])", "legendFormat": "Avg Memory of Tagged Procs", "refId": "A"},
+        { "expr": "avg_over_time(process_memory_rss{job=\"otel-collector-metrics\", nr_priority!=\"critical\"}[1m])", "legendFormat": "Avg Memory of Non-Tagged Procs", "refId": "B", "hide": true},
+        { "expr": "max_over_time(process_memory_rss{job=\"otel-collector-metrics\", nr_priority=\"critical\", reason=\"memory_threshold\"}[1m])", "legendFormat": "Max Memory of Mem-Tagged Procs", "refId": "C"}
+      ],
+      "title": "Memory RSS of Tagged Processes",
+      "description": "Shows Memory metrics for processes tagged as critical (especially by Memory threshold). Requires `nr.priority` and `reason` attributes on original metrics or a way to join.",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": {"color": {"mode": "palette-classic"}, "custom": {}, "mappings": []} },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 21 },
+      "id": 8,
+      "options": { "sortBy": [{"displayName": "Value #A", "desc": true}], "showHeader": true},
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "expr": "topk(10, sum by (process_executable_name) (increase(nrdot_prioritytagger_critical_processes_tagged_total{job=\"otel-collector-metrics\"}[5m])))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Top 10 Executables Tagged as Critical (Last 5m)",
+      "type": "table"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 38,
+  "tags": ["nrdot", "prioritytagger", "algorithm"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "NRDOT L0: PriorityTagger Algorithm Insights",
+  "uid": "nrdot-prioritytagger-algo",
+  "version": 1
+}

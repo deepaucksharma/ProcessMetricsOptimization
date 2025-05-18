@@ -1,42 +1,49 @@
-# Binaries
+# Binary files
+otelcol
+otelcol_*
 bin/
+
+# Log files
+otel-collector.log
+*copy.log
+# Sample logs are tracked
+*.log
+
+# Environment variables
+.env
+
+# Backup files
+*.bak
+*copy*
+
+# Temporary files
+tmp/
+temp/
+.DS_Store
+
+# Downloaded packages
+*.tar.gz
+*.zip
+
+# Go specific
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-e2e/temp/
-
-# Test binary, built with `go test -c`
 *.test
-
-# Output of the go coverage tool
 *.out
-coverage.html
-
-# Checkpoint database for tests
-*.db
-*.db.compact
-*.db.bak
+go.work
+/vendor/
 
 # Dependency directories
-vendor/
+node_modules/
 
-# IDE and editor files
+# SBOM files
+sbom.spdx.json
+
+# IDE specific files
 .idea/
 .vscode/
 *.swp
 *.swo
-*~
-
-# Log files
-*.log
-
-# OS specific files
-.DS_Store
-Thumbs.db
