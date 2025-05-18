@@ -46,8 +46,10 @@ func newOthersRollupProcessor(settings processor.CreateSettings, next consumer.M
 }
 
 func (p *othersRollupProcessor) Start(_ context.Context, _ component.Host) error { return nil }
-func (p *othersRollupProcessor) Shutdown(_ context.Context) error               { return nil }
-func (p *othersRollupProcessor) Capabilities() consumer.Capabilities            { return consumer.Capabilities{MutatesData: true} }
+func (p *othersRollupProcessor) Shutdown(_ context.Context) error                { return nil }
+func (p *othersRollupProcessor) Capabilities() consumer.Capabilities {
+	return consumer.Capabilities{MutatesData: true}
+}
 
 func (p *othersRollupProcessor) ConsumeMetrics(ctx context.Context, md pmetric.Metrics) error {
 	ctx = p.obsrep.StartMetricsOp(ctx)
@@ -149,7 +151,7 @@ func (p *othersRollupProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 					processDataPoints(metric.Gauge().DataPoints())
 					if passThroughDps.Len() > 0 {
 						m := newSm.Metrics().AppendEmpty()
-						metric.CopyTo(m) // Copy metric metadata
+						metric.CopyTo(m)                                                                              // Copy metric metadata
 						m.SetEmptyGauge().DataPoints().RemoveIf(func(_ pmetric.NumberDataPoint) bool { return true }) // Clear existing
 						passThroughDps.CopyTo(m.Gauge().DataPoints())
 					}
@@ -157,7 +159,7 @@ func (p *othersRollupProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 					processDataPoints(metric.Sum().DataPoints())
 					if passThroughDps.Len() > 0 {
 						m := newSm.Metrics().AppendEmpty()
-						metric.CopyTo(m) // Copy metric metadata
+						metric.CopyTo(m)                                                                            // Copy metric metadata
 						m.SetEmptySum().DataPoints().RemoveIf(func(_ pmetric.NumberDataPoint) bool { return true }) // Clear existing
 						passThroughDps.CopyTo(m.Sum().DataPoints())
 					}

@@ -28,12 +28,12 @@ func NewFactory() processor.Factory {
 // createDefaultConfig creates the default configuration for the PriorityTagger processor.
 func createDefaultConfig() component.Config {
 	return &Config{
-		CriticalExecutables:      []string{},
+		CriticalExecutables:        []string{},
 		CriticalExecutablePatterns: []string{},
-		CPUSteadyStateThreshold:  -1.0, // Negative to disable by default
-		MemoryRSSThresholdMiB:    -1,   // Negative to disable by default
-		PriorityAttributeName:    "nr.priority",
-		CriticalAttributeValue:   "critical",
+		CPUSteadyStateThreshold:    -1.0, // Negative to disable by default
+		MemoryRSSThresholdMiB:      -1,   // Negative to disable by default
+		PriorityAttributeName:      "nr.priority",
+		CriticalAttributeValue:     "critical",
 	}
 }
 

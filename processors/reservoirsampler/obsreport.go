@@ -10,12 +10,12 @@ import (
 const processorName = "reservoirsampler"
 
 type reservoirSamplerObsreport struct {
-	settings                     component.TelemetrySettings
-	processedPoints             metric.Int64Counter
-	droppedPoints               metric.Int64Counter
-	reservoirFillRatio          metric.Float64Observable
-	selectedIdentitiesCount     metric.Int64Observable
-	eligibleIdentitiesSeenTotal metric.Int64Counter
+	settings                      component.TelemetrySettings
+	processedPoints               metric.Int64Counter
+	droppedPoints                 metric.Int64Counter
+	reservoirFillRatio            metric.Float64Observable
+	selectedIdentitiesCount       metric.Int64Observable
+	eligibleIdentitiesSeenTotal   metric.Int64Counter
 	newIdentitiesAddedToReservoir metric.Int64Counter
 }
 
@@ -82,12 +82,12 @@ func newReservoirSamplerObsreport(settings component.TelemetrySettings) (*reserv
 	}
 
 	return &reservoirSamplerObsreport{
-		settings:                     settings,
-		processedPoints:              processedPoints,
-		droppedPoints:                droppedPoints,
-		reservoirFillRatio:           reservoirFillRatio,
-		selectedIdentitiesCount:      selectedIdentitiesCount,
-		eligibleIdentitiesSeenTotal:  eligibleIdentitiesSeenTotal,
+		settings:                      settings,
+		processedPoints:               processedPoints,
+		droppedPoints:                 droppedPoints,
+		reservoirFillRatio:            reservoirFillRatio,
+		selectedIdentitiesCount:       selectedIdentitiesCount,
+		eligibleIdentitiesSeenTotal:   eligibleIdentitiesSeenTotal,
 		newIdentitiesAddedToReservoir: newIdentitiesAddedToReservoir,
 	}, nil
 }

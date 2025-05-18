@@ -73,10 +73,10 @@ func TestEndToEndPipeline(t *testing.T) {
 	expectedTaggedProcesses := map[string]bool{
 		"systemd":    true,
 		"containerd": true,
-		"kubelet":    true,      // matches regex pattern kube.*
-		"kube-proxy": true,      // matches regex pattern kube.*
-		"high-cpu":   true,      // high CPU process
-		"high-mem":   true,      // high memory process
+		"kubelet":    true, // matches regex pattern kube.*
+		"kube-proxy": true, // matches regex pattern kube.*
+		"high-cpu":   true, // high CPU process
+		"high-mem":   true, // high memory process
 	}
 
 	// List of processes that should not be tagged
@@ -155,8 +155,8 @@ func TestProcessorWithEmptyMetrics(t *testing.T) {
 
 	// Create the processor
 	cfg := &Config{
-		CriticalExecutables: []string{"systemd"},
-		PriorityAttributeName: "nr.priority",
+		CriticalExecutables:    []string{"systemd"},
+		PriorityAttributeName:  "nr.priority",
 		CriticalAttributeValue: "critical",
 	}
 	require.NoError(t, cfg.Validate())
@@ -193,16 +193,16 @@ func createMultiProcessMetrics() pmetric.Metrics {
 		cpuUtil  float64
 		memoryMB int64
 	}{
-		{"systemd", "1", 0.01, 50},             // Critical by name
-		{"containerd", "100", 0.05, 200},       // Critical by name
-		{"kubelet", "200", 0.1, 300},           // Critical by pattern
-		{"kube-proxy", "201", 0.05, 100},       // Critical by pattern
-		{"high-cpu", "300", 0.8, 100},          // Critical by CPU
-		{"high-mem", "301", 0.01, 900},         // Critical by memory
-		{"chrome", "1000", 0.3, 400},           // Regular process
-		{"firefox", "1001", 0.2, 350},          // Regular process
-		{"vscode", "1002", 0.1, 200},           // Regular process
-		{"terminal", "1003", 0.01, 50},         // Regular process
+		{"systemd", "1", 0.01, 50},       // Critical by name
+		{"containerd", "100", 0.05, 200}, // Critical by name
+		{"kubelet", "200", 0.1, 300},     // Critical by pattern
+		{"kube-proxy", "201", 0.05, 100}, // Critical by pattern
+		{"high-cpu", "300", 0.8, 100},    // Critical by CPU
+		{"high-mem", "301", 0.01, 900},   // Critical by memory
+		{"chrome", "1000", 0.3, 400},     // Regular process
+		{"firefox", "1001", 0.2, 350},    // Regular process
+		{"vscode", "1002", 0.1, 200},     // Regular process
+		{"terminal", "1003", 0.01, 50},   // Regular process
 	}
 
 	// Create CPU metrics for all processes
@@ -299,12 +299,12 @@ func TestPrioritizationRules(t *testing.T) {
 		{
 			name: "No match",
 			config: Config{
-				CriticalExecutables:     []string{"nginx", "postgres"},
+				CriticalExecutables:        []string{"nginx", "postgres"},
 				CriticalExecutablePatterns: []string{"java.*", "node.*"},
-				CPUSteadyStateThreshold: 0.5,
-				MemoryRSSThresholdMiB:   500,
-				PriorityAttributeName:   "nr.priority",
-				CriticalAttributeValue:  "critical",
+				CPUSteadyStateThreshold:    0.5,
+				MemoryRSSThresholdMiB:      500,
+				PriorityAttributeName:      "nr.priority",
+				CriticalAttributeValue:     "critical",
 			},
 			process:        "app",
 			cpuUtil:        0.1,
@@ -314,12 +314,12 @@ func TestPrioritizationRules(t *testing.T) {
 		{
 			name: "Combinations of rules",
 			config: Config{
-				CriticalExecutables:     []string{"nginx", "postgres"},
+				CriticalExecutables:        []string{"nginx", "postgres"},
 				CriticalExecutablePatterns: []string{"kube.*"},
-				CPUSteadyStateThreshold: 0.5,
-				MemoryRSSThresholdMiB:   500,
-				PriorityAttributeName:   "nr.priority",
-				CriticalAttributeValue:  "critical",
+				CPUSteadyStateThreshold:    0.5,
+				MemoryRSSThresholdMiB:      500,
+				PriorityAttributeName:      "nr.priority",
+				CriticalAttributeValue:     "critical",
 			},
 			process:        "kube-proxy",
 			cpuUtil:        0.1,

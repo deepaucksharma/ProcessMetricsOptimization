@@ -38,13 +38,13 @@ func createSamplerTestMetrics(numProcs int, criticalIdx int, cfg *Config) pmetri
 
 func TestReservoirSampler_BasicSampling(t *testing.T) {
 	cfg := &Config{
-		ReservoirSize:          2, // Small reservoir size for testing
-		IdentityAttributes:     []string{"process.pid"},
-		SampledAttributeName:   "sampled",
-		SampledAttributeValue:  "yes",
-		SampleRateAttributeName:"rate",
-		PriorityAttributeName:  "prio",
-		CriticalAttributeValue: "crit",
+		ReservoirSize:           2, // Small reservoir size for testing
+		IdentityAttributes:      []string{"process.pid"},
+		SampledAttributeName:    "sampled",
+		SampledAttributeValue:   "yes",
+		SampleRateAttributeName: "rate",
+		PriorityAttributeName:   "prio",
+		CriticalAttributeValue:  "crit",
 	}
 	require.NoError(t, cfg.Validate())
 

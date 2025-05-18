@@ -26,10 +26,10 @@ type reservoirSamplerProcessor struct {
 	obsrep       *reservoirSamplerObsreport
 
 	// Reservoir state
-	mu              sync.Mutex
-	reservoir       map[string]bool // Stores unique process identities that are sampled
-	streamCount     int64           // Count of eligible items seen so far in the stream
-	randSource      *rand.Rand      // For sampling algorithm
+	mu          sync.Mutex
+	reservoir   map[string]bool // Stores unique process identities that are sampled
+	streamCount int64           // Count of eligible items seen so far in the stream
+	randSource  *rand.Rand      // For sampling algorithm
 }
 
 func newReservoirSamplerProcessor(settings processor.CreateSettings, next consumer.Metrics, cfg *Config) (*reservoirSamplerProcessor, error) {
@@ -53,8 +53,10 @@ func newReservoirSamplerProcessor(settings processor.CreateSettings, next consum
 }
 
 func (p *reservoirSamplerProcessor) Start(_ context.Context, _ component.Host) error { return nil }
-func (p *reservoirSamplerProcessor) Shutdown(_ context.Context) error               { return nil }
-func (p *reservoirSamplerProcessor) Capabilities() consumer.Capabilities            { return consumer.Capabilities{MutatesData: true} }
+func (p *reservoirSamplerProcessor) Shutdown(_ context.Context) error                { return nil }
+func (p *reservoirSamplerProcessor) Capabilities() consumer.Capabilities {
+	return consumer.Capabilities{MutatesData: true}
+}
 
 // generateIdentity creates a unique string for a process based on configured attributes.
 func (p *reservoirSamplerProcessor) generateIdentity(attrs pcommon.Map) (string, bool) {
@@ -130,7 +132,7 @@ func (p *reservoirSamplerProcessor) ConsumeMetrics(ctx context.Context, md pmetr
 	for identity := range eligibleIdentities {
 		// Is this identity new? (not yet seen in stream)
 		if _, exists := p.reservoir[identity]; !exists {
-			p.streamCount++ // This is a new eligible identity in the logical stream
+			p.streamCount++                            // This is a new eligible identity in the logical stream
 			p.obsrep.recordEligibleIdentitiesSeen(ctx) // Count unique eligible identities
 
 			// Algorithm R variant for reservoir sampling

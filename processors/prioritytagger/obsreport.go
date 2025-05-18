@@ -9,9 +9,9 @@ import (
 
 // obsreportHelper encapsulates observability functionality for the PriorityTagger processor.
 type obsreportHelper struct {
-	settings               component.TelemetrySettings
-	processedPoints        metric.Int64Counter
-	droppedPoints          metric.Int64Counter
+	settings                component.TelemetrySettings
+	processedPoints         metric.Int64Counter
+	droppedPoints           metric.Int64Counter
 	criticalProcessesTagged metric.Int64Counter
 }
 
@@ -52,9 +52,9 @@ func newObsreportHelper(settings component.TelemetrySettings) (*obsreportHelper,
 	}
 
 	return &obsreportHelper{
-		settings:               settings,
-		processedPoints:        processedPoints,
-		droppedPoints:          droppedPoints,
+		settings:                settings,
+		processedPoints:         processedPoints,
+		droppedPoints:           droppedPoints,
 		criticalProcessesTagged: criticalProcessesTagged,
 	}, nil
 }

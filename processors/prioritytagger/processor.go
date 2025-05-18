@@ -14,7 +14,7 @@ const (
 	// Process metric attribute names
 	processExecutableNameKey = "process.executable.name"
 	processCPUUtilizationKey = "process.cpu.utilization"
-	processMemoryRSSKey     = "process.memory.rss"
+	processMemoryRSSKey      = "process.memory.rss"
 )
 
 type priorityTaggerProcessor struct {

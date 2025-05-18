@@ -23,13 +23,13 @@ func NewFactory() processor.Factory {
 
 func createDefaultConfig() component.Config {
 	return &Config{
-		ReservoirSize:          100,
-		IdentityAttributes:     []string{"process.pid"},
-		SampledAttributeName:   "nr.process_sampled_by_reservoir",
-		SampledAttributeValue:  "true",
-		SampleRateAttributeName:"nr.sample_rate",
-		PriorityAttributeName:  "nr.priority",
-		CriticalAttributeValue: "critical",
+		ReservoirSize:           100,
+		IdentityAttributes:      []string{"process.pid"},
+		SampledAttributeName:    "nr.process_sampled_by_reservoir",
+		SampledAttributeValue:   "true",
+		SampleRateAttributeName: "nr.sample_rate",
+		PriorityAttributeName:   "nr.priority",
+		CriticalAttributeValue:  "critical",
 	}
 }
 
