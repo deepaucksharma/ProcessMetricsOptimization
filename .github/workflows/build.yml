@@ -46,3 +46,19 @@ jobs:
       
     - name: Build Docker image
       run: docker build -t nrdot-process-optimization:test -f build/Dockerfile .
+
+  url-check:
+    runs-on: ubuntu-latest
+    needs: docker
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Start stack
+      run: make compose-up
+
+    - name: Run URL checks
+      run: ./test/url_check.sh
+
+    - name: Stop stack
+      if: always()
+      run: make compose-down
