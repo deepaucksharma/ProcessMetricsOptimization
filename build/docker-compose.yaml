@@ -6,7 +6,7 @@ services:
       dockerfile: build/Dockerfile
     image: nrdot-process-optimization:latest
     container_name: otel-collector
-    command: ["--config=/etc/otel/config/opt-plus.yaml"]
+    command: ["--config=/etc/otel/config/${COLLECTOR_CONFIG:-opt-plus.yaml}"]
     volumes:
       - ../config:/etc/otel/config
     ports:
