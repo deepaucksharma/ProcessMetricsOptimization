@@ -38,6 +38,21 @@ Every processor consists of these key files:
 | `processor_test.go` | Unit tests |
 | `README.md` | Documentation for the processor |
 
+## Aligning with OpenTelemetry
+
+NRDOT processors follow the standard [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) design. Each processor implements the `component.Processor` interface and is created through a factory. The factory parses configuration into a `Config` struct and exposes `CreateMetricsProcessor` (and/or `CreateLogsProcessor`) for the collector to call.
+
+Typical lifecycle:
+
+1. **Factory creates the processor** – configuration is validated and an instance is returned.
+2. **Start** – the processor allocates resources when the collector pipeline starts.
+3. **Consume** – metrics or logs are processed for each call.
+4. **Shutdown** – resources are released on collector shutdown.
+
+For complex matching or transformation logic you can use the [OpenTelemetry Transformation Language (OTTL)](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl). OTTL expressions allow attribute-based filters or modifications without additional code.
+
+See the upstream [Collector documentation](https://opentelemetry.io/docs/collector/components/#processors) for further reference.
+
 ## Self-Observability Implementation
 
 ### Standard Metrics with obsreport
