@@ -90,7 +90,7 @@ Dashboards should cover the entire collector pipeline. See `docs/GRAFANA_DASHBOA
 ---
 
 ### 5. Ensure End-to-End Visibility
-Monitor the entire data flow using `obsreport` and custom metrics (e.g., `nrdot_helloworld_mutations_total`).
+Monitor the entire data flow using `obsreport` and custom metrics (e.g., `otelcol_otelcol_helloworld_mutations_total`).
 
 #### Key Metrics:
 - Receivers: `otelcol_receiver_accepted_metric_points`, `otelcol_receiver_refused_metric_points`.

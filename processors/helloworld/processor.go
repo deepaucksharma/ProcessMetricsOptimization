@@ -28,7 +28,7 @@ func newProcessor(config *Config, logger *zap.Logger, mexp consumer.Metrics, set
 	// Create a metric for counting mutations
 	meter := settings.MeterProvider.Meter("helloworld")
 	mutationsCounter, err := meter.Int64Counter(
-		"nrdot_helloworld_mutations_total",
+		"otelcol_otelcol_helloworld_mutations_total",
 		metric.WithDescription("Total number of metrics modified by the hello world processor"),
 	)
 	if err != nil {
