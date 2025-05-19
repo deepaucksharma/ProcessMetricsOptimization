@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/newrelic/nrdot-process-optimization/internal/metricsutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
@@ -84,7 +85,7 @@ func TestAdaptiveTopK_FixedK(t *testing.T) {
 
 	// Expected PIDs: "1" (critical), "2" (top CPU), "3" (second top CPU)
 	// Metric points: dp1, dp2, dp3, dp5 (belongs to critical process 1)
-	assert.Equal(t, 4, getMetricPointCount(processedMetrics[0]), "Should have 4 data points: 1 critical (cpu), 2 top K (cpu), 1 critical (mem)")
+	assert.Equal(t, 4, metricsutil.CountPoints(processedMetrics[0]), "Should have 4 data points: 1 critical (cpu), 2 top K (cpu), 1 critical (mem)")
 
 	foundPIDs := make(map[string]int)
 	rms := processedMetrics[0].ResourceMetrics()
