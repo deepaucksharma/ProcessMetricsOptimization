@@ -132,3 +132,32 @@ See [docs/COMPLETING_PHASE_5.md](COMPLETING_PHASE_5.md) for additional integrati
 - [ ] Passes linting and static analysis
 - [ ] Works with the Docker Compose setup
 - [ ] Adds dashboard panels for processor metrics
+
+## Aligning with OpenTelemetry
+
+Custom processors follow the standard `component.Processor` lifecycle defined by
+the OpenTelemetry Collector. A processor is created by a factory, started by the
+collector, receives telemetry via its `Consume` method, and is finally shut down
+when the collector stops.
+
+### Lifecycle and Factory Pattern
+
+1. **Factory** – Each processor exposes a `NewFactory` function that returns a
+   `processor.Factory`. The factory provides `createDefaultConfig` and a
+   `create*Processor` function used by the collector to instantiate the
+   component.
+2. **Start/Shutdown** – Implement the `Start` and `Shutdown` methods from
+   `component.Component` to allocate resources and clean them up.
+3. **Consume** – Implement `ConsumeMetrics`, `ConsumeTraces`, or `ConsumeLogs`
+   depending on the processor type. Use `Capabilities()` to declare whether the
+   processor mutates data.
+
+### Attribute Matching with OTTL
+
+The **OpenTelemetry Transformation Language (OTTL)** provides a flexible way to
+express attribute-based matching or transformations without hard‑coding logic in
+Go. Processors can leverage OTTL statements to match on attributes or modify
+telemetry in a declarative fashion.
+
+For more details on the processor lifecycle and OTTL syntax, see the
+[upstream OpenTelemetry documentation](https://github.com/open-telemetry/opentelemetry-collector/blob/main/processor/README.md).
