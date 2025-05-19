@@ -79,3 +79,8 @@ func (cfg *Config) Unmarshal(componentParser *confmap.Conf) error {
 
 	return componentParser.Unmarshal(cfg)
 }
+
+// ProcessorType returns the processor type for metrics usage
+func (cfg *Config) ProcessorType() string {
+	return "othersrollup"
+}

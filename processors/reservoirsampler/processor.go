@@ -235,7 +235,7 @@ func (p *reservoirSamplerProcessor) ConsumeMetrics(ctx context.Context, md pmetr
 
 	numProcessedMetricPoints := getMetricPointCount(newMd)
 	numDroppedMetricPoints := numOriginalMetricPoints - numProcessedMetricPoints
-	p.obsrep.EndMetricsOp(ctx, numProcessedMetricPoints, numDroppedMetricPoints, nil)
+	p.obsrep.EndMetricsOp(ctx, p.config.ProcessorType(), numProcessedMetricPoints, numDroppedMetricPoints, nil)
 
 	if newMd.ResourceMetrics().Len() == 0 {
 		p.logger.Debug("All metrics were dropped by reservoir sampler, resulting in empty batch.")
