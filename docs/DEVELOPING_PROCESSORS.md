@@ -50,7 +50,7 @@ if err != nil {
 }
 
 // Start metrics observation
-ctx, numPoints := p.obsrecv.StartMetricsOp(ctx)
+ctx = p.obsrecv.StartMetricsOp(ctx)
 
 // End metrics observation
 p.obsrecv.EndMetricsOp(ctx, p.config.ProcessorType(), metricCount, nil)
