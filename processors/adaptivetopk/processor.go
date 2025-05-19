@@ -12,6 +12,8 @@ import (
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/processor"
 	"go.uber.org/zap"
+
+	"github.com/newrelic/nrdot-process-optimization/internal/processorhelper"
 )
 
 const (
@@ -67,6 +69,8 @@ func (ph *processHeap) Pop() any {
 }
 
 type adaptiveTopKProcessor struct {
+	*processorhelper.Helper
+
 	config       *Config
 	logger       *zap.Logger
 	nextConsumer consumer.Metrics
@@ -79,11 +83,16 @@ type adaptiveTopKProcessor struct {
 }
 
 func newAdaptiveTopKProcessor(settings processor.CreateSettings, next consumer.Metrics, cfg *Config) (*adaptiveTopKProcessor, error) {
+	helper, err := processorhelper.NewHelper(settings.TelemetrySettings, "adaptivetopk")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create helper for adaptivetopk processor: %w", err)
+	}
 	obsrep, err := newAdaptiveTopKObsreport(settings.TelemetrySettings)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create obsreport for adaptivetopk processor: %w", err)
 	}
 	p := &adaptiveTopKProcessor{
+		Helper:       helper,
 		config:       cfg,
 		logger:       settings.Logger,
 		nextConsumer: next,
@@ -103,14 +112,8 @@ func newAdaptiveTopKProcessor(settings processor.CreateSettings, next consumer.M
 	return p, nil
 }
 
-func (p *adaptiveTopKProcessor) Start(_ context.Context, _ component.Host) error { return nil }
-func (p *adaptiveTopKProcessor) Shutdown(_ context.Context) error                { return nil }
-func (p *adaptiveTopKProcessor) Capabilities() consumer.Capabilities {
-	return consumer.Capabilities{MutatesData: true}
-}
-
 func (p *adaptiveTopKProcessor) ConsumeMetrics(ctx context.Context, md pmetric.Metrics) error {
-	ctx = p.obsrep.StartMetricsOp(ctx)
+	ctx = p.StartMetricsOp(ctx)
 	numOriginalMetricPoints := getMetricPointCount(md)
 
 	// Determine current K value (fixed or dynamic)
@@ -298,7 +301,7 @@ func (p *adaptiveTopKProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 
 	numProcessedMetricPoints := getMetricPointCount(filteredMd)
 	numDroppedMetricPoints := numOriginalMetricPoints - numProcessedMetricPoints
-	p.obsrep.EndMetricsOp(ctx, numProcessedMetricPoints, numDroppedMetricPoints, nil)
+	p.EndMetricsOp(ctx, numProcessedMetricPoints, nil)
 
 	return p.nextConsumer.ConsumeMetrics(ctx, filteredMd)
 }

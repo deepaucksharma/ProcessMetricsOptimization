@@ -9,18 +9,21 @@ import (
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
+
+	"github.com/newrelic/nrdot-process-optimization/internal/processorhelper"
 )
 
 type helloWorldProcessor struct {
+	*processorhelper.Helper
+
 	config           *Config
 	logger           *zap.Logger
 	metricsConsumer  consumer.Metrics
-	obsrecv          *obsreportHelper
 	mutationsCounter metric.Int64Counter
 }
 
 func newProcessor(config *Config, logger *zap.Logger, mexp consumer.Metrics, settings component.TelemetrySettings) (*helloWorldProcessor, error) {
-	obsrecv, err := newObsreportHelper(settings)
+	helper, err := processorhelper.NewHelper(settings, "helloworld")
 	if err != nil {
 		return nil, err
 	}
@@ -36,35 +39,23 @@ func newProcessor(config *Config, logger *zap.Logger, mexp consumer.Metrics, set
 	}
 
 	return &helloWorldProcessor{
+		Helper:           helper,
 		config:           config,
 		logger:           logger,
 		metricsConsumer:  mexp,
-		obsrecv:          obsrecv,
 		mutationsCounter: mutationsCounter,
 	}, nil
 }
 
-func (p *helloWorldProcessor) Start(_ context.Context, _ component.Host) error {
-	return nil
-}
-
-func (p *helloWorldProcessor) Shutdown(_ context.Context) error {
-	return nil
-}
-
-func (p *helloWorldProcessor) Capabilities() consumer.Capabilities {
-	return consumer.Capabilities{MutatesData: true}
-}
-
 func (p *helloWorldProcessor) ConsumeMetrics(ctx context.Context, md pmetric.Metrics) error {
 	// Start the metrics observation
-	ctx = p.obsrecv.StartMetricsOp(ctx)
+	ctx = p.StartMetricsOp(ctx)
 
 	// Add Hello World attribute to each metric
 	metricCount := p.processMetrics(ctx, md)
 
 	// Record the observation and the number of processed items
-	p.obsrecv.EndMetricsOp(ctx, p.config.ProcessorType(), metricCount, nil)
+	p.EndMetricsOp(ctx, metricCount, nil)
 
 	// Increment our custom mutation counter metric
 	p.mutationsCounter.Add(ctx, int64(metricCount))

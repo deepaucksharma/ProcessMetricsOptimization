@@ -40,20 +40,19 @@ Every processor consists of these key files:
 
 ## Self-Observability Implementation
 
-### Standard Metrics with obsreport
+### Standard Metrics with processorhelper
 
 ```go
-// Create the obsreport helper
-obsrecv, err := newObsreportHelper(settings)
+// Create the shared helper in your constructor
+helper, err := processorhelper.NewHelper(settings.TelemetrySettings, "myprocessor")
 if err != nil {
     return nil, err
 }
 
-// Start metrics observation
-ctx, numPoints := p.obsrecv.StartMetricsOp(ctx)
-
-// End metrics observation
-p.obsrecv.EndMetricsOp(ctx, p.config.ProcessorType(), metricCount, nil)
+// Embed the helper in your processor struct and use the convenience methods
+ctx = helper.StartMetricsOp(ctx)
+// ... perform processing ...
+helper.EndMetricsOp(ctx, metricCount, nil)
 ```
 
 ### Custom Processor KPIs

@@ -8,6 +8,8 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.uber.org/zap"
+
+	"github.com/newrelic/nrdot-process-optimization/internal/processorhelper"
 )
 
 const (
@@ -18,6 +20,8 @@ const (
 )
 
 type priorityTaggerProcessor struct {
+	*processorhelper.Helper
+
 	config          *Config
 	logger          *zap.Logger
 	metricsConsumer consumer.Metrics
@@ -25,12 +29,17 @@ type priorityTaggerProcessor struct {
 }
 
 func newProcessor(config *Config, logger *zap.Logger, mexp consumer.Metrics, settings component.TelemetrySettings) (*priorityTaggerProcessor, error) {
+	helper, err := processorhelper.NewHelper(settings, "prioritytagger")
+	if err != nil {
+		return nil, err
+	}
 	obsrecv, err := newObsreportHelper(settings)
 	if err != nil {
 		return nil, err
 	}
 
 	return &priorityTaggerProcessor{
+		Helper:          helper,
 		config:          config,
 		logger:          logger,
 		metricsConsumer: mexp,
@@ -38,27 +47,15 @@ func newProcessor(config *Config, logger *zap.Logger, mexp consumer.Metrics, set
 	}, nil
 }
 
-func (p *priorityTaggerProcessor) Start(_ context.Context, _ component.Host) error {
-	return nil
-}
-
-func (p *priorityTaggerProcessor) Shutdown(_ context.Context) error {
-	return nil
-}
-
-func (p *priorityTaggerProcessor) Capabilities() consumer.Capabilities {
-	return consumer.Capabilities{MutatesData: true}
-}
-
 func (p *priorityTaggerProcessor) ConsumeMetrics(ctx context.Context, md pmetric.Metrics) error {
 	// Start the metrics observation
-	ctx = p.obsrecv.StartMetricsOp(ctx)
+	ctx = p.StartMetricsOp(ctx)
 
 	// Process metrics, check if they belong to critical processes and tag them
 	processedCount := p.processMetrics(ctx, md)
 
 	// Record the observation and the number of processed items
-	p.obsrecv.EndMetricsOp(ctx, p.config.ProcessorType(), processedCount, nil)
+	p.EndMetricsOp(ctx, processedCount, nil)
 
 	// Send the modified metrics to the next consumer
 	return p.metricsConsumer.ConsumeMetrics(ctx, md)

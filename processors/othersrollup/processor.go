@@ -11,6 +11,8 @@ import (
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/processor"
 	"go.uber.org/zap"
+
+	"github.com/newrelic/nrdot-process-optimization/internal/processorhelper"
 )
 
 const (
@@ -19,6 +21,8 @@ const (
 )
 
 type othersRollupProcessor struct {
+	*processorhelper.Helper
+
 	config       *Config
 	logger       *zap.Logger
 	nextConsumer consumer.Metrics
@@ -33,26 +37,24 @@ type AggregationState struct {
 }
 
 func newOthersRollupProcessor(settings processor.CreateSettings, next consumer.Metrics, cfg *Config) (*othersRollupProcessor, error) {
+	helper, err := processorhelper.NewHelper(settings.TelemetrySettings, "othersrollup")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create helper for othersrollup processor: %w", err)
+	}
 	obsrep, err := newOthersRollupObsreport(settings.TelemetrySettings)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create obsreport for othersrollup processor: %w", err)
 	}
 	return &othersRollupProcessor{
+		Helper:       helper,
 		config:       cfg,
 		logger:       settings.Logger,
 		nextConsumer: next,
 		obsrep:       obsrep,
 	}, nil
 }
-
-func (p *othersRollupProcessor) Start(_ context.Context, _ component.Host) error { return nil }
-func (p *othersRollupProcessor) Shutdown(_ context.Context) error                { return nil }
-func (p *othersRollupProcessor) Capabilities() consumer.Capabilities {
-	return consumer.Capabilities{MutatesData: true}
-}
-
 func (p *othersRollupProcessor) ConsumeMetrics(ctx context.Context, md pmetric.Metrics) error {
-	ctx = p.obsrep.StartMetricsOp(ctx)
+	ctx = p.StartMetricsOp(ctx)
 	originalMetricPointCount := getMetricPointCount(md)
 
 	// This map will store aggregated values: resourceKey -> metric_name -> AggregationState
@@ -253,7 +255,7 @@ func (p *othersRollupProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 
 	finalMetricPointCount := getMetricPointCount(newMetrics)
 	droppedCount := originalMetricPointCount - finalMetricPointCount
-	p.obsrep.EndMetricsOp(ctx, finalMetricPointCount, droppedCount, nil)
+	p.EndMetricsOp(ctx, finalMetricPointCount, nil)
 
 	if newMetrics.ResourceMetrics().Len() == 0 {
 		p.logger.Debug("All metrics were rolled up or dropped, resulting in empty batch.")

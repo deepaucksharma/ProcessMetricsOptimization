@@ -17,9 +17,13 @@ import (
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/processor"
 	"go.uber.org/zap"
+
+	"github.com/newrelic/nrdot-process-optimization/internal/processorhelper"
 )
 
 type reservoirSamplerProcessor struct {
+	*processorhelper.Helper
+
 	config       *Config
 	logger       *zap.Logger
 	nextConsumer consumer.Metrics
@@ -33,6 +37,10 @@ type reservoirSamplerProcessor struct {
 }
 
 func newReservoirSamplerProcessor(settings processor.CreateSettings, next consumer.Metrics, cfg *Config) (*reservoirSamplerProcessor, error) {
+	helper, err := processorhelper.NewHelper(settings.TelemetrySettings, "reservoirsampler")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create helper for reservoirsampler: %w", err)
+	}
 	obsrep, err := newReservoirSamplerObsreport(settings.TelemetrySettings)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create obsreport for reservoirsampler: %w", err)
@@ -42,6 +50,7 @@ func newReservoirSamplerProcessor(settings processor.CreateSettings, next consum
 	rs := rand.NewSource(time.Now().UnixNano())
 
 	return &reservoirSamplerProcessor{
+		Helper:       helper,
 		config:       cfg,
 		logger:       settings.Logger,
 		nextConsumer: next,
@@ -52,13 +61,6 @@ func newReservoirSamplerProcessor(settings processor.CreateSettings, next consum
 	}, nil
 }
 
-func (p *reservoirSamplerProcessor) Start(_ context.Context, _ component.Host) error { return nil }
-func (p *reservoirSamplerProcessor) Shutdown(_ context.Context) error                { return nil }
-func (p *reservoirSamplerProcessor) Capabilities() consumer.Capabilities {
-	return consumer.Capabilities{MutatesData: true}
-}
-
-// generateIdentity creates a unique string for a process based on configured attributes.
 func (p *reservoirSamplerProcessor) generateIdentity(attrs pcommon.Map) (string, bool) {
 	var identityParts []string
 	for _, key := range p.config.IdentityAttributes {
@@ -80,7 +82,7 @@ func (p *reservoirSamplerProcessor) ConsumeMetrics(ctx context.Context, md pmetr
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	ctx = p.obsrep.StartMetricsOp(ctx)
+	ctx = p.StartMetricsOp(ctx)
 	numOriginalMetricPoints := getMetricPointCount(md)
 
 	// First pass: identify eligible DPs and perform sampling logic for their identities
@@ -235,7 +237,7 @@ func (p *reservoirSamplerProcessor) ConsumeMetrics(ctx context.Context, md pmetr
 
 	numProcessedMetricPoints := getMetricPointCount(newMd)
 	numDroppedMetricPoints := numOriginalMetricPoints - numProcessedMetricPoints
-	p.obsrep.EndMetricsOp(ctx, numProcessedMetricPoints, numDroppedMetricPoints, nil)
+	p.EndMetricsOp(ctx, numProcessedMetricPoints, nil)
 
 	if newMd.ResourceMetrics().Len() == 0 {
 		p.logger.Debug("All metrics were dropped by reservoir sampler, resulting in empty batch.")

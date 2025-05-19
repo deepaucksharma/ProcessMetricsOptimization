@@ -7,6 +7,7 @@ This directory contains shared implementation logic that can be used across mult
 | Package | Description | Primary Users |
 |---------|-------------|---------------|
 | [`banding/`](./banding/) | Adaptive decision making based on host metrics | AdaptiveTopK processor |
+| [`processorhelper/`](./processorhelper/) | Common TelemetrySettings wrapper and obsreport helper | All processors |
 
 ## Package Principles
 
