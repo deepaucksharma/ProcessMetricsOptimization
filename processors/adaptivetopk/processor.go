@@ -298,7 +298,7 @@ func (p *adaptiveTopKProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 
 	numProcessedMetricPoints := getMetricPointCount(filteredMd)
 	numDroppedMetricPoints := numOriginalMetricPoints - numProcessedMetricPoints
-	p.obsrep.EndMetricsOp(ctx, numProcessedMetricPoints, numDroppedMetricPoints, nil)
+	p.obsrep.EndMetricsOp(ctx, p.config.ProcessorType(), numProcessedMetricPoints, numDroppedMetricPoints, nil)
 
 	return p.nextConsumer.ConsumeMetrics(ctx, filteredMd)
 }

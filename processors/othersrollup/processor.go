@@ -253,7 +253,7 @@ func (p *othersRollupProcessor) ConsumeMetrics(ctx context.Context, md pmetric.M
 
 	finalMetricPointCount := getMetricPointCount(newMetrics)
 	droppedCount := originalMetricPointCount - finalMetricPointCount
-	p.obsrep.EndMetricsOp(ctx, finalMetricPointCount, droppedCount, nil)
+	p.obsrep.EndMetricsOp(ctx, p.config.ProcessorType(), finalMetricPointCount, droppedCount, nil)
 
 	if newMetrics.ResourceMetrics().Len() == 0 {
 		p.logger.Debug("All metrics were rolled up or dropped, resulting in empty batch.")
