@@ -66,15 +66,15 @@ func (orh *obsreportHelper) StartMetricsOp(ctx context.Context) context.Context 
 }
 
 // EndMetricsOp ends the metrics operation and records the number of processed metrics.
-func (orh *obsreportHelper) EndMetricsOp(ctx context.Context, processorName string, numReceivedItems int, err error) {
+func (orh *obsreportHelper) EndMetricsOp(ctx context.Context, numProcessedPoints int, numDroppedPoints int, err error) {
 	// Record the number of processed points
 	if orh.processedPoints != nil {
-		orh.processedPoints.Add(ctx, int64(numReceivedItems))
+		orh.processedPoints.Add(ctx, int64(numProcessedPoints))
 	}
 
-	// If there was an error, record dropped points
-	if err != nil && orh.droppedPoints != nil {
-		orh.droppedPoints.Add(ctx, int64(numReceivedItems))
+	// Record dropped points
+	if orh.droppedPoints != nil && numDroppedPoints > 0 {
+		orh.droppedPoints.Add(ctx, int64(numDroppedPoints))
 	}
 }
 
