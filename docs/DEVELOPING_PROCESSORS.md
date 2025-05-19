@@ -62,7 +62,7 @@ p.obsrecv.EndMetricsOp(ctx, p.config.ProcessorType(), metricCount, nil)
 // Create a metric in the constructor
 meter := settings.MeterProvider.Meter("helloworld")
 mutationsCounter, err := meter.Int64Counter(
-    "nrdot_helloworld_mutations_total",
+    "otelcol_otelcol_helloworld_mutations_total",
     metric.WithDescription("Total number of metrics modified"),
 )
 
