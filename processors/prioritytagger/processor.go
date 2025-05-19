@@ -58,7 +58,7 @@ func (p *priorityTaggerProcessor) ConsumeMetrics(ctx context.Context, md pmetric
 	processedCount := p.processMetrics(ctx, md)
 
 	// Record the observation and the number of processed items
-	p.obsrecv.EndMetricsOp(ctx, p.config.ProcessorType(), processedCount, nil)
+	p.obsrecv.EndMetricsOp(ctx, processedCount, 0, nil)
 
 	// Send the modified metrics to the next consumer
 	return p.metricsConsumer.ConsumeMetrics(ctx, md)

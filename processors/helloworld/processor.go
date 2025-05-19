@@ -64,7 +64,7 @@ func (p *helloWorldProcessor) ConsumeMetrics(ctx context.Context, md pmetric.Met
 	metricCount := p.processMetrics(ctx, md)
 
 	// Record the observation and the number of processed items
-	p.obsrecv.EndMetricsOp(ctx, p.config.ProcessorType(), metricCount, nil)
+	p.obsrecv.EndMetricsOp(ctx, metricCount, 0, nil)
 
 	// Increment our custom mutation counter metric
 	p.mutationsCounter.Add(ctx, int64(metricCount))
