@@ -62,7 +62,7 @@ In the full optimization pipeline (configured in opt-plus.yaml), the PriorityTag
 
 | Metric Name | Type | Description |
 |-------------|------|-------------|
-| `otelcol_otelcol_otelcol_processor_prioritytagger_processed_metric_points` | Counter | Total metric points processed |
+| `otelcol_otelcol_processor_prioritytagger_processed_metric_points` | Counter | Total metric points processed |
 | `otelcol_processor_dropped_metric_points` | Counter | Metric points dropped due to errors |
 | `otelcol_otelcol_prioritytagger_critical_processes_tagged_total` | Counter | Unique processes tagged as critical |
 

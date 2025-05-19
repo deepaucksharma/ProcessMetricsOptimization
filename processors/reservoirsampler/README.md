@@ -59,8 +59,8 @@ processors:
 
 | Metric Name | Type | Description |
 |-------------|------|-------------|
-| otelcol_processor_reservoirsampler_processed_metric_points | Counter | Total number of original metric data points processed. |
-| otelcol_processor_reservoirsampler_dropped_metric_points | Counter | Total number of original metric data points dropped (eligible but not sampled). |
+| otelcol_otelcol_processor_reservoirsampler_processed_metric_points | Counter | Total number of original metric data points processed. |
+| otelcol_otelcol_processor_reservoirsampler_dropped_metric_points | Counter | Total number of original metric data points dropped (eligible but not sampled). |
 | otelcol_otelcol_reservoirsampler_reservoir_fill_ratio | Gauge | Current fill ratio of the reservoir (0.0 to 1.0). |
 | otelcol_otelcol_reservoirsampler_selected_identities_count | Gauge | Current number of unique process identities in the reservoir. |
 | otelcol_otelcol_reservoirsampler_eligible_identities_seen_total | Counter | Total number of unique eligible process identities encountered since collector start. |
