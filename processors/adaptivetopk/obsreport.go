@@ -92,7 +92,7 @@ func (o *adaptiveTopKObsreport) StartMetricsOp(ctx context.Context) context.Cont
 }
 
 // EndMetricsOp ends the metrics operation and records the number of processed metrics
-func (o *adaptiveTopKObsreport) EndMetricsOp(ctx context.Context, numProcessedPoints int, numDroppedPoints int, err error) {
+func (o *adaptiveTopKObsreport) EndMetricsOp(ctx context.Context, _ string, numProcessedPoints int, numDroppedPoints int, err error) {
 	// Record the number of processed points
 	if o.processedPoints != nil {
 		o.processedPoints.Add(ctx, int64(numProcessedPoints))

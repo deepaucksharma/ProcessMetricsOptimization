@@ -112,3 +112,8 @@ func (cfg *Config) Unmarshal(componentParser *confmap.Conf) error {
 func (cfg *Config) IsDynamicK() bool {
 	return cfg.HostLoadMetricName != ""
 }
+
+// ProcessorType returns the processor type for metrics usage
+func (cfg *Config) ProcessorType() string {
+	return "adaptivetopk"
+}
