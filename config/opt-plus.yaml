@@ -157,6 +157,8 @@ service:
   pipelines:
     metrics:
       receivers: [hostmetrics]
+        # Processor order (per docs/OPTIMIZATION_PIPELINE.md):
+        # memory_limiter -> prioritytagger -> adaptivetopk -> reservoirsampler -> othersrollup -> batch
       processors: [
         memory_limiter,
         prioritytagger,     # L0: Tag critical processes
