@@ -83,13 +83,13 @@ This dashboard visualizes the progressive optimization of metrics through the L0
 
 1. **L0: PriorityTagger Performance**
    - Tagged vs. Untagged Processes
-   - Processing Rate: `rate(otelcol_processor_prioritytagger_processed_metric_points[1m])`
+   - Processing Rate: `rate(otelcol_otelcol_processor_prioritytagger_processed_metric_points[1m])`
    - Tag Distribution by Criteria (name, regex, CPU, memory)
 
 2. **L1: AdaptiveTopK Metrics**
    - Current K Value: `otelcol_otelcol_adaptivetopk_current_k_value`
    - TopK Selection Changes Over Time
-   - Dropped Points: `rate(otelcol_processor_adaptivetopk_dropped_metric_points[1m])`
+   - Dropped Points: `rate(otelcol_otelcol_processor_adaptivetopk_dropped_metric_points[1m])`
    - CPU Threshold Adjustments
 
 3. **L2: OthersRollup Impact**
@@ -193,24 +193,24 @@ For each processor, create a "before/after" visualization:
 1. **Before-After Time Series**
    ```
    // Before processor
-   rate(otelcol_processor_<n>_received_metric_points[1m])
+   rate(otelcol_otelcol_processor_<n>_received_metric_points[1m])
 
    // After processor
-   rate(otelcol_processor_<n>_processed_metric_points[1m])
+   rate(otelcol_otelcol_processor_<n>_processed_metric_points[1m])
    ```
 
 2. **Reduction Percentage Gauge**
    ```
    (
-     sum(rate(otelcol_processor_<n>_received_metric_points[5m])) -
-     sum(rate(otelcol_processor_<n>_processed_metric_points[5m]))
+     sum(rate(otelcol_otelcol_processor_<n>_received_metric_points[5m])) -
+     sum(rate(otelcol_otelcol_processor_<n>_processed_metric_points[5m]))
    ) /
-   sum(rate(otelcol_processor_<n>_received_metric_points[5m])) * 100
+   sum(rate(otelcol_otelcol_processor_<n>_received_metric_points[5m])) * 100
    ```
 
 3. **Processing Latency Heatmap**
    ```
-   sum(rate(otelcol_processor_<n>_latency_bucket[1m])) by (le)
+   sum(rate(otelcol_otelcol_processor_<n>_latency_bucket[1m])) by (le)
    ```
 
 ### Health Status Panels
@@ -227,8 +227,8 @@ Create color-coded health indicators:
 2. **Processor Error Rate Status**
    ```
    // Warning threshold at 0.1% error rate
-   rate(otelcol_processor_<n>_dropped_metric_points[5m]) /
-   rate(otelcol_processor_<n>_received_metric_points[5m])
+   rate(otelcol_otelcol_processor_<n>_dropped_metric_points[5m]) /
+   rate(otelcol_otelcol_processor_<n>_received_metric_points[5m])
    ```
 
 ### Volume Reduction Visualization

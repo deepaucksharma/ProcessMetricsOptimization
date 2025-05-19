@@ -82,10 +82,10 @@ check_metric() {
 }
 
 # Check standard processor metrics for each processor
-prio_check=$(check_metric "otelcol_processor_prioritytagger_processed_metric_points" "PriorityTagger processor active")
-topk_check=$(check_metric "otelcol_processor_adaptivetopk_processed_metric_points" "AdaptiveTopK processor active")
-rollup_check=$(check_metric "otelcol_processor_othersrollup_processed_metric_points" "OthersRollup processor active")
-sampler_check=$(check_metric "otelcol_processor_reservoirsampler_processed_metric_points" "ReservoirSampler processor active")
+prio_check=$(check_metric "otelcol_otelcol_processor_prioritytagger_processed_metric_points" "PriorityTagger processor active")
+topk_check=$(check_metric "otelcol_otelcol_processor_adaptivetopk_processed_metric_points" "AdaptiveTopK processor active")
+rollup_check=$(check_metric "otelcol_otelcol_processor_othersrollup_processed_metric_points" "OthersRollup processor active")
+sampler_check=$(check_metric "otelcol_otelcol_processor_reservoirsampler_processed_metric_points" "ReservoirSampler processor active")
 
 # Check processor-specific metrics
 check_metric "nrdot_prioritytagger_critical_processes_tagged_total" "PriorityTagger tagged processes"

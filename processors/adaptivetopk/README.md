@@ -82,7 +82,7 @@ processors:
 
 | Metric Name | Type | Description |
 |-------------|------|-------------|
-| otelcol_processor_adaptivetopk_processed_metric_points | Counter | Total number of metric data points processed. |
-| otelcol_processor_adaptivetopk_dropped_metric_points | Counter | Total number of metric data points dropped. |
+| otelcol_otelcol_processor_adaptivetopk_processed_metric_points | Counter | Total number of metric data points processed. |
+| otelcol_otelcol_processor_adaptivetopk_dropped_metric_points | Counter | Total number of metric data points dropped. |
 | otelcol_otelcol_adaptivetopk_topk_processes_selected_total | Counter | Total number of non-critical processes selected for Top K in each batch. |
 | otelcol_otelcol_adaptivetopk_current_k_value (for Dynamic K) | Gauge | The current value of K being used for selection. |

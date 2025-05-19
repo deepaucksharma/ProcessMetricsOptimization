@@ -215,27 +215,27 @@ Each processor exports detailed metrics about its operation:
 
 -**PriorityTagger Metrics:**
 - `otelcol_otelcol_prioritytagger_critical_processes_tagged_total`
-- `otelcol_processor_prioritytagger_processed_metric_points`
+- `otelcol_otelcol_processor_prioritytagger_processed_metric_points`
 
 -**AdaptiveTopK Metrics:**
 - `otelcol_otelcol_adaptivetopk_topk_processes_selected_total`
 - `otelcol_otelcol_adaptivetopk_current_k_value`
-- `otelcol_processor_adaptivetopk_processed_metric_points`
-- `otelcol_processor_adaptivetopk_dropped_metric_points`
+- `otelcol_otelcol_processor_adaptivetopk_processed_metric_points`
+- `otelcol_otelcol_processor_adaptivetopk_dropped_metric_points`
 
 -**ReservoirSampler Metrics:**
 - `otelcol_otelcol_reservoirsampler_reservoir_fill_ratio`
 - `otelcol_otelcol_reservoirsampler_eligible_identities_seen_total`
 - `otelcol_otelcol_reservoirsampler_new_identities_added_to_reservoir_total`
 - `otelcol_otelcol_reservoirsampler_selected_identities_count`
-- `otelcol_processor_reservoirsampler_processed_metric_points`
-- `otelcol_processor_reservoirsampler_dropped_metric_points`
+- `otelcol_otelcol_processor_reservoirsampler_processed_metric_points`
+- `otelcol_otelcol_processor_reservoirsampler_dropped_metric_points`
 
 -**OthersRollup Metrics:**
 - `otelcol_otelcol_othersrollup_aggregated_series_count_total`
 - `otelcol_otelcol_othersrollup_input_series_rolled_up_total`
-- `otelcol_processor_othersrollup_processed_metric_points`
-- `otelcol_processor_othersrollup_dropped_metric_points`
+- `otelcol_otelcol_processor_othersrollup_processed_metric_points`
+- `otelcol_otelcol_processor_othersrollup_dropped_metric_points`
 
 ## Troubleshooting
 
