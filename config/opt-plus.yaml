@@ -157,6 +157,13 @@ service:
   pipelines:
     metrics:
       receivers: [hostmetrics]
+      # Processor order must follow docs/OPTIMIZATION_PIPELINE.md
+      # 1. memory_limiter -> memory protection
+      # 2. prioritytagger -> tag critical processes
+      # 3. adaptivetopk -> keep top resource processes
+      # 4. reservoirsampler -> sample remaining processes
+      # 5. othersrollup -> aggregate the rest
+      # 6. batch -> final batching before export
       processors: [
         memory_limiter,
         prioritytagger,     # L0: Tag critical processes
